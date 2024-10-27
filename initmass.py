@@ -4,16 +4,16 @@ import math
 #Starting Variable
 W0 = 106000 #Pound
 c = 0.45 #Pound/hours/Pound
-LbyD = 18
-AR = 8
+LbyD = 20
+AR = 6
 R = 9206.236 #range in miles
 V = 647.026 #speed in miles per hours (M = 0.85 )
 Pl_1 = 2120 # payload 1
 Pl_2 = 1260 # payload 2
 Pl_3 = 2520 # payload 3
 W_crew = 690 # crew weight
-A = 0.2678 # Roskans values of A in the table
-B = 0.9979 # Roskans values of B in the table
+A = 0.238 # Roskans values of A in the table
+B = 0.9 # Roskans values of B in the table
 
 def initandfuel_weight():
     W1 = 0.97 * W0  #Textbook data (starup and taxi)
@@ -35,6 +35,8 @@ def initandfuel_weight():
     #W_e2 = W_oe2-W_crew
     #W_e3 = W_oe3-W_crew
 
-    We = 10**((math.log10(W0)-A)/B) #empty weight
-
+    #We = 10**((math.log10(W0)-A)/B) #empty weight
+    We = A*W0**(B)
     return We , Wf
+
+print(initandfuel_weight())
