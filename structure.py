@@ -19,3 +19,4 @@ c_d = 1 # Drag coefficent
 
 M_c = 1.06 * M_cruise 
 
+# I'm working hard$
