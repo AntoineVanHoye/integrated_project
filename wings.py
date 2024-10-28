@@ -1,6 +1,6 @@
 import numpy as np
 from matplotlib import pyplot as plt
-
+import scipy.integrate as integrate
 
 #---Guesses---#
 b = 31.6992         #Span (guest) 104[ft] from Global8000
@@ -14,12 +14,12 @@ R = 287             #[m^2/s^2K]
 gamma = 1.4
 e = 0.85            #Ostxald's efficiency factor
 CD0 = 0.02          # Zero lift drag coeff
-sweep_quater = 45          #[°] sweep angle
-Lambda = 0.3        # [-] taper ratio
+sweep_quarter = 10         #[°] sweep angle
+Lambda = 0.6        # [-] taper ratio
 
 #---Commande---#
-polar_Cl_Cd = True
-
+polar_Cl_Cd = False
+wing_plot = False
 
 #---Code---#
 
@@ -37,7 +37,7 @@ CL_max = CL[max_index]
 CL_CD_max = CL_CD[max_index]
 
 # Afficher les résultats
-print(f"Le maximum de CL/CD est {CL_CD_max:.2f} pour CL = {CL_max:.2f}")
+print(f"Le maximum de CL/CD est {CL_CD_max:.2f} pour CL = {CL_max:.2f} \n")
 
 if polar_Cl_Cd:
     plt.plot(CL, CL/CD)
@@ -59,24 +59,70 @@ v = M*a #[m/s]
 
 S = 2*weight/(rho*(v**2)*Cl_max)
 
-c_quater = S/b
-c_root = c_quater/(2*(1-Lambda))
-c_tip = Lambda*c_root
+c_quarter = S/b
+#c_root = c_quarter/(2*(1-Lambda))
+#c_tip = Lambda*c_root
 
 
 #S = b**2/AR
 
 
-print("Cl max used:", Cl_max, "[-]")
-print("Total area:", S, "[m^2]")
-print("Corde:", c_quater, "[m]")
+print(f"Cl max used = {Cl_max:.2f} [-]")
+print(f"Total area = {S:.2f} [m^2]")
+print(f"Corde quarter = {c_quarter:.2f} [m] \n")
+#print("Codre root:", c_root, "[m]")
+#print("Codre tip:", c_tip, "[m]")
 
-sweep_leeding = np.tan(sweep_quater) + (4/AR) * ((1-Lambda)/(1+Lambda) * (0.25 - 0))
-sweep_trailing = np.tan(sweep_quater) + (4/AR) * ((1-Lambda)/(1+Lambda) * (0.25 - 1))
+sweep_quarter = sweep_quarter*((2*np.pi)/180)
+sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR) * (((1-Lambda)/(1+Lambda)) * (0.25 - 0)))
+sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR) * (((1-Lambda)/(1+Lambda)) * (0.25 - 1)))
 
-x = np.linspace(0, b/2, 100)
 
-#chord_len =  
+y = np.linspace(0, b/2, 10)
+
+quarter_line = (np.tan(sweep_quarter))*y + (0.25*c_quarter)
+leading_edge = (np.tan(sweep_leading))*y 
+trailing_edge = (np.tan(sweep_trailing))*y + c_quarter
+
+
+c = leading_edge - trailing_edge
+
+result_mac, _ = integrate.quad(lambda y: ((np.tan(sweep_trailing))*y -(np.tan(sweep_leading))*y + c_quarter)**2, 0, b/2)
+result_yac, _ = integrate.quad(lambda y: ((np.tan(sweep_trailing))*y -(np.tan(sweep_leading))*y + c_quarter)*y, 0, b/2)
+
+MAC = (2/(S))*result_mac
+y_ac = (2/(S))*result_yac
+
+print(f"MAC = {MAC:.2f} [m]")
+print(f"Y_a_c = {y_ac:.2f} [m] \n")
+ 
+
+beta = np.sqrt(1-(M**2))
+
+beta_AR = beta*AR
+
+sweep_beta = np.arctan2(np.tan(sweep_quarter), beta) * (180/(2*np.pi))
+print(f"beta AR = {beta_AR:.2f}")
+print(f"sweep Beta = {sweep_beta:.2f} [deg]\n")
+
+x_ac = 0.23*MAC  # x_ac/MAC => choice done according to slide 26 Conception Aero Design
+
+print(f"x_ac = {x_ac:.2f} [m] \n")
+
+if wing_plot:
+    plt.plot(y, leading_edge)
+    plt.plot(y, trailing_edge)
+    plt.plot(y, quarter_line, color='red',)
+    plt.scatter(y_ac, (np.tan(sweep_leading))*y_ac + x_ac, marker="x")
+
+    plt.xlabel('$Y$')
+    plt.ylabel('$X$')
+    # Fixer l'échelle des axes
+    plt.axis('equal')
+    plt.show() 
+
+
+
 
 #help of prof.
 # a (CL_alpha) 
