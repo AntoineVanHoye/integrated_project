@@ -9,7 +9,7 @@ S = 0               #total area
 weight = 471511.49122 #[N] = 106000lb (guess from weight code)
 alti = 12500        #[m]
 rho = 0.288         #[kg/m^3]
-M = 0.85            #[-] Mach number
+M = 0.9            #[-] Mach number
 R = 287             #[m^2/s^2K]
 gamma = 1.4
 e = 0.85            #Ostxald's efficiency factor
@@ -123,6 +123,49 @@ if wing_plot:
 
 
 
+
+# ------------------- Schuemann wing planform ------------------- #
+print("# ------------------- Schuemann wing planform ------------------- # \n")
+
+c0 = 20 #[m]
+c1 = 5 #[m]
+c2 = 1 #[m]
+
+b = 40
+
+
+c = [c0, c1, c2]
+y = [10, 10]
+Lambda = c[-1]/c[0]
+
+S = np.zeros(2)
+S_tot = 0
+for i in range(len(S)):
+    S[i] = y[i] * (c[i] + c[i+1])/2
+    S_tot += S[i]
+
+Sw = 0
+for i in range(len(S)):
+    Sw += (b/S_tot) * ((c[i]*S[i]) + (c[i+1]*S[i]))
+
+
+Cwre = 0
+for i in range(len(S)):
+    Cwre += (2/Sw) * (c[i]*S[i])
+
+
+
+cr = Cwre / c[0]
+
+MCG = (2*cr/3)*((1 + Lambda + Lambda**2)/(1 + Lambda))
+
+Yac = (b/6) * ((1+ (2*Lambda))/(1+Lambda))
+
+print(f"MCG = {MCG} [m]")
+print(f"Yac = {Yac:.2f} [m]")
+print(f"Cwre = {Cwre:.2f} [m]")
+print(f"Sw = {Sw:.2f} [m^2]")
+print(f"cr = {cr:.2f} [-]")
 
 #help of prof.
 # a (CL_alpha) 
