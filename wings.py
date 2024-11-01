@@ -122,8 +122,20 @@ if wing_plot:
     plt.show() 
 
 
+# maximum thickness at s/2
+
+M_star = 1.15 - (Cl_max/(4*(np.cos(sweep_quarter))**2))
+t_over_c = (3/(10*M)) * np.cbrt((1/(M*np.cos(sweep_quarter))) - (M*np.cos(sweep_quarter))) * (1- ((5+ M**2 * (np.cos(sweep_quarter)**2))/(5 + M_star**2))**3.5)**(2/3)
+
+print(f"t_over_c = {t_over_c:.2f} [m] \n")
 
 
+# --- Lift --- #
+
+#page 345 reference book (SNORRI)
+#have to find \tau
+
+"""
 # ------------------- Schuemann wing planform ------------------- #
 print("# ------------------- Schuemann wing planform ------------------- # \n")
 
@@ -167,7 +179,24 @@ print(f"Cwre = {Cwre:.2f} [m]")
 print(f"Sw = {Sw:.2f} [m^2]")
 print(f"cr = {cr:.2f} [-]")
 
+"""
+
+
+
+
+
+
+
+
+
+
+
+
+
 #help of prof.
 # a (CL_alpha) 
 #CL = CL_alpha * (alpha - alpha_L0)
 
+# ------------ Panknin and Culver twist formulas ------------ #
+# read page 324 of book of reference (SNORRI)
+# to do that we have to compute the lift
