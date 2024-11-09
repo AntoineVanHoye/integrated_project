@@ -3,10 +3,10 @@ from matplotlib import pyplot as plt
 from scipy.integrate import trapz
 
 #---Guesses---#
-span_max = 36              #[m] Span (guest) max span for airport
+span_max = 36              #[m] Span  max span for airport
 cabin_width = 8    #[m] /!\ guess
 cabin_lenght = 17   #[m] /!\ guess
-AR = 5              #Aspect ratio (guest)
+AR = 5              #Aspect ratio (guess)
 S = 0               #total area
 weight = 471511.49122 #[N] = 106000lb (guess from weight code)
 alti = 12500        #[m]
@@ -16,12 +16,12 @@ R = 287             #[m^2/s^2K]
 gamma = 1.4
 e = 0.85            #Ostxald's efficiency factor
 CD0 = 0.02          # Zero lift drag coeff
-sweep_quarter = 15         #[°] sweep angle
+#sweep_quarter = 15         #[°] sweep angle
 Lambda = 0.6        # [-] taper ratio
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = False
+wing_plot = True
 cl_plot = True
 
 
@@ -75,7 +75,7 @@ surface_wing = S_total - surface_fuslage
 beta = np.sqrt(1-(M**2))
 
 print(f"Cl max used = {Cl_max:.2f} [-]")
-print(f"Total area = {S_total:.2f} [m^2]")
+print(f"Total area = {S_total:.2f} [m^2]\n")
 
 
 def wing_side():
@@ -85,10 +85,15 @@ def wing_side():
     b = span_max - cabin_width - 2
     AR_wing = (b**2)/surface_wing
     
+    """
     cl_alpha = 1.621 # SC(2)-0012 M0.85 Re6M
-    alpha_L0 = 0
+    alpha_l0 = 0
     CD_wing = 999 # /!\
-
+    """
+    cl_alpha = (1.7-0)/(4+12) * (180/np.pi) # NACA 64209 M0.85 Re6M
+    alpha_l0 = -12*(np.pi/180)
+    CD_wing = 0.007 
+    
     sweep_quarter = 20 #[°]
     taper_ratio = 0.2
 
@@ -125,12 +130,17 @@ def wing_side():
         plt.axis('equal')
         plt.show() 
 
+
+    #twist
+    twist_angle = 3 * (np.pi/180) #[°]
+    alpha_01 = -0.17
+    alpha_L0 = alpha_l0 + (alpha_01 * twist_angle)
     # Lift
     AoA = np.linspace(-10, 10, 20) * ((np.pi)/180)
     CL_w = np.zeros(len(AoA))
      
     k = (beta * cl_alpha)/(2*np.pi)
-    a = ((2*np.pi)/((2/(beta*AR)) + np.sqrt((1/((k * np.cos(sweep_beta)))**2) + ((2/(beta * AR))**2) )))/beta
+    a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta)))**2) + ((2/(beta * AR_wing))**2) )))/beta
 
     for i in range(len(AoA)):    
         CL_w[i] = a*(AoA[i] - alpha_L0)
@@ -146,7 +156,7 @@ def wing_side():
         plt.show()
     
 
-
+    print(f"CL_0W wing = {CL_w0:.3f}")
     return c_root, c_tip, wing_surface_integrate, CL_w0, CD_wing
 
 c_root_wing, c_tip_wing, surface_wing, CL_wing, CD_wing = wing_side()
@@ -159,11 +169,16 @@ def wing_fuselage():
     b = cabin_width + 2
     
     AR_fuslage = (b**2)/surface_fuslage
-
-    cl_alpha = 1.621 # SC(2)-0012 M0.85 Re6M
-    alpha_L0 = 0
-    CD_fuselage = 999 # /!\
-
+    
+    """
+    cl_alpha = (0.82-0.2)/(1.5+2) # SC(2)-0714 M0.75 Re6M
+    alpha_L0 = -3.5 * (np.pi/180) #[rad]
+    CD_fuselage = 0.01 
+    """
+    cl_alpha = ((0.8+0.2)/(5+5)) *(180/np.pi)# Eppler 642 M0 Re1M C_m = -0.05
+    alpha_L0 = -4 * (np.pi/180) #[rad]
+    CD_fuselage = 0.01 
+    
     sweep_quarter = 30 #[°]
     taper_ratio = 0.1
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
@@ -194,7 +209,7 @@ def wing_fuselage():
         plt.plot(y, leading_edge)
         plt.plot(y, trailing_edge, color='green')
         plt.plot(y, quarter_line, color='red',)
-
+        
         plt.xlabel('$Y$')
         plt.ylabel('$X$')
         # Fixer l'échelle des axes
@@ -208,7 +223,7 @@ def wing_fuselage():
     
      
     k = (beta * cl_alpha)/(2*np.pi)
-    a = ((2*np.pi)/((2/(beta*AR)) + np.sqrt((1/((k * np.cos(sweep_beta)))**2) + ((2/(beta * AR))**2) )))/beta
+    a = ((2*np.pi)/((2/(beta*AR_fuslage)) + np.sqrt((1/((k * np.cos(sweep_beta)))**2) + ((2/(beta * AR_fuslage))**2) )))/beta
 
     for i in range(len(AoA)):    
         CL_w[i] = a*(AoA[i] - alpha_L0)
@@ -216,13 +231,14 @@ def wing_fuselage():
             if AoA[i+1] >= 0:
                 CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
     
-
+    print(f"CL_w0 fuselage = {CL_w0:.3f}")
     
     if cl_plot:
         plt.plot(AoA*(180/(np.pi)), CL_w)
         #plt.scatter(CL_max, CL_CD_max, marker="x", color="r")
         plt.xlabel('$AoA$')
         plt.ylabel('$Cl_w$')
+        plt.title("Lift fuselage")
         plt.show()
     
     return fuselage_surface_integrate, CL_w0, CD_fuselage
@@ -234,12 +250,22 @@ surface_total = surface_wing + surface_fuslage
 
 CL = ((CL_fuselage * surface_fuslage) + (CL_wing * surface_wing))/surface_total
 
-print(c_tip_wing/cabin_lenght) # 0.027813732207197624
+print(f"Total lift recomputed = {CL:.3}")
+
+#print(c_tip_wing/cabin_lenght) # 0.027813732207197624
 delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 
 CD_induce = ((CL**2)/(np.pi* AR))*(1+delta)
 
 CD = CD_induce + CD_wing + CD_fuselage
+#CD_gest = ((Cl_max**2)/(np.pi* AR))*(1+delta) + CD_wing + CD_fuselage
+print(f"CD = {CD:.3f}")
+
+
+
+
+
+
 
 """
 sweep_quarter = sweep_quarter*((2*np.pi)/180)
