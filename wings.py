@@ -4,36 +4,34 @@ from scipy.integrate import trapz
 
 #---Guesses---#
 span_max = 36              #[m] Span  max span for airport
-cabin_width = 4    #[m] /!\ guess
-cabin_lenght = 10   #[m] /!\ guess
+cabin_width = 7    #[m] /!\ guess
+cabin_lenght = 12   #[m] /!\ guess
 AR = 5              #Aspect ratio (guess)
 S = 0               #total area
 weight = 471511.49122 #[N] = 106000lb (guess from weight code)
 alti = 12500        #[m]
-rho = 0.288         #[kg/m^3]
 M = 0.9            #[-] Mach number
 R = 287             #[m^2/s^2K]
 gamma = 1.4
 e = 0.85            #Ostxald's efficiency factor
 CD0 = 0.02          # Zero lift drag coeff
 #sweep_quarter = 15         #[°] sweep angle
-Lambda = 0.6        # [-] taper ratio
+#Lambda = 0.6        # [-] taper ratio
 
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
-cl_plot = True
+wing_plot = False
+cl_plot = False
 
+
+# --- globale constant --- #
+T = 288.15 - (6.5e-3*alti)
+a = np.sqrt(gamma * R * T)  #[m^2] speed of sound
+v = M*a #[m/s]
+rho = 0.288         #[kg/m^3]
 
 #---Code---#
-
-
-#cl_alpha = np.genfromtxt('SC2-0410.csv', delimiter=',')   # SC 0410
-#cl_alpha[0, 0] =-19.5
-#print(cl_alpha)
-
-
 def guess_CL_max():
     CL = np.linspace(0, 1.0, 100)
 
@@ -63,21 +61,17 @@ def guess_CL_max():
 
 Cl_max = guess_CL_max()
 
-T = 288.15 - (6.5e-3*alti)
+surface_total = 2*weight/(rho*(v**2)*Cl_max)
 
-a = np.sqrt(gamma * R * T)  #[m^2] speed of sound
-v = M*a #[m/s] 
-
-S_total = 2*weight/(rho*(v**2)*Cl_max)
-
-surface_fuslage = (cabin_width * cabin_lenght)/2
-surface_wing = S_total - surface_fuslage
+surface_fuselage = (cabin_width * cabin_lenght)
+surface_wing = surface_total - surface_fuselage
 
 beta = np.sqrt(1-(M**2))
 
-print(f"Cl max used = {Cl_max:.2f} [-]")
-print(f"Total area = {S_total:.2f} [m^2]\n")
-
+print(f"Cl max used = {Cl_max:.2f} [-]\n")
+print(f"Total area = {surface_total:.2f} [m^2]")
+print(f"Surface of fuselage = {surface_fuselage:.2f}")
+print(f"Surface of wing = {surface_wing:.2f} \n")
 
 def wing_side():
     """
@@ -116,10 +110,9 @@ def wing_side():
         leading_edge[i] = (np.tan(sweep_leading))*y[i] 
         trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
 
-    c = trailing_edge -leading_edge
-    wing_surface_integrate = trapz(c, y)*2 #numerical integration via method of trapeze
-    print(f"Surface of wing = {surface_wing:.2f}")
-    print(f"Surface of wing via integration = {wing_surface_integrate:.2f} \n")
+    #c = trailing_edge -leading_edge
+    #wing_surface_integrate = trapz(c, y)*2 #numerical integration via method of trapeze
+    
     if wing_plot:
         plt.plot(y, leading_edge)
         plt.plot(y, trailing_edge, color='green')
@@ -131,12 +124,12 @@ def wing_side():
         plt.axis('equal')
         plt.show() 
 
-
-    #twist
+    # --- Twist angle --- #
     twist_angle = 3 * (np.pi/180) #[°]
     alpha_01 = -0.17
     alpha_L0 = alpha_l0 + (alpha_01 * twist_angle)
-    # Lift
+
+    # --- Lift --- #
     AoA = np.linspace(-10, 10, 20) * ((np.pi)/180)
     CL_w = np.zeros(len(AoA))
     
@@ -156,11 +149,11 @@ def wing_side():
         plt.ylabel('$Cl_w$')
         plt.show()
     
+    print(f"AR wing: {AR_wing:.3f} \nCL_w0 wing = {CL_w0:.3f} \n")
 
-    print(f"CL_0W wing = {CL_w0:.3f}")
-    return c_root, c_tip, wing_surface_integrate, CL_w0, CD_wing
-
-c_root_wing, c_tip_wing, surface_wing, CL_wing, CD_wing = wing_side()
+    Lift_wing = 0.5*rho*(v**2)*surface_wing*CL_w0
+    Drag_wing = 0.5*rho*(v**2)*surface_wing*CD_wing
+    return CL_w0,  CD_wing#Lift_wing, Drag_wing
 
 
 def wing_fuselage():
@@ -169,7 +162,7 @@ def wing_fuselage():
     """
     b = cabin_width + 2
     
-    AR_fuselage = (b**2)/surface_fuslage
+    AR_fuselage = (b**2)/surface_fuselage
     print(f"AR fuselage: {AR_fuselage}")
     """
     cl_alpha = (0.82-0.2)/(1.5+2) # SC(2)-0714 M0.75 Re6M
@@ -184,8 +177,9 @@ def wing_fuselage():
     sweep_quarter = 30 #[°]
     taper_ratio = 0.1
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
-    
-    taper_ratio =  c_root_wing/c_root
+    c_tip = ((2*surface_fuselage)/b) - c_root
+
+    taper_ratio =  c_tip/c_root
     
     sweep_quarter = sweep_quarter*((2*np.pi)/180)
     sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 0)))
@@ -202,11 +196,8 @@ def wing_fuselage():
         leading_edge[i] = (np.tan(sweep_leading))*y[i] 
         trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
 
-    c = trailing_edge - leading_edge
-    fuselage_surface_integrate = trapz(c, y)*2 #numerical integration via method of trapeze
-    print(f"Surface of fuselage = {surface_fuslage:.2f}")
-    print(f"Surface of fuselage via integration = {fuselage_surface_integrate:.2f} \n")
-
+    #c = trailing_edge - leading_edge
+    #fuselage_surface_integrate = trapz(c, y)*2 #numerical integration via method of trapez
     if wing_plot:
         plt.plot(y, leading_edge)
         plt.plot(y, trailing_edge, color='green')
@@ -218,14 +209,10 @@ def wing_fuselage():
         plt.axis('equal')
         plt.show() 
 
-
-    #Lift
-    #AR_fuselage =(b**2)/fuselage_surface_integrate
-    
+    # --- Lift --- #
     AoA = np.linspace(-10, 10, 50) * ((np.pi)/180)
     CL_w = np.zeros(len(AoA))
     
-     
     k = (beta * cl_alpha)/(2*np.pi)
     a = ((2*np.pi)/((2/(beta*AR_fuselage)) + np.sqrt( ((1/(k * np.cos(sweep_beta)))**2) + ((2/(beta * AR_fuselage))**2) )))/beta
 
@@ -235,7 +222,7 @@ def wing_fuselage():
             if AoA[i+1] >= 0:
                 CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
     
-    print(f"CL_w0 fuselage = {CL_w0:.3f}")
+    print(f"CL_w0 fuselage = {CL_w0:.3f}\n")
     
     if cl_plot:
         plt.plot(AoA*(180/(np.pi)), CL_w)
@@ -245,13 +232,11 @@ def wing_fuselage():
         plt.title("Lift fuselage")
         plt.show()
     
-    return fuselage_surface_integrate, CL_w0, CD_fuselage
+    Lift_fuselage = 0.5*rho*(v**2)*surface_fuselage*CL_w0
+    Drag_fuselage = 0.5*rho*(v**2)*surface_fuselage*CD_fuselage
+    return CL_w0, CD_fuselage #Lift_fuselage, Drag_fuselage
 
-
-surface_fuselage, CL_fuselage, CD_fuselage = wing_fuselage()
-
-surface_total = surface_wing + surface_fuselage
-
+"""
 CL = ((CL_fuselage * (surface_fuselage)) + (CL_wing * (surface_wing)))/(surface_total)
 
 print(f"Total lift recomputed = {CL:.3}")
@@ -271,13 +256,42 @@ L_tot = 0.5*rho*(v**2)*surface_total*CL
 L_wing = 0.5*rho*(v**2)*surface_wing*CL_wing
 L_fuselage = 0.5*rho*(v**2)*surface_fuselage*CL_fuselage
 L_tot_add = ((L_wing*surface_wing) + (L_fuselage * surface_fuselage))/surface_total
+CL = L_tot_add/(0.5*rho*(v**2)*surface_total)
 
 print(f"Lift total method 1: {L_tot:.3f}")
 print(f"Lift total method 2: {L_tot_add:.3f}")
+print(CL)
 
+"""
 
+def get_Lift_and_drag(AR, delta):
+    #lift_wing, drag_wing = wing_side()
+    #lift_fuselage, drag_fuselage = wing_fuselage()
 
+    Cl_wing, Cd_wing = wing_side()
+    Cl_fuselage, Cd_fuselage = wing_fuselage()
 
+    """
+    # --- Adimentionnalisation --- #
+    Cl_wing = lift_wing/(0.5*rho*(v**2)*surface_total)
+    Cd_wing = drag_wing/surface_total
+
+    Cl_fuselage = lift_fuselage/(0.5*rho*(v**2)*surface_total)
+    Cd_fuselage = drag_fuselage/(0.5*rho*(v**2)*surface_total)
+    """
+    # --- total lift computation --- #
+    Cl_tot = ((Cl_wing*surface_wing) + (Cl_fuselage*surface_fuselage))/surface_total 
+
+    # --- total drag computation --- #
+    Cd_induce = ((Cl_tot**2)/(np.pi* AR)) * (1+delta)
+    Cd_tot = Cd_induce + (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
+    
+    return Cl_tot, Cd_tot
+
+delta = 0.005 #graph slide 61 lecture 6 aerodinimics
+lift_coef, drag_coef = get_Lift_and_drag(AR, delta)
+
+print(f"\n CL = {lift_coef:.3f} \n CD = {drag_coef:.3f} \n")
 
 
 
