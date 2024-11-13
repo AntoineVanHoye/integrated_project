@@ -6,8 +6,8 @@ from scipy.integrate import trapz
 span_max = 36              #[m] Span  max span for airport
 cabin_width = 7    #[m] /!\ guess
 cabin_lenght = 12   #[m] /!\ guess
-AR = 5              #Aspect ratio (guess)
-S = 0               #total area
+AR = 1.5              #Aspect ratio (guess)
+AoA_wing = 4              #[°]
 weight = 471511.49122 #[N] = 106000lb (guess from weight code)
 alti = 12500        #[m]
 M = 0.9            #[-] Mach number
@@ -21,7 +21,7 @@ CD0 = 0.02          # Zero lift drag coeff
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = False
+wing_plot = True
 cl_plot = False
 
 
@@ -141,6 +141,8 @@ def wing_side():
         if AoA[i] <= 0:
             if AoA[i+1] >= 0:
                 CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
+
+    CL_w0 = a*((AoA_wing * (np.pi/180)) - alpha_L0) # choce of AoA of the wing 
 
     if cl_plot:
         plt.plot(AoA*(180/(np.pi)), CL_w)
