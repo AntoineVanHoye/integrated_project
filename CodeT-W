@@ -1,0 +1,87 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Define the x range (design margin or similar)
+x = np.linspace(0, 150, 1000) # = W/S
+
+"""
+# ------------------------------
+# T/W for a desired T-O Distance 
+
+V_Lof =     # Lift off speed
+g = 9.81    # accelaration due to gravitiy [m/s^2]
+S_G =       # Ground run
+q =         # Dynamic pressure at VLOF/sqrt(2) and selected altitude
+C_D_TO =    # Drag coefficient during T-O run
+C_L_TO =    # Lift coefficient during T-O run
+mu =        # Ground Friction constant
+
+y1 = (V_Lof**2 /(2 * g * S_G)) + ((q * C_D_TO)/x) + mu * (1 - (q * C_L_TO)/x) # = T/W
+
+# ---------------------------------
+# T/W for a Desired Cruise Airspeed 
+
+q =         # dynamic pressure at the selected airspeed and altitude
+S =         # Wing Area 
+C_D_min =   # Minimum drag coefficient 
+k =         # Lift-induced drag constant
+   
+y2 = q * C_D_min * (1/x) + k *(1/q) * x
+"""
+
+
+# Take off requierements 
+
+sigma = 0.2236 # density ratio 
+C_l_max = 
+S_TOFL = # 
+y1 = (37.5*x)/(sigma * C_l_max* S_TOFL)# T/W
+
+y1 = x
+y2 = x + 1
+
+
+# ------------------------------------
+# Stall speed (plot on a second y-axis)
+C_l_max = 1.5 # assume from the report
+rho = 0.288 # at 12 500 alt [m]
+
+y3 = np.sqrt((2*x)/(rho*C_l_max)) # V_s
+
+
+# Create the figure and the first Y-axis
+fig, ax1 = plt.subplots(figsize=(8, 6))
+
+# Plot the first two curves (baseline and with added noise) on the first Y-axis
+ax1.plot(x, y1, label="Baseline", color='b', lw=2)         # Solid line (blue)
+ax1.plot(x, y2, label="With Added Noise", color='b', lw=2, linestyle='--')  # Dashed line
+
+# Add a vertical dotted line to indicate the critical margin
+critical_margin = 0.75
+ax1.axvline(x=critical_margin, color='k', linestyle=':')
+
+# Label for the first Y-axis
+ax1.set_xlabel("Wing Loading, W/S", fontsize=12)
+ax1.set_ylabel("Thrust Loading, T/W", fontsize=12)
+
+# Create a second Y-axis sharing the same X-axis
+ax2 = ax1.twinx()
+
+# Plot the third curve on the second Y-axis
+ax2.plot(x, y3, label="Stall velocity", color='g', lw=2, linestyle='-.')  # Dot-dashed line (green)
+ax2.set_ylabel("Stall velocity", fontsize=12, color='g')  # Y-axis label for the second axis
+ax2.tick_params(axis='y', labelcolor='g')  # Color the ticks to match the second Y-axis curve
+
+# Add legends for both Y axes
+ax1.legend(loc="upper left")
+ax2.legend(loc="upper right")
+
+# Show the plot
+#plt.title("Title", fontsize=14)
+plt.grid(True)
+plt.show()
+
+
+
+
+
