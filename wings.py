@@ -5,7 +5,7 @@ from scipy.integrate import trapz
 #---Guesses---#
 span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] /!\ guess
-cabin_lenght = 16       #[m] /!\ guess
+cabin_lenght = 16.8     #[m] /!\ guess
 AR = 1.8                #Aspect ratio (guess)
 AoA_wing = 6            #[°]
 weight = 471511.49122   #[N] = 106000lb (guess from weight code)
