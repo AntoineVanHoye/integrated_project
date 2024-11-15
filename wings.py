@@ -3,20 +3,20 @@ from matplotlib import pyplot as plt
 from scipy.integrate import trapz
 
 #---Guesses---#
-span_max = 36              #[m] Span  max span for airport
-cabin_width = 7    #[m] /!\ guess
-cabin_lenght = 12   #[m] /!\ guess
-AR = 1.5              #Aspect ratio (guess)
-AoA_wing = 4              #[°]
-weight = 471511.49122 #[N] = 106000lb (guess from weight code)
-alti = 12500        #[m]
-M = 0.9            #[-] Mach number
-R = 287             #[m^2/s^2K]
+span_max = 29           #[m] Span  max span for airport
+cabin_width = 7         #[m] /!\ guess
+cabin_lenght = 16       #[m] /!\ guess
+AR = 1.8                #Aspect ratio (guess)
+AoA_wing = 6            #[°]
+weight = 471511.49122   #[N] = 106000lb (guess from weight code)
+alti = 12500            #[m]
+M = 0.9                 #[-] Mach number
+R = 287                 #[m^2/s^2K]
 gamma = 1.4
-e = 0.85            #Ostxald's efficiency factor
-CD0 = 0.02          # Zero lift drag coeff
-#sweep_quarter = 15         #[°] sweep angle
-#Lambda = 0.6        # [-] taper ratio
+e = 0.85                #Ostxald's efficiency factor
+CD0 = 0.02              # Zero lift drag coeff
+#sweep_quarter = 15     #[°] sweep angle
+#Lambda = 0.6           # [-] taper ratio
 
 
 #---Commande---#
@@ -26,7 +26,7 @@ cl_plot = False
 
 
 # --- globale constant --- #
-T = 288.15 - (6.5e-3*alti)
+T = 216.5#288.15 - (6.5e-3*alti)
 a = np.sqrt(gamma * R * T)  #[m^2] speed of sound
 v = M*a #[m/s]
 rho = 0.288         #[kg/m^3]
@@ -80,23 +80,35 @@ def wing_side():
     b = span_max - cabin_width - 2
     AR_wing = (b**2)/surface_wing
     
+    # ----- Airfoil ----- #
     """
-    cl_alpha = 1.621 # SC(2)-0012 M0.85 Re6M
+    cl_alpha = (0.5765-0)/(5+0) * (180/np.pi) # SC(2)-0012 M0.85 Re12M
     alpha_l0 = 0
-    CD_wing = 999 # /!\
+    CD_wing = 0.0059 
+    
+    cl_alpha = (0.8293+0.3558)/(5+5) * (180/np.pi) # SC(2)-0410 M0.85 Re12M
+    alpha_l0 = -2*(np.pi/180)
+    CD_wing = 0.006
+    """
+
+    cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
+    alpha_l0 = -7*(np.pi/180)
+    CD_wing = 0.006
     """
     cl_alpha = (1.7-0)/(4+12) * (180/np.pi) # NACA 64209 M0.85 Re6M
     alpha_l0 = -12*(np.pi/180)
     CD_wing = 0.007 
-    
-    sweep_quarter = 20 #[°]
+    """
+
+    sweep_leading = 40 #[°]
     taper_ratio = 0.2
 
     c_root = (surface_wing/b)* (2/(1+taper_ratio))
     c_tip = taper_ratio*c_root
 
-    sweep_quarter = sweep_quarter*((2*np.pi)/180)
-    sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 0)))
+    
+    sweep_leading = sweep_leading*((np.pi)/180)
+    sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
     sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
 
     sweep_beta = np.arctan2(np.tan(sweep_quarter), beta) 
@@ -142,7 +154,7 @@ def wing_side():
             if AoA[i+1] >= 0:
                 CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
 
-    CL_w0 = a*((AoA_wing * (np.pi/180)) - alpha_L0) # choce of AoA of the wing 
+    CL_w0 = a*((AoA_wing * (np.pi/180)) - alpha_L0) # choose of AoA of the wing 
 
     if cl_plot:
         plt.plot(AoA*(180/(np.pi)), CL_w)
@@ -170,21 +182,26 @@ def wing_fuselage():
     cl_alpha = (0.82-0.2)/(1.5+2) # SC(2)-0714 M0.75 Re6M
     alpha_L0 = -3.5 * (np.pi/180) #[rad]
     CD_fuselage = 0.01 
-    """
-    # --- airfoil --- #
-    cl_alpha = ((0.8+0.2)/(5+5)) *(180/np.pi)# Eppler 642 M0 Re1M C_m = -0.05
+
+    cl_alpha = ((0.8+0.2)/(5+5)) *(180/np.pi) # Eppler 642 M0 Re1M C_m = -0.058
     alpha_L0 = -4 * (np.pi/180) #[rad] 
     CD_fuselage = 0.01 
+    """
+    # --- airfoil --- #
     
-    sweep_quarter = 30 #[°]
+    cl_alpha = ((1.0498+0.2062)/(5+5)) * (180/np.pi) # SC(2) 0518 M0 Re12M C_m = -0.1158
+    alpha_L0 = -3.5 * (np.pi/180) #[rad] 
+    CD_fuselage = 0.00636 
+
+    sweep_leading =  60 #[°]
     taper_ratio = 0.1
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
     c_tip = ((2*surface_fuselage)/b) - c_root
 
     taper_ratio =  c_tip/c_root
     
-    sweep_quarter = sweep_quarter*((2*np.pi)/180)
-    sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 0)))
+    sweep_leading = sweep_leading*((np.pi)/180)
+    sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
     sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
 
     sweep_beta = np.arctan2(np.tan(sweep_quarter), beta) 
@@ -273,14 +290,6 @@ def get_Lift_and_drag(AR, delta):
     Cl_wing, Cd_wing = wing_side()
     Cl_fuselage, Cd_fuselage = wing_fuselage()
 
-    """
-    # --- Adimentionnalisation --- #
-    Cl_wing = lift_wing/(0.5*rho*(v**2)*surface_total)
-    Cd_wing = drag_wing/surface_total
-
-    Cl_fuselage = lift_fuselage/(0.5*rho*(v**2)*surface_total)
-    Cd_fuselage = drag_fuselage/(0.5*rho*(v**2)*surface_total)
-    """
     # --- total lift computation --- #
     Cl_tot = ((Cl_wing*surface_wing) + (Cl_fuselage*surface_fuselage))/surface_total 
 
@@ -293,7 +302,7 @@ def get_Lift_and_drag(AR, delta):
 delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 lift_coef, drag_coef = get_Lift_and_drag(AR, delta)
 
-print(f"\n CL = {lift_coef:.3f} \n CD = {drag_coef:.3f} \n")
+print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
 
 
 
