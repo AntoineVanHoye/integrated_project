@@ -4,8 +4,8 @@ from scipy.integrate import trapz
 
 #---Guesses---#
 span_max = 29           #[m] Span  max span for airport
-cabin_width = 7         #[m] /!\ guess
-cabin_lenght = 16.8     #[m] /!\ guess
+cabin_width = 7         #[m] 
+cabin_lenght = 16.8     #[m] 
 AR = 1.8                #Aspect ratio (guess)
 AoA_wing = 6            #[°]
 weight = 471511.49122   #[N] = 106000lb (guess from weight code)
@@ -63,7 +63,7 @@ Cl_max = guess_CL_max()
 
 surface_total = 2*weight/(rho*(v**2)*Cl_max)
 
-surface_fuselage = (cabin_width * cabin_lenght)
+surface_fuselage = (cabin_lenght + ((cabin_width/2 +1)/np.tan(30*np.pi/180)))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
 surface_wing = surface_total - surface_fuselage
 
 beta = np.sqrt(1-(M**2))
@@ -72,46 +72,19 @@ print(f"Cl max used = {Cl_max:.2f} [-]\n")
 print(f"Total area = {surface_total:.2f} [m^2]")
 print(f"Surface of fuselage = {surface_fuselage:.2f}")
 print(f"Surface of wing = {surface_wing:.2f} \n")
+print(f"Compressibility parameter: {beta:.3f}")
 
-def wing_side():
-    """
-    The choice of the airfoil must be made (cl_alpha and alpha_0)
-    """
+def wingGeometry():
     b = span_max - cabin_width - 2
     AR_wing = (b**2)/surface_wing
-    
-    # ----- Airfoil ----- #
-    """
-    cl_alpha = (0.5765-0)/(5+0) * (180/np.pi) # SC(2)-0012 M0.85 Re12M
-    alpha_l0 = 0
-    CD_wing = 0.0059 
-    
-    cl_alpha = (0.8293+0.3558)/(5+5) * (180/np.pi) # SC(2)-0410 M0.85 Re12M
-    alpha_l0 = -2*(np.pi/180)
-    CD_wing = 0.006
-    """
-
-    cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
-    alpha_l0 = -7*(np.pi/180)
-    CD_wing = 0.006
-    """
-    cl_alpha = (1.7-0)/(4+12) * (180/np.pi) # NACA 64209 M0.85 Re6M
-    alpha_l0 = -12*(np.pi/180)
-    CD_wing = 0.007 
-    """
-
     sweep_leading = 40 #[°]
-    taper_ratio = 0.2
-
-    c_root = (surface_wing/b)* (2/(1+taper_ratio))
-    c_tip = taper_ratio*c_root
-
-    
+    c_tip = 0.8 #[m]
+    c_root = (2*surface_wing/b) - c_tip
+    taper_ratio = c_tip/c_root
     sweep_leading = sweep_leading*((np.pi)/180)
     sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
     sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
-
-    sweep_beta = np.arctan2(np.tan(sweep_quarter), beta) 
+    sweep_beta = np.arctan2(np.tan(sweep_quarter), beta)
 
     y = np.linspace(0, b/2, 10)
     quarter_line = np.zeros(len(y))
@@ -122,19 +95,44 @@ def wing_side():
         leading_edge[i] = (np.tan(sweep_leading))*y[i] 
         trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
 
-    #c = trailing_edge -leading_edge
-    #wing_surface_integrate = trapz(c, y)*2 #numerical integration via method of trapeze
-    
-    if wing_plot:
-        plt.plot(y, leading_edge)
-        plt.plot(y, trailing_edge, color='green')
-        plt.plot(y, quarter_line, color='red',)
+    return b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line
 
-        plt.xlabel('$Y$')
-        plt.ylabel('$X$')
-        # Fixer l'échelle des axes
-        plt.axis('equal')
-        plt.show() 
+def wingPlot(wing_plot):
+    if wing_plot == False:
+        return
+    _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = wingGeometry() 
+    plt.plot(y, leading_edge)
+    plt.plot(y, trailing_edge, color='green')
+    plt.plot(y, quarter_line, color='red',)
+
+    plt.xlabel('$Y$')
+    plt.ylabel('$X$')
+    # Fixer l'échelle des axes
+    plt.axis('equal')
+    plt.show() 
+
+    return
+wingPlot(wing_plot)
+
+def wingCL():
+    # ----- Airfoil ----- #
+    cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
+    alpha_l0 = -7*(np.pi/180)
+    CD_wing = 0.01091 #at 6° aoa  and at 0° aoa = 0.006
+    """
+    cl_alpha = (0.5765-0)/(5+0) * (180/np.pi) # SC(2)-0012 M0.85 Re12M
+    alpha_l0 = 0
+    CD_wing = 0.0059 
+    
+    cl_alpha = (0.8293+0.3558)/(5+5) * (180/np.pi) # SC(2)-0410 M0.85 Re12M
+    alpha_l0 = -2*(np.pi/180)
+    CD_wing = 0.006
+
+    cl_alpha = (1.7-0)/(4+12) * (180/np.pi) # NACA 64209 M0.85 Re6M
+    alpha_l0 = -12*(np.pi/180)
+    CD_wing = 0.007 
+    """
+    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = wingGeometry()
 
     # --- Twist angle --- #
     twist_angle = 3 * (np.pi/180) #[°]
@@ -163,47 +161,26 @@ def wing_side():
         plt.ylabel('$Cl_w$')
         plt.show()
     
-    print(f"AR wing: {AR_wing:.3f} \nCL_w0 wing = {CL_w0:.3f} \n")
+    print("\n-------------- wing values --------------\n")
+    print(f"\nAR wing: {AR_wing:.3f} \nCL_w0 wing = {CL_w0:.3f} \n")
+    print(f"Cord at wing root: {c_root:.3f} \nCorde at wing tip: {c_tip:.3f}")
+    print(f"Taper ratio: {taper_ratio:.3f}")
+    print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
+    print(f"Wing lift coefficient derivative: {a:.3f}")
+    print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
+    
+    return CL_w0,  CD_wing
 
-    Lift_wing = 0.5*rho*(v**2)*surface_wing*CL_w0
-    Drag_wing = 0.5*rho*(v**2)*surface_wing*CD_wing
-    return CL_w0,  CD_wing#Lift_wing, Drag_wing
-
-
-def wing_fuselage():
-    """
-    The choice of the airfoil must be made (cl_alpha and alpha_0)
-    """
+def fusGeometry():
     b = cabin_width + 2
-    
     AR_fuselage = (b**2)/surface_fuselage
-    print(f"AR fuselage: {AR_fuselage}")
-    """
-    cl_alpha = (0.82-0.2)/(1.5+2) # SC(2)-0714 M0.75 Re6M
-    alpha_L0 = -3.5 * (np.pi/180) #[rad]
-    CD_fuselage = 0.01 
-
-    cl_alpha = ((0.8+0.2)/(5+5)) *(180/np.pi) # Eppler 642 M0 Re1M C_m = -0.058
-    alpha_L0 = -4 * (np.pi/180) #[rad] 
-    CD_fuselage = 0.01 
-    """
-    # --- airfoil --- #
-    
-    cl_alpha = ((1.0498+0.2062)/(5+5)) * (180/np.pi) # SC(2) 0518 M0 Re12M C_m = -0.1158
-    alpha_L0 = -3.5 * (np.pi/180) #[rad] 
-    CD_fuselage = 0.00636 
-
     sweep_leading =  60 #[°]
-    taper_ratio = 0.1
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
-    c_tip = ((2*surface_fuselage)/b) - c_root
-
+    c_tip = ((cabin_width/2 +1)/np.tan(30*np.pi/180)) #((2*surface_fuselage)/b) - c_root
     taper_ratio =  c_tip/c_root
-    
     sweep_leading = sweep_leading*((np.pi)/180)
     sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
     sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
-
     sweep_beta = np.arctan2(np.tan(sweep_quarter), beta) 
 
     y = np.linspace(0, b/2, 10)
@@ -214,19 +191,41 @@ def wing_fuselage():
         quarter_line[i] = (np.tan(sweep_quarter))*y[i] + (0.25*c_root)
         leading_edge[i] = (np.tan(sweep_leading))*y[i] 
         trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
+    return b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line
 
-    #c = trailing_edge - leading_edge
-    #fuselage_surface_integrate = trapz(c, y)*2 #numerical integration via method of trapez
-    if wing_plot:
-        plt.plot(y, leading_edge)
-        plt.plot(y, trailing_edge, color='green')
-        plt.plot(y, quarter_line, color='red',)
-        
-        plt.xlabel('$Y$')
-        plt.ylabel('$X$')
-        # Fixer l'échelle des axes
-        plt.axis('equal')
-        plt.show() 
+def fusPlot(wing_plot):
+    if wing_plot == False:
+        return
+    _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = fusGeometry() 
+    plt.plot(y, leading_edge)
+    plt.plot(y, trailing_edge, color='green')
+    plt.plot(y, quarter_line, color='red',)
+
+    plt.xlabel('$Y$')
+    plt.ylabel('$X$')
+    # Fixer l'échelle des axes
+    plt.axis('equal')
+    plt.show() 
+    return
+fusPlot(wing_plot)
+
+def fuselageCL():
+    print("\n-------------- fuselage values --------------\n")
+
+    # --- airfoil --- #
+    cl_alpha = ((1.0498+0.2062)/(5+5)) * (180/np.pi) # SC(2) 0518 M0 Re12M C_m = -0.1158
+    alpha_L0 = -3.5 * (np.pi/180) #[rad] 
+    CD_fuselage = 0.00636 
+    """
+    cl_alpha = (0.82-0.2)/(1.5+2) # SC(2)-0714 M0.75 Re6M
+    alpha_L0 = -3.5 * (np.pi/180) #[rad]
+    CD_fuselage = 0.01 
+
+    cl_alpha = ((0.8+0.2)/(5+5)) *(180/np.pi) # Eppler 642 M0 Re1M C_m = -0.058
+    alpha_L0 = -4 * (np.pi/180) #[rad] 
+    CD_fuselage = 0.01 
+    """
+    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = fusGeometry()
 
     # --- Lift --- #
     AoA = np.linspace(-10, 10, 50) * ((np.pi)/180)
@@ -241,8 +240,6 @@ def wing_fuselage():
             if AoA[i+1] >= 0:
                 CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
     
-    print(f"CL_w0 fuselage = {CL_w0:.3f}\n")
-    
     if cl_plot:
         plt.plot(AoA*(180/(np.pi)), CL_w)
         #plt.scatter(CL_max, CL_CD_max, marker="x", color="r")
@@ -251,44 +248,48 @@ def wing_fuselage():
         plt.title("Lift fuselage")
         plt.show()
     
-    Lift_fuselage = 0.5*rho*(v**2)*surface_fuselage*CL_w0
-    Drag_fuselage = 0.5*rho*(v**2)*surface_fuselage*CD_fuselage
+    # ---- Print ---- #
+    print(f"\nAR fuselage: {AR_fuselage:.3f} \nCL_w0 fuselage = {CL_w0:.3f} \n")
+    print(f"Cord at fuselage root: {c_root:.3f} \nCorde at fuselage tip: {c_tip:.3f}")
+    print(f"Taper ratio: {taper_ratio:.3f}")
+    print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
+    print(f"Fuselage lift coefficient derivative: {a:.3f}")
+    
     return CL_w0, CD_fuselage #Lift_fuselage, Drag_fuselage
 
-"""
-CL = ((CL_fuselage * (surface_fuselage)) + (CL_wing * (surface_wing)))/(surface_total)
+def getMAC():
+    _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = wingGeometry() 
+    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry() 
 
-print(f"Total lift recomputed = {CL:.3}")
+    # -- fuselage -- #
+    c_fus = trailing_fus - leading_fus
+    MAC_fus = (2/surface_total) * trapz(c_fus*2, y_fus) #numerical integration via method of trapez
+    cy_fus = c_fus*y_fus
+    yac_fus = (2/surface_total) * trapz(cy_fus, y_fus)
 
-#print(c_tip_wing/cabin_lenght) # 0.027813732207197624
-delta = 0.005 #graph slide 61 lecture 6 aerodinimics
+    # -- wing -- #
+    c_wing = trailing_wing - leading_wing
+    MAC_wing = (2/surface_total) * trapz(c_wing*2, y_wing) #numerical integration via method of trapez
+    cy_wing = c_wing*y_wing
+    yac_wing = (2/surface_total) * trapz(cy_wing, y_wing)
 
-CD_induce = ((CL**2)/(np.pi* AR)) * (1+delta)
+    # -- total -- #
+    c = np.concatenate((c_fus, c_wing))
+    y = np.linspace(0, span_max/2, 20)
+    MAC = (2/surface_total) * trapz(c*2, y)
+    cy = c*y
+    yac = (2/surface_total) * trapz(cy, y)
+    xac = 0.2*MAC
 
-CD = CD_induce + (((CD_fuselage * surface_fuselage) + (CD_wing * surface_wing))/surface_total)
-#CD_gest = ((Cl_max**2)/(np.pi* AR))*(1+delta) + CD_wing + CD_fuselage
-print(f"CD = {CD:.3f}")
+    return MAC, yac, xac
 
-
-L_tot = 0.5*rho*(v**2)*surface_total*CL
-
-L_wing = 0.5*rho*(v**2)*surface_wing*CL_wing
-L_fuselage = 0.5*rho*(v**2)*surface_fuselage*CL_fuselage
-L_tot_add = ((L_wing*surface_wing) + (L_fuselage * surface_fuselage))/surface_total
-CL = L_tot_add/(0.5*rho*(v**2)*surface_total)
-
-print(f"Lift total method 1: {L_tot:.3f}")
-print(f"Lift total method 2: {L_tot_add:.3f}")
-print(CL)
-
-"""
+MAC, yac, xac = getMAC()
+print(MAC, yac, xac)
 
 def get_Lift_and_drag(AR, delta):
-    #lift_wing, drag_wing = wing_side()
-    #lift_fuselage, drag_fuselage = wing_fuselage()
 
-    Cl_wing, Cd_wing = wing_side()
-    Cl_fuselage, Cd_fuselage = wing_fuselage()
+    Cl_wing, Cd_wing = wingCL()
+    Cl_fuselage, Cd_fuselage = fuselageCL()
 
     # --- total lift computation --- #
     Cl_tot = ((Cl_wing*surface_wing) + (Cl_fuselage*surface_fuselage))/surface_total 
