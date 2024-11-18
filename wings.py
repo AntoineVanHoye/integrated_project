@@ -21,7 +21,7 @@ CD0 = 0.02              # Zero lift drag coeff
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 cl_plot = False
 
 
@@ -296,8 +296,9 @@ def get_Lift_and_drag(AR, delta):
 
     # --- total drag computation --- #
     Cd_induce = ((Cl_tot**2)/(np.pi* AR)) * (1+delta)
+    Cd0_tot = (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
     Cd_tot = Cd_induce + (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
-    
+    print(f"CDO = {Cd0_tot}")
     return Cl_tot, Cd_tot
 
 delta = 0.005 #graph slide 61 lecture 6 aerodinimics
@@ -306,8 +307,26 @@ lift_coef, drag_coef = get_Lift_and_drag(AR, delta)
 print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
 
 
+def wingMaxthickness():
+    CL, _ = wingCL()
+    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
+    M_star = 1.15-(CL/(4*(np.cos(sweep_quarter)**2)))
+    t_bar_over_c =  (3/(10*M)) * np.cbrt((1/(M*np.cos(sweep_quarter))) - (M*np.cos(sweep_quarter))) * (1-(((5 + (M**2)*(np.cos(sweep_quarter)**2))/(5 + (M_star**2)))**3.5))**(2/3)
+    t_root = t_bar_over_c*c_root
+    t_tip = t_bar_over_c*c_tip 
+    print(t_root, t_tip)
+    return t_root, t_tip
+
+wingMaxthickness()
+
+def wingFuelvolume():
+    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
+    tau = 1
+    V_fuel = 0.54*((surface_wing**2)/b) * 0.10 * ((1+(taper_ratio*np.sqrt(tau))+((taper_ratio**2)*tau))/(1+taper_ratio)**2)
+    return V_fuel
 
 
-# ------------ Panknin and Culver twist formulas ------------ #
-# read page 324 of book of reference (SNORRI)
-# to do that we have to compute the lift
+def wingSurfaceWetted():
+    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
+    S_wet = 2*surface_wing*(1+ (1/4) * ((0.10 + (0.1*taper_ratio))/(1+taper_ratio)))
+    return S_wet
