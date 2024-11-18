@@ -1,5 +1,5 @@
 """
-Group member:
+Group members :
 - Leo Di Puma           - Louis Belboom
 - Emile de Lamalle      - Diego Schyns
 - Amos David            - Antoine Van Hoye
