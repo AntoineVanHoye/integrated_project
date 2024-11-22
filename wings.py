@@ -254,12 +254,14 @@ def getMAC():
     MAC_fus = (2/surface_total) * trapz(c_fus*2, y_fus) #numerical integration via method of trapez
     cy_fus = c_fus*y_fus
     yac_fus = (2/surface_total) * trapz(cy_fus, y_fus)
+    xac_fus = MAC_fus*0.2
 
     # -- wing -- #
     c_wing = trailing_wing - leading_wing
     MAC_wing = (2/surface_total) * trapz(c_wing*2, y_wing) #numerical integration via method of trapez
     cy_wing = c_wing*y_wing
     yac_wing = (2/surface_total) * trapz(cy_wing, y_wing)
+    xac_wing = MAC_wing*0.2
 
     # -- total -- #
     c = np.concatenate((c_fus, c_wing))
@@ -269,7 +271,7 @@ def getMAC():
     yac = (2/surface_total) * trapz(cy, y)
     xac = 0.2*MAC
 
-    return MAC, yac, xac
+    return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac
 
 
 def get_Lift_and_drag(AR, delta):
@@ -352,7 +354,9 @@ def printFunction():
     print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
     print(f"Fuselage lift coefficient derivative: {a:.3f}\n")
 
-    MAC, yac, xac = getMAC()
+    MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
+    print(f"MAC fus: {MAC_fus:.3f} \nYac fus: {yac_fus:.3f} \nXac fus: {xac_fus:.3f} \n")
+    print(f"MAC wing: {MAC_wing:.3f} \nYac wing: {yac_wing:.3f} \nXac wing: {xac_wing:.3f} \n")
     print(f"MAC: {MAC:.3f} \nYac: {yac:.3f} \nXac: {xac:.3f} \n")
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
