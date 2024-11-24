@@ -22,7 +22,7 @@ delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = False
+wing_plot = True
 cl_plot = False
 
 
@@ -101,7 +101,7 @@ def wingPlot(wing_plot):
     _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = wingGeometry() 
     plt.plot(y, leading_edge)
     plt.plot(y, trailing_edge, color='green')
-    plt.plot(y, quarter_line, color='red',)
+    plt.plot(y, quarter_line, color='red')
 
     plt.xlabel('$Y$')
     plt.ylabel('$X$')
@@ -251,28 +251,62 @@ def getMAC():
 
     # -- fuselage -- #
     c_fus = trailing_fus - leading_fus
-    MAC_fus = (2/surface_total) * trapz(c_fus*2, y_fus) #numerical integration via method of trapez
+    MAC_fus = (2/surface_fuselage) * trapz(c_fus**2, y_fus) #numerical integration via method of trapez
     cy_fus = c_fus*y_fus
-    yac_fus = (2/surface_total) * trapz(cy_fus, y_fus)
+    yac_fus = (2/surface_fuselage) * trapz(cy_fus, y_fus)
     xac_fus = MAC_fus*0.2
 
     # -- wing -- #
     c_wing = trailing_wing - leading_wing
-    MAC_wing = (2/surface_total) * trapz(c_wing*2, y_wing) #numerical integration via method of trapez
+    MAC_wing = (2/surface_wing) * trapz(c_wing**2, y_wing) #numerical integration via method of trapez
     cy_wing = c_wing*y_wing
-    yac_wing = (2/surface_total) * trapz(cy_wing, y_wing)
+    yac_wing = (2/surface_wing) * trapz(cy_wing, y_wing)
     xac_wing = MAC_wing*0.2
 
     # -- total -- #
     c = np.concatenate((c_fus, c_wing))
     y = np.linspace(0, span_max/2, 20)
-    MAC = (2/surface_total) * trapz(c*2, y)
+    MAC = (2/surface_total) * trapz(c**2, y)
     cy = c*y
     yac = (2/surface_total) * trapz(cy, y)
     xac = 0.2*MAC
 
     return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac
 
+def plotAllWing(wing_plot):
+    if wing_plot == False:
+        return
+    _, _, _, _, _, _, _, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry() 
+    plt.plot(y_fus, leading_edge_fus, color='blue')
+    plt.plot(y_fus, trailing_edge_fus, color='green')
+    plt.plot(y_fus, quarter_line_fus, color='red')
+
+    _, _, _, _, _, _, _, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing = wingGeometry() 
+    plt.plot(y_wing + y_fus[-1], leading_edge_wing + leading_edge_fus[-1], color='blue')
+    plt.plot(y_wing + y_fus[-1], trailing_edge_wing + leading_edge_fus[-1], color='green')
+    plt.plot(y_wing + y_fus[-1], quarter_line_wing + leading_edge_fus[-1], color='red')
+
+    plt.plot([y_fus[-1], y_wing[0] + y_fus[-1]], [trailing_edge_fus[-1], trailing_edge_wing[0] + leading_edge_fus[-1]], color='green')
+
+    # --- left part --- #
+    plt.plot(-y_fus, leading_edge_fus, color='blue')
+    plt.plot(-y_fus, trailing_edge_fus, color='green')
+    plt.plot(-y_fus, quarter_line_fus, color='red')
+
+    plt.plot(-(y_wing + y_fus[-1]), (leading_edge_wing + leading_edge_fus[-1]), color='blue')
+    plt.plot(-(y_wing + y_fus[-1]), (trailing_edge_wing + leading_edge_fus[-1]), color='green')
+    plt.plot(-(y_wing + y_fus[-1]), (quarter_line_wing + leading_edge_fus[-1]), color='red')
+
+    plt.plot([-y_fus[-1], -(y_wing[0] + y_fus[-1])], [trailing_edge_fus[-1], (trailing_edge_wing[0] + leading_edge_fus[-1])], color='green')
+
+
+    plt.xlabel('$Y$')
+    plt.ylabel('$X$')
+    # Fixer l'échelle des axes
+    plt.axis('equal')
+    plt.show() 
+    return
+plotAllWing(wing_plot)
 
 def get_Lift_and_drag(AR, delta):
 
