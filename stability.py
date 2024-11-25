@@ -29,6 +29,10 @@ def plot_Cm(AoA_fus, AoA_wings, Cm_fus, Cm_wings):
 
 plot_Cm(AoA_fus, AoA_wings,Cm_fus,Cm_wings)
 
+##################################################################
+ ######LONGITUDINAL STATIC STABILITY
+ ##################################################################
+
 def long_stat_stab(): #in the pitching plane
     #goal : verify if dCm/dalpha <0
 
@@ -49,4 +53,25 @@ long_stat_stab()
 
 
     
-def lat_stat_stab(): #in the rolling plane 
+def static_margin(Xac, Xcg, MAC): 
+    Kn = (Xac - Xcg)/MAC
+
+    if Kn >= 0.05 : 
+        print("The static margin has a correct value and is equal to : ", Kn)
+
+    else : 
+        print("The static margin has to be changed and is equal to : ", Kn)
+ 
+ ##################################################################
+ ######LATERAL STATIC STABILITY
+ ##################################################################
+
+
+def roll_stab(): #stable if dCr/dalpha < 0
+
+    derivative = np.diff(Cr)/np.diff(phi)
+    return 
+
+def yaw_stab(): #stable if dCn/dbeta < 0
+
+    return 
