@@ -6,7 +6,7 @@ from scipy.integrate import trapz
 span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
-AR = 1.8                #Aspect ratio (guess)
+AR = 1.5                #Aspect ratio (guess)
 AoA_wing = 6            #[°]
 weight = 471511.49122   #[N] = 106000lb (guess from weight code)
 alti = 12500            #[m]
@@ -64,7 +64,8 @@ Cl_max = guess_CL_max()
 
 surface_total = 2*weight/(rho*(v**2)*Cl_max)
 
-surface_fuselage = (cabin_lenght + ((cabin_width/2 +1)/np.tan(30*np.pi/180)))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
+c_root_fus = cabin_lenght - ((cabin_width/2 +1)/np.tan(30*np.pi/180))
+surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2 +1)/np.tan(30*np.pi/180))))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
 surface_wing = surface_total - surface_fuselage
 
 beta = np.sqrt(1-(M**2))
@@ -90,6 +91,9 @@ def wingGeometry():
         quarter_line[i] = (np.tan(sweep_quarter))*y[i] + (0.25*c_root)
         leading_edge[i] = (np.tan(sweep_leading))*y[i] 
         trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
+
+    c = [c_root_fus, c_root_fus*0.7, c_root_fus*07*0.7 ,0.8]
+    S1 = 4
 
     #geometrical_twist = twist_angle*((taper_ratio * y_over_S)/(1-(1-taper_ratio)*y_over_S ))
 
@@ -134,7 +138,7 @@ def wingCL():
     b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = wingGeometry()
 
     # --- Twist angle --- #
-    twist_angle = 3 * (np.pi/180) #[°]
+    twist_angle = -3 * (np.pi/180) #[°]
     alpha_01 = -0.17
     eta_a_tip = twist_angle 
     alpha_L0 = alpha_l0 + (alpha_01 * twist_angle)
@@ -170,11 +174,11 @@ def fusGeometry():
     AR_fuselage = (b**2)/surface_fuselage
     sweep_leading =  60 #[°]
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
-    c_tip = ((cabin_width/2 +1)/np.tan(30*np.pi/180)) #((2*surface_fuselage)/b) - c_root
+    c_tip = cabin_lenght - ((b/2)/np.tan((90-sweep_leading)*np.pi/180)) #((2*surface_fuselage)/b) - c_root
     taper_ratio =  c_tip/c_root
     sweep_leading = sweep_leading*((np.pi)/180)
     sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
-    sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
+    sweep_trailing = 0 # np.arctan(np.tan(sweep_quarter) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
     sweep_beta = np.arctan2(np.tan(sweep_quarter), beta) 
 
     y = np.linspace(0, b/2, 10)
@@ -344,8 +348,13 @@ def wingFuelvolume():
 
 def wingSurfaceWetted():
     b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
-    S_wet = 2*surface_wing*(1+ (1/4) * ((0.10 + (0.1*taper_ratio))/(1+taper_ratio)))
-    return S_wet
+    S_wet_wing = 2*surface_wing*(1+ (1/4) * ((0.10 + (0.1*taper_ratio))/(1+taper_ratio)))
+
+    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry()
+    S_wet_fus = 2*surface_fuselage*(1+ (1/4) * ((0.18 + (0.18*taper_ratio))/(1+taper_ratio)))
+
+    S_wet_tot = S_wet_wing + S_wet_fus
+    return S_wet_wing, S_wet_fus, S_wet_tot
 
 def stallVelocity():
     b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
@@ -389,6 +398,7 @@ def printFunction():
     print(f"Fuselage lift coefficient derivative: {a:.3f}\n")
 
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
+    print("\n-------------- MAC values --------------\n")
     print(f"MAC fus: {MAC_fus:.3f} \nYac fus: {yac_fus:.3f} \nXac fus: {xac_fus:.3f} \n")
     print(f"MAC wing: {MAC_wing:.3f} \nYac wing: {yac_wing:.3f} \nXac wing: {xac_wing:.3f} \n")
     print(f"MAC: {MAC:.3f} \nYac: {yac:.3f} \nXac: {xac:.3f} \n")
@@ -400,16 +410,16 @@ def printFunction():
 
     t_root, t_tip = wingMaxthickness()
     print(f"Thickness root: {t_root:.3f}, thickness tip: {t_tip:.3f}")
-    print(f"Mean thinckness: {(t_root+t_tip)/2:.3f}")
+    print(f"Mean thinckness: {(t_root+t_tip)/2:.3f}\n")
 
     V_fuel = wingFuelvolume()
-    print(f"Fuel volume in wing: {V_fuel:.3f}")
+    print(f"Fuel volume in wing: {V_fuel:.3f}\n")
 
-    Swetted = wingSurfaceWetted()
-    print(f"Surface wetted: {Swetted:.3f}")
+    _, _, Swetted = wingSurfaceWetted()
+    print(f"Surface wetted: {Swetted:.3f}\n")
 
     Vs, Vs0 = stallVelocity()
-    print(f"Stall velocity: {Vs:.3f} \nStall velocity in approach config: {Vs0:.3f}")
+    print(f"Stall velocity: {Vs:.3f} \nStall velocity in approach config: {Vs0:.3f} \n")
     return
 
 printFunction()
