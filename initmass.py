@@ -5,7 +5,7 @@ import math
 W0 = 106000 #Pound
 c = 0.5 #Pound/hours/Pound
 LbyD = 20
-AR = 6
+AR = 1.5
 R = 9206.236 #range in miles
 V = 647.026 #speed in miles per hours (M = 0.85 )
 Pl_1 = 2120 # payload 1
