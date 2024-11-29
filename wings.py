@@ -71,104 +71,6 @@ surface_wing = surface_total - surface_fuselage
 beta = np.sqrt(1-(M**2))
 
 
-def wingGeometry():
-    b = span_max - cabin_width - 2
-    AR_wing = (b**2)/surface_wing
-    sweep_leading = 40 #[°]
-    c_tip = 0.8 #[m]
-    c_root = (2*surface_wing/b) - c_tip
-    taper_ratio = c_tip/c_root
-    sweep_leading = sweep_leading*((np.pi)/180)
-    sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
-    sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
-    sweep_beta = np.arctan2(np.tan(sweep_quarter), beta)
-
-    y = np.linspace(0, b/2, 10)
-    quarter_line = np.zeros(len(y))
-    leading_edge = np.zeros(len(y))
-    trailing_edge = np.zeros(len(y))
-    for i in range(len(y)):
-        quarter_line[i] = (np.tan(sweep_quarter))*y[i] + (0.25*c_root)
-        leading_edge[i] = (np.tan(sweep_leading))*y[i] 
-        trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
-
-    c = [c_root_fus, c_root_fus*0.7, c_root_fus*07*0.7 ,0.8]
-    S1 = 4
-
-    #geometrical_twist = twist_angle*((taper_ratio * y_over_S)/(1-(1-taper_ratio)*y_over_S ))
-
-    return b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line
-
-def wingPlot(wing_plot):
-    if wing_plot == False:
-        return
-    _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = wingGeometry() 
-    plt.plot(y, leading_edge)
-    plt.plot(y, trailing_edge, color='green')
-    plt.plot(y, quarter_line, color='red')
-
-    plt.xlabel('$Y$')
-    plt.ylabel('$X$')
-    # Fixer l'échelle des axes
-    plt.axis('equal')
-    plt.show() 
-
-    return
-wingPlot(wing_plot)
-
-def wingCL():
-    # ----- Airfoil ----- #
-    cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
-    cl_max = 1.4
-    alpha_l0 = -7*(np.pi/180)
-    CD_wing = 0.01091 #at 6° aoa  and at 0° aoa = 0.006
-    """
-    cl_alpha = (0.5765-0)/(5+0) * (180/np.pi) # SC(2)-0012 M0.85 Re12M
-    alpha_l0 = 0
-    CD_wing = 0.0059 
-    
-    cl_alpha = (0.8293+0.3558)/(5+5) * (180/np.pi) # SC(2)-0410 M0.85 Re12M
-    alpha_l0 = -2*(np.pi/180)
-    CD_wing = 0.006
-
-    cl_alpha = (1.7-0)/(4+12) * (180/np.pi) # NACA 64209 M0.85 Re6M
-    alpha_l0 = -12*(np.pi/180)
-    CD_wing = 0.007 
-    """
-    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = wingGeometry()
-
-    # --- Twist angle --- #
-    twist_angle = -3 * (np.pi/180) #[°]
-    alpha_01 = -0.17
-    eta_a_tip = twist_angle 
-    alpha_L0 = alpha_l0 + (alpha_01 * twist_angle)
-    
-    # --- Lift --- #
-    AoA = np.linspace(-10, 10, 20) * ((np.pi)/180)
-    CL_w = np.zeros(len(AoA))
-    
-    k = (beta * cl_alpha)/(2*np.pi)
-    a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta))))**2 + ((2/(beta * AR_wing))**2) )))/beta
-
-    for i in range(len(AoA)):    
-        CL_w[i] = a*(AoA[i] - alpha_L0)
-        if AoA[i] <= 0:
-            if AoA[i+1] >= 0:
-                CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
-
-    CL_w0 = a*((AoA_wing * (np.pi/180)) - alpha_L0) # choose of AoA of the wing 
-
-    CL_max = np.cos(sweep_quarter) * 0.95 * ((cl_max + cl_max)/2)
-
-    if cl_plot:
-        plt.plot(AoA*(180/(np.pi)), CL_w)
-        #plt.scatter(CL_max, CL_CD_max, marker="x", color="r")
-        plt.xlabel('$AoA$')
-        plt.ylabel('$Cl_w$')
-        plt.show()
-    
-    return CL_w0,  CD_wing, CL_max, alpha_L0
-
 def fusGeometry():
     b = cabin_width + 2
     AR_fuselage = (b**2)/surface_fuselage
@@ -248,6 +150,166 @@ def fuselageCL():
     CL_max = np.cos(sweep_quarter) * 0.95 * ((cl_max + cl_max)/2)
     
     return CL_w0, CD_fuselage, CL_max
+
+
+
+def wingGeometry():
+    b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry()
+
+    b = span_max - cabin_width - 2
+    AR_wing = (b**2)/surface_wing
+    sweep_leading = 40 #[°]
+    c_tip = 0.8 #[m]
+    c_root = (2*surface_wing/b) - c_tip
+    taper_ratio = c_tip/c_root
+    sweep_leading = sweep_leading*((np.pi)/180)
+    sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
+    sweep_trailing = np.arctan(np.tan(sweep_quarter) + (4/AR_wing) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
+    sweep_beta = np.arctan2(np.tan(sweep_quarter), beta)
+
+    y = np.linspace(0, b/2, 10)
+    quarter_line = np.zeros(len(y))
+    leading_edge = np.zeros(len(y))
+    trailing_edge = np.zeros(len(y))
+    for i in range(len(y)):
+        quarter_line[i] = (np.tan(sweep_quarter))*y[i] + (0.25*c_root)
+        leading_edge[i] = (np.tan(sweep_leading))*y[i] 
+        trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
+    
+    """
+    # ---- Complex wing ---- #
+    h = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, (b*0.5) - 3] #[m]
+    Yposition = [0, h[0], h[0]+h[1], b/2]
+    c = [c_tip_fus, 7, 6, 5, 4.5, 4.2, 3.8 , 0]
+    
+    S = np.zeros(len(h))
+    S_sum =0
+    for i in range(len(c)-2):
+        S[i] = (c[i]+ c[i+1])*0.5*h[i]
+        S_sum += S[i]
+    #S1 = (c[0]+ c[1])*0.5*h[0]
+    #S2 = (c[1] + c[2])*0.5*h[1]
+    S[-1] = (surface_wing*0.5) - S_sum
+    c[-1] = (2/h[-1]) * S[-1] - c[-2] #c_tip
+    print("C tip wing niew :", c)
+
+    sweep_leading = 40 #[°]
+    sweep_leading = sweep_leading*((np.pi)/180)
+    sweep_quarter = np.zeros(len(c)-1)
+    sweep_trailing = np.zeros(len(c)-1)
+    sweep_beta = np.zeros(len(c)-1)
+
+    for i in range(len(c)-1):
+        sweep_quarter[i] = np.arctan2(h[i], ((c[i]*0.25) - ((h[i]*np.tan(sweep_leading)) + (c[i+1]*0.25)))) - (np.pi/2)#np.arctan(np.tan(sweep_leading) + (4/AR_tmp) * (((1-taper_tmp)/(1+taper_tmp)) * (0 - 0.25)))
+        sweep_trailing[i] = np.arctan2(h[i], (c[i] - ((h[i]*np.tan(sweep_leading)) + c[i+1]))) - (np.pi/2) #np.arctan(np.tan(sweep_quarter[i]) + (4/AR_tmp) * (((1-taper_tmp)/(1+taper_tmp)) * (0.25 - 1)))
+        sweep_beta[i] = np.arctan2(np.tan(sweep_quarter[i]), beta)
+
+    
+    y = np.array([])
+    quarter_line = np.array([])
+    leading_edge = np.array([])
+    trailing_edge = np.array([])
+
+    quarter_base = 0
+    leading_base = 0
+    trailing_base = 0
+    y_base = 0
+    for j in range(len(c)-1):
+        y_tmp = np.linspace(0, h[j], 10)
+        quarter_line_tmp = np.zeros(len(y_tmp))
+        leading_edge_tmp = np.zeros(len(y_tmp))
+        trailing_edge_tmp = np.zeros(len(y_tmp))
+        
+        for i in range(len(y_tmp)):
+            leading_edge_tmp[i] =  (np.tan(sweep_leading))*y_tmp[i] + leading_base
+            quarter_line_tmp[i] = (np.tan(sweep_quarter[j]))*y_tmp[i] + (0.25*c[j]) + leading_base#+ quarter_base
+            trailing_edge_tmp[i] = (np.tan(sweep_trailing[j]))*y_tmp[i] + c[j] + leading_base#+ trailing_base
+        y_tmp = y_tmp + y_base
+        quarter_base = quarter_line_tmp[-1]
+        
+        leading_base = leading_edge_tmp[-1]
+        trailing_base = trailing_edge_tmp[-1]
+        y_base = y_tmp[-1]
+        y = np.concatenate((y, y_tmp))
+        quarter_line = np.concatenate((quarter_line, quarter_line_tmp))
+        leading_edge = np.concatenate((leading_edge, leading_edge_tmp))
+        trailing_edge = np.concatenate((trailing_edge, trailing_edge_tmp))
+    """
+    #geometrical_twist = twist_angle*((taper_ratio * y_over_S)/(1-(1-taper_ratio)*y_over_S ))
+
+    return b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line
+
+def wingPlot(wing_plot):
+    if wing_plot == False:
+        return
+    _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = wingGeometry() 
+    plt.plot(y, leading_edge)
+    plt.plot(y, trailing_edge, color='green')
+    plt.plot(y, quarter_line, color='red')
+
+    plt.xlabel('$Y$')
+    plt.ylabel('$X$')
+    # Fixer l'échelle des axes
+    plt.axis('equal')
+    plt.show() 
+
+    return
+wingPlot(wing_plot)
+
+def wingCL():
+    # ----- Airfoil ----- #
+    cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
+    cl_max = 1.4
+    alpha_l0 = -7*(np.pi/180)
+    CD_wing = 0.01091 #at 6° aoa  and at 0° aoa = 0.006
+    """
+    cl_alpha = (0.5765-0)/(5+0) * (180/np.pi) # SC(2)-0012 M0.85 Re12M
+    alpha_l0 = 0
+    CD_wing = 0.0059 
+    
+    cl_alpha = (0.8293+0.3558)/(5+5) * (180/np.pi) # SC(2)-0410 M0.85 Re12M
+    alpha_l0 = -2*(np.pi/180)
+    CD_wing = 0.006
+
+    cl_alpha = (1.7-0)/(4+12) * (180/np.pi) # NACA 64209 M0.85 Re6M
+    alpha_l0 = -12*(np.pi/180)
+    CD_wing = 0.007 
+    """
+    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = wingGeometry()
+
+    # --- Twist angle --- #
+    twist_angle = -3 * (np.pi/180) #[°]
+    alpha_01 = -0.17
+    eta_a_tip = twist_angle 
+    alpha_L0 = alpha_l0 + (alpha_01 * twist_angle)
+    
+    # --- Lift --- #
+    AoA = np.linspace(-10, 10, 20) * ((np.pi)/180)
+    CL_w = np.zeros(len(AoA))
+    
+    k = (beta * cl_alpha)/(2*np.pi)
+    a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta))))**2 + ((2/(beta * AR_wing))**2) )))/beta
+
+    for i in range(len(AoA)):    
+        CL_w[i] = a*(AoA[i] - alpha_L0)
+        if AoA[i] <= 0:
+            if AoA[i+1] >= 0:
+                CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
+
+    CL_w0 = a*((AoA_wing * (np.pi/180)) - alpha_L0) # choose of AoA of the wing 
+
+    CL_max = np.cos(sweep_quarter) * 0.95 * ((cl_max + cl_max)/2)
+
+    if cl_plot:
+        plt.plot(AoA*(180/(np.pi)), CL_w)
+        #plt.scatter(CL_max, CL_CD_max, marker="x", color="r")
+        plt.xlabel('$AoA$')
+        plt.ylabel('$Cl_w$')
+        plt.show()
+    
+    return CL_w0,  CD_wing, CL_max, alpha_L0
+
+
 
 def getMAC():
     _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = wingGeometry() 
