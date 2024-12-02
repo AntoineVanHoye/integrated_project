@@ -7,10 +7,10 @@ span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
 AR = 1.5                #Aspect ratio (guess)
-AoA_wing = 6            #[°]
+AoA_wing = 3.732        #[°]
 weight = 471511.49122   #[N] = 106000lb (guess from weight code)
 alti = 12500            #[m]
-M = 0.9                 #[-] Mach number
+M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
 gamma = 1.4
 e = 0.85                #Ostxald's efficiency factor
@@ -159,6 +159,7 @@ def wingGeometry():
     b = span_max - cabin_width - 2
     AR_wing = (b**2)/surface_wing
     sweep_leading = 40 #[°]
+    """
     c_tip = 0.8 #[m]
     c_root = (2*surface_wing/b) - c_tip
     taper_ratio = c_tip/c_root
@@ -175,12 +176,12 @@ def wingGeometry():
         quarter_line[i] = (np.tan(sweep_quarter))*y[i] + (0.25*c_root)
         leading_edge[i] = (np.tan(sweep_leading))*y[i] 
         trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
-    
     """
+    
     # ---- Complex wing ---- #
-    h = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, (b*0.5) - 3] #[m]
+    h = [0.5, 0.25, 0.25, 0.5, 0.5, 0.5, 0.5, (b*0.5) - 3] #[m]
     Yposition = [0, h[0], h[0]+h[1], b/2]
-    c = [c_tip_fus, 7, 6, 5, 4.5, 4.2, 3.8 , 0]
+    c = [c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     
     S = np.zeros(len(h))
     S_sum =0
@@ -191,7 +192,6 @@ def wingGeometry():
     #S2 = (c[1] + c[2])*0.5*h[1]
     S[-1] = (surface_wing*0.5) - S_sum
     c[-1] = (2/h[-1]) * S[-1] - c[-2] #c_tip
-    print("C tip wing niew :", c)
 
     sweep_leading = 40 #[°]
     sweep_leading = sweep_leading*((np.pi)/180)
@@ -204,7 +204,6 @@ def wingGeometry():
         sweep_trailing[i] = np.arctan2(h[i], (c[i] - ((h[i]*np.tan(sweep_leading)) + c[i+1]))) - (np.pi/2) #np.arctan(np.tan(sweep_quarter[i]) + (4/AR_tmp) * (((1-taper_tmp)/(1+taper_tmp)) * (0.25 - 1)))
         sweep_beta[i] = np.arctan2(np.tan(sweep_quarter[i]), beta)
 
-    
     y = np.array([])
     quarter_line = np.array([])
     leading_edge = np.array([])
@@ -234,15 +233,21 @@ def wingGeometry():
         quarter_line = np.concatenate((quarter_line, quarter_line_tmp))
         leading_edge = np.concatenate((leading_edge, leading_edge_tmp))
         trailing_edge = np.concatenate((trailing_edge, trailing_edge_tmp))
-    """
-    #geometrical_twist = twist_angle*((taper_ratio * y_over_S)/(1-(1-taper_ratio)*y_over_S ))
+    
+    sweep_beta_tot = 0
+    for i in range(len(sweep_beta)):
+        sweep_beta_tot += sweep_beta[i] * h[i]
+    sweep_beta_tot = sweep_beta_tot/(b/2)
 
-    return b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line
+    taper_ratio = c[-1]/c[0]
+    #geometrical_twist = twist_angle*((taper_ratio * y_over_S)/(1-(1-taper_ratio)*y_over_S ))
+    
+    return b, AR_wing, sweep_beta, sweep_beta_tot, c[0], taper_ratio, sweep_quarter, c[-1], y, leading_edge, trailing_edge, quarter_line
 
 def wingPlot(wing_plot):
     if wing_plot == False:
         return
-    _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = wingGeometry() 
+    _, _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = wingGeometry() 
     plt.plot(y, leading_edge)
     plt.plot(y, trailing_edge, color='green')
     plt.plot(y, quarter_line, color='red')
@@ -275,7 +280,7 @@ def wingCL():
     alpha_l0 = -12*(np.pi/180)
     CD_wing = 0.007 
     """
-    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = wingGeometry()
+    b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = wingGeometry()
 
     # --- Twist angle --- #
     twist_angle = -3 * (np.pi/180) #[°]
@@ -288,7 +293,7 @@ def wingCL():
     CL_w = np.zeros(len(AoA))
     
     k = (beta * cl_alpha)/(2*np.pi)
-    a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta))))**2 + ((2/(beta * AR_wing))**2) )))/beta
+    a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta_tot))))**2 + ((2/(beta * AR_wing))**2) )))/beta
 
     for i in range(len(AoA)):    
         CL_w[i] = a*(AoA[i] - alpha_L0)
@@ -309,10 +314,25 @@ def wingCL():
     
     return CL_w0,  CD_wing, CL_max, alpha_L0
 
+def getCalageAngle(CL):
+    b_wing, AR_wing, _, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, _, _, _, _ = wingGeometry()
+    Cl_fuselage, Cd_fuselage, Cl_max_fus = fuselageCL()
 
+    #cl_alpha wing
+    cl_alpha_wing = (1.4073-0.269)/(5+5) * (180/np.pi)
+    alpha_L0_wing = -7*(np.pi/180)
+ 
+
+    k = (beta * cl_alpha_wing)/(2*np.pi)
+    a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta_wing))))**2 + ((2/(beta * AR_wing))**2) )))/beta
+
+    #alpha_L0root = ((surface_fuselage*alpha_L0_fus) + (surface_wing*alpha_L0_wing))/surface_total
+    #CL/a + alpha_L0_wing
+    alpha_root = ((CL*surface_total - Cl_fuselage*surface_fuselage)/(surface_wing*a)) + alpha_L0_wing
+    return alpha_root
 
 def getMAC():
-    _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = wingGeometry() 
+    _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = wingGeometry() 
     _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry() 
 
     # -- fuselage -- #
@@ -345,23 +365,23 @@ def plotAllWing(wing_plot):
     _, _, _, _, _, _, _, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry() 
     plt.plot(y_fus, leading_edge_fus, color='blue')
     plt.plot(y_fus, trailing_edge_fus, color='green')
-    plt.plot(y_fus, quarter_line_fus, color='red')
+    #plt.plot(y_fus, quarter_line_fus, color='red')
 
-    _, _, _, _, _, _, _, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing = wingGeometry() 
+    _, _, _, _, _, _, _, _, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing = wingGeometry() 
     plt.plot(y_wing + y_fus[-1], leading_edge_wing + leading_edge_fus[-1], color='blue')
     plt.plot(y_wing + y_fus[-1], trailing_edge_wing + leading_edge_fus[-1], color='green')
-    plt.plot(y_wing + y_fus[-1], quarter_line_wing + leading_edge_fus[-1], color='red')
+    #plt.plot(y_wing + y_fus[-1], quarter_line_wing + leading_edge_fus[-1], color='red')
 
     plt.plot([y_fus[-1], y_wing[0] + y_fus[-1]], [trailing_edge_fus[-1], trailing_edge_wing[0] + leading_edge_fus[-1]], color='green')
 
     # --- left part --- #
     plt.plot(-y_fus, leading_edge_fus, color='blue')
     plt.plot(-y_fus, trailing_edge_fus, color='green')
-    plt.plot(-y_fus, quarter_line_fus, color='red')
+    #plt.plot(-y_fus, quarter_line_fus, color='red')
 
     plt.plot(-(y_wing + y_fus[-1]), (leading_edge_wing + leading_edge_fus[-1]), color='blue')
     plt.plot(-(y_wing + y_fus[-1]), (trailing_edge_wing + leading_edge_fus[-1]), color='green')
-    plt.plot(-(y_wing + y_fus[-1]), (quarter_line_wing + leading_edge_fus[-1]), color='red')
+    #plt.plot(-(y_wing + y_fus[-1]), (quarter_line_wing + leading_edge_fus[-1]), color='red')
 
     plt.plot([-y_fus[-1], -(y_wing[0] + y_fus[-1])], [trailing_edge_fus[-1], (trailing_edge_wing[0] + leading_edge_fus[-1])], color='green')
 
@@ -440,13 +460,13 @@ def printFunction():
     print(f"Surface of wing = {surface_wing:.2f} \n")
     print(f"Compressibility parameter: {beta:.3f}")
     
-    b, AR_wing, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
+    b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
     Cl_wing, Cd_wing, Cl_max_wing, alpha_L0 = wingCL()
     print("\n-------------- wing values --------------\n")
     print(f"\nAR wing: {AR_wing:.3f} \nCL_w0 wing = {Cl_wing:.3f} \n")
     print(f"Cord at wing root: {c_root:.3f} \nCorde at wing tip: {c_tip:.3f}")
     print(f"Taper ratio: {taper_ratio:.3f}")
-    print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
+    #print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
     print(f"Wing lift coefficient derivative: {a:.3f}")
     print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
 
@@ -459,17 +479,19 @@ def printFunction():
     print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
     print(f"Fuselage lift coefficient derivative: {a:.3f}\n")
 
+    """
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
     print("\n-------------- MAC values --------------\n")
     print(f"MAC fus: {MAC_fus:.3f} \nYac fus: {yac_fus:.3f} \nXac fus: {xac_fus:.3f} \n")
     print(f"MAC wing: {MAC_wing:.3f} \nYac wing: {yac_wing:.3f} \nXac wing: {xac_wing:.3f} \n")
     print(f"MAC: {MAC:.3f} \nYac: {yac:.3f} \nXac: {xac:.3f} \n")
+    """
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
     lift_coef, drag_coef, CL_max = get_Lift_and_drag(AR, delta)
     print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
-    print(f"Cl max: {CL_max:.3f}")
-
+    #print(f"Cl max: {CL_max:.3f}")
+    """
     t_root, t_tip = wingMaxthickness()
     print(f"Thickness root: {t_root:.3f}, thickness tip: {t_tip:.3f}")
     print(f"Mean thinckness: {(t_root+t_tip)/2:.3f}\n")
@@ -482,6 +504,9 @@ def printFunction():
 
     Vs, Vs0 = stallVelocity()
     print(f"Stall velocity: {Vs:.3f} \nStall velocity in approach config: {Vs0:.3f} \n")
+    """
+    AoA_root = getCalageAngle(Cl_max)
+    print(f"AoA root needed: {AoA_root*(180/np.pi):.3}")
     return
 
 printFunction()
