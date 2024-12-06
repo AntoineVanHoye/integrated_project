@@ -346,7 +346,10 @@ def getMAC():
     MAC_fus = (2/surface_fuselage) * trapz(c_fus**2, y_fus) #numerical integration via method of trapez
     cy_fus = c_fus*y_fus
     yac_fus = (2/surface_fuselage) * trapz(cy_fus, y_fus)
+
     xac_fus = MAC_fus*0.1  # keep attention that it is an estimation the table don't give the value for this very low AR
+    x_tmp = leading_fus[np.argmin(abs(y_fus - yac_fus))]
+    xac_fus = x_tmp+xac_fus 
 
     # -- wing -- #
     c_wing = trailing_wing - leading_wing
@@ -355,6 +358,9 @@ def getMAC():
     yac_wing = (2/surface_wing) * trapz(cy_wing, y_wing)
     xac_wing = MAC_wing*0.23
     
+    x_tmp = leading_wing[np.argmin(abs(y_wing - yac_wing))]
+    xac_wing = x_tmp+xac_wing + (cabin_lenght - c_wing[0])
+
     y_wing = y_wing + y_fus[-1]
 
     # -- total -- #
@@ -365,7 +371,7 @@ def getMAC():
     yac = (2/surface_total) * trapz(cy, y)
     xac = 0.1*MAC # keep attention that it is an estimation the table don't give the value for this very low AR
 
-    return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac
+    return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
 
 def plotAllWing(wing_plot):
     if wing_plot == False:
