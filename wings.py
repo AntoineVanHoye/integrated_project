@@ -8,6 +8,7 @@ cabin_width = 7         #[m]
 cabin_lenght = 16.8     #[m] 
 AR = 1.5                #Aspect ratio (guess)
 weight = 471511.49122   #[N] = 106000lb (guess from weight code)
+weight_empty =60452.314059821154 * 9.81 #[N] 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
@@ -23,7 +24,7 @@ delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 polar_Cl_Cd = False
 wing_plot = False
 cl_plot = False
-lift_and_drag_plots =True
+lift_and_drag_plots =False
 
 
 # --- globale constant --- #
@@ -31,6 +32,7 @@ T = 216.5#288.15 - (6.5e-3*alti)
 a = np.sqrt(gamma * R * T)  #[m^2] speed of sound
 v = M*a #[m/s]
 rho = 0.288         #[kg/m^3]
+rho_sl = 1.225      #[kg/m^3] at sea level
 
 #---Code---#
 def guess_CL_max():
@@ -495,11 +497,10 @@ def stallVelocity():
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
     _, _, Cl_max, _ , _, _, _= get_Lift_and_drag(AR, delta)
 
-    rho_sl = 1.225
-
     Vs = np.sqrt((weight/surface_total) * (2/rho_sl) * (1/(1.133*Cl_max)))
+    
     Cl_max0 = 2 * np.cos(sweep_quarter)
-    W0 = 555 #landing weight
+    W0 = weight_empty #landing weight
     Vs0 = np.sqrt((W0/surface_total) * (2/rho_sl) * (1/(1.133*Cl_max0)))
     return Vs, Vs0
 
