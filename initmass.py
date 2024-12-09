@@ -1,76 +1,65 @@
 import numpy as np
 import math
 
-# Design Variables 
+# Design Variables
 W0 = 106000  # MTOW (lbs)
-c = 0.5  # TSFC (lb/hr/lb)
-LbyD = 25  # Lift-to-Drag Ratio (assumes for BWB)
-AR = 3  # Aspect Ratio (Assumed for BWB)
-R = 9206.236  # Range (miles)
-V = 647.026  # Cruise Speed (mph)
-W_crew = 690  # Crew Weight (lbs)
-A = 0.2678  # Roskam's A
-B = 0.995  # Roskam's B
-payloads = [2120, 1260, 2520]  # Payload variations (lbs) for the diffrent missions 
+c = 0.45  # TSFC (lb/hr/lb)
+LbyD = 11.62  # Lift-to-Drag Ratio (assumed for BWB)
+R = 8000  # Range (nautical miles)
+V = 595.35  # Cruise Speed (knots)
+W_fixed = 4100  # Weight of passengers + crew + baggage + avionics + sensors + refreshments
 
+# Breguet Range Equation to compute fuel weight fraction
+def breguet_range_equation(c, LbyD, R, V):
+    """
+    Calculate fuel weight fraction based on the Breguet range equation.
+    """
+    return math.exp((R * c) / (V * LbyD))
 
-def breguet_range_equation(W_initial, c, LbyD, R, V):  #Breguet Range Equation to compute fuel weight fraction
-
-    return W_initial * math.exp(-(R * c) / (V * LbyD))
-
-def initandfuel_weight(W0, c, LbyD, R, V, W_crew, A, B): #Calculate weights for various phases and fuel usage
-    
+# Initialize weights and fuel weight calculation
+def init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed):
+    """
+    Calculate weights for various phases and fuel usage using the Nicolai method.
+    """
     # Weight during various phases
     W1 = 0.97 * W0  # Startup and taxi
-    W2 = 0.985 * W1  # Climb
-    W3 = breguet_range_equation(W2, c, LbyD, R, V)  # Cruise
-    W4 = 0.995 * W3  # Landing and taxi
+    W2 = 0.978 * W1  # Climb
+    W3 = breguet_range_equation(c, LbyD, R, V)  # Cruise
 
     # Mission Fuel Fraction (Mff)
-    Mff = (W1 / W0) * (W2 / W1) * (W3 / W2) * (W4 / W3)
+    Mff = (W1 / W0) * (W2 / W1) * (1 / W3)
 
-    # Fuel Weights
-    W_used = (1 - Mff) * W0  # Used fuel weight
-    W_res = 0.1 * W_used  # Reserved fuel weight
-    Wf = W_used + W_res  # Total fuel weight
+    # Total fuel weight
+    W_f = 1.06 * (1 - Mff) * W0
 
-    # Landing Weight
-    W_landing = W3  # Weight after cruise, before landing phase
+    # Nicolai method for empty weight fraction
+    We_frac = 0.911 / (W0**0.053)  # Empty weight fraction (Nicolai method)
+    We_a = W0 * (1 - W_f / W0) - W_fixed  # Available empty weight
+    We_r = We_frac * W0  # Required empty weight
 
-    # Operational Empty Weight and Zero Fuel Weight
-    We = 10 ** ((math.log10(W0) - A) / B)  # Empty weight (Roskam's method)
-    W_oe = W0 - Wf  # Operational empty weight
-    W_zf = W_oe + W_crew  # Zero fuel weight (includes crew weight)
+    # Operational empty weight (OEW) and zero fuel weight (ZFW)
+    W_oe = We_a  # Operational empty weight
+    W_zf = W0 - W_f  # Zero fuel weight
+
+    # Maximum Payload Calculation
+    MZFW = W_zf  # Maximum Zero Fuel Weight
+    max_payload = MZFW - W_oe
 
     return {
-        "Empty Weight (We)": We,
-        "Fuel Weight (Wf)": Wf,
-        "Used Fuel Weight": W_used,
-        "Reserve Fuel Weight": W_res,
-        "Landing Weight": W_landing,
+        "Available Empty Weight (We)": We_a,
+        "Fuel Weight (Wf)": W_f,
+        "Required Empty Weight (We)": We_r,
         "Operational Empty Weight (W_oe)": W_oe,
-        "Zero Fuel Weight (W_zf)": W_zf
+        "Zero Fuel Weight (W_zf)": W_zf,
+        "Maximum Zero Fuel Weight (MZFW)": MZFW,
+        "Maximum Payload": max_payload,
     }
 
-# Payload-Range Analysis
-def payload_range_analysis(W0, c, LbyD, R, V, W_crew, payloads):
-    """Analyze weights and fuel for different payloads."""
-    results = []
-    for payload in  payloads:
-        W0_adj = W0 - payload - W_crew
-        weights = initandfuel_weight(W0_adj, c, LbyD, R, V, W_crew, A, B)
-        weights["Payload"] = payload
-        results.append(weights)
-    return results
+# Calculate weights and display results
+weights = init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed)
 
-weights = initandfuel_weight(W0, c, LbyD, R, V, W_crew, A, B)
-print("General Weight Breakdown:")
+print("Weight Breakdown (Nicolai Method):")
 for key, value in weights.items():
     print(f"{key}: {value:.2f} lbs")
 
-print("\nPayload-Range Analysis:")
-payload_results = payload_range_analysis(W0, c, LbyD, R, V, W_crew,  payloads)
-for idx, result in enumerate(payload_results):
-    print(f"\nPayload Case {idx + 1}:")
-    for key, value in result.items():
-        print(f"{key}: {value:.2f} lbs")
+
