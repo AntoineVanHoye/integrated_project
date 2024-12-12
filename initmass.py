@@ -9,6 +9,9 @@ R = 8000  # Range (nautical miles)
 V = 595.35  # Cruise Speed (knots)
 W_fixed = 4100  # Weight of passengers + crew + baggage + avionics + sensors + refreshments
 
+# Conversion factors
+LBS_TO_NEWTON = 4.44822  # 1 lb = 4.44822 N
+
 # Breguet Range Equation to compute fuel weight fraction
 def breguet_range_equation(c, LbyD, R, V):
     """
@@ -45,6 +48,9 @@ def init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed):
     MZFW = W_zf  # Maximum Zero Fuel Weight
     max_payload = MZFW - W_oe
 
+    # Landing Weight Calculation
+    landing_weight = W_zf  # Assuming no additional fuel burn after cruise
+
     return {
         "Available Empty Weight (We)": We_a,
         "Fuel Weight (Wf)": W_f,
@@ -53,6 +59,7 @@ def init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed):
         "Zero Fuel Weight (W_zf)": W_zf,
         "Maximum Zero Fuel Weight (MZFW)": MZFW,
         "Maximum Payload": max_payload,
+        "Landing Weight": landing_weight,
     }
 
 # Calculate weights and display results
@@ -60,6 +67,5 @@ weights = init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed)
 
 print("Weight Breakdown (Nicolai Method):")
 for key, value in weights.items():
-    print(f"{key}: {value:.2f} lbs")
-
-
+    value_n = value * LBS_TO_NEWTON  # Convert to Newtons
+    print(f"{key}: {value:.2f} lbs ({value_n:.2f} N)")
