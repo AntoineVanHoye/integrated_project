@@ -573,9 +573,10 @@ def printFunction():
     
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
-    lift_coef, drag_coef, CL_max, AoA_L0, _, _, _ = get_Lift_and_drag(AR, delta)
+    lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa = get_Lift_and_drag(AR, delta)
     print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
-    print(f"Cl max: {CL_max:.3f} [-]\n")
+    print(f"Cl max: {CL_max:.3f} [-]")
+    print(f"Lift coefficient derivative CL_alfa: {(cl[-1] - cl[0])/(aoa[-1] - aoa[0]):.3f} [-] \n")
     
     
     t_root, t_tip,t_bar_over_C = wingMaxthickness()
