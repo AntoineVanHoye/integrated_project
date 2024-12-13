@@ -26,7 +26,6 @@ wing_plot = False
 cl_plot = False
 lift_and_drag_plots =False
 
-
 #---Code---#
 
 # Function to calculate air density using the ISA model
@@ -455,6 +454,8 @@ def get_Lift_and_drag(AR, delta):
     return Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA
 
 def plotLiftDrag(lift_and_drag_plots):
+    if lift_and_drag_plots == False:
+        return
     Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA =  get_Lift_and_drag(AR, delta)
     plt.figure(figsize=(8,5))
     plt.plot(Cl_tot, Cl_tot/Cd_tot)
