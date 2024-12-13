@@ -1,42 +1,71 @@
 import numpy as np
 import math
 
-#Starting Variable
-W0 = 106000 #Pound
-c = 0.5 #Pound/hours/Pound
-LbyD = 20
-AR = 1.5
-R = 9206.236 #range in miles
-V = 647.026 #speed in miles per hours (M = 0.85 )
-Pl_1 = 2120 # payload 1
-Pl_2 = 1260 # payload 2
-Pl_3 = 2520 # payload 3
-W_crew = 690 # crew weight
-A = 0.2678 # Roskans values of A in the table
-B = 0.995 # Roskans values of B in the table
+# Design Variables
+W0 = 106000  # MTOW (lbs)
+c = 0.45  # TSFC (lb/hr/lb)
+LbyD = 11.62  # Lift-to-Drag Ratio (assumed for BWB)
+R = 8000  # Range (nautical miles)
+V = 595.35  # Cruise Speed (knots)
+W_fixed = 4100  # Weight of passengers + crew + baggage + avionics + sensors + refreshments
 
-def initandfuel_weight(W0,c,LbyD,AR,R,V,W_crew,A,B):
-    W1 = 0.97 * W0  #Textbook data (starup and taxi)
-    W2 = 0.985* W1 #Textbook data (climb)
-    W3 = W2*math.exp(-(R*c)/(V*LbyD)) #Breget Range Equation (cruise)
-    W4 = W3 * 0.995 #Textbook data (landing and taxi)
+# Conversion factors
+LBS_TO_NEWTON = 4.44822  # 1 lb = 4.44822 N
 
-    Mff = (W1/W0)*(W2/W1)*(W3/W2)*(W4/W3)
+# Breguet Range Equation to compute fuel weight fraction
+def breguet_range_equation(c, LbyD, R, V):
+    """
+    Calculate fuel weight fraction based on the Breguet range equation.
+    """
+    return math.exp((R * c) / (V * LbyD))
 
-    W_used = (1- Mff)* W0 # used fuel weight
-    W_res = 0.1*W_used # reserved fuel weight
-    Wf = W_used + W_res # fuel weight
+# Initialize weights and fuel weight calculation
+def init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed):
+    """
+    Calculate weights for various phases and fuel usage using the Nicolai method.
+    """
+    # Weight during various phases
+    W1 = 0.97 * W0  # Startup and taxi
+    W2 = 0.978 * W1  # Climb
+    W3 = breguet_range_equation(c, LbyD, R, V)  # Cruise
 
-    #W_oe1 = W0-Wf-Pl_1 #operational emply weight (for mission 1 to 3)
-    #W_oe2 = W0-Wf-Pl_2
-    #W_oe3 = W0-Wf-Pl_3
+    # Mission Fuel Fraction (Mff)
+    Mff = (W1 / W0) * (W2 / W1) * (1 / W3)
 
-    #W_e1 = W_oe1-W_crew
-    #W_e2 = W_oe2-W_crew
-    #W_e3 = W_oe3-W_crew
+    # Total fuel weight
+    W_f = 1.06 * (1 - Mff) * W0
 
-    We = 10**((math.log10(W0)-A)/B) #empty weight
-    #We = A*W0**(B)
-    return We , Wf
+    # Nicolai method for empty weight fraction
+    We_frac = 0.911 / (W0**0.053)  # Empty weight fraction (Nicolai method)
+    We_a = W0 * (1 - W_f / W0) - W_fixed  # Available empty weight
+    We_r = We_frac * W0  # Required empty weight
 
-print(initandfuel_weight(W0,c,LbyD,AR,R,V,W_crew,A,B))
+    # Operational empty weight (OEW) and zero fuel weight (ZFW)
+    W_oe = We_a  # Operational empty weight
+    W_zf = W0 - W_f  # Zero fuel weight
+
+    # Maximum Payload Calculation
+    MZFW = W_zf  # Maximum Zero Fuel Weight
+    max_payload = MZFW - W_oe
+
+    # Landing Weight Calculation
+    landing_weight = W_zf  # Assuming no additional fuel burn after cruise
+
+    return {
+        "Available Empty Weight (We)": We_a,
+        "Fuel Weight (Wf)": W_f,
+        "Required Empty Weight (We)": We_r,
+        "Operational Empty Weight (W_oe)": W_oe,
+        "Zero Fuel Weight (W_zf)": W_zf,
+        "Maximum Zero Fuel Weight (MZFW)": MZFW,
+        "Maximum Payload": max_payload,
+        "Landing Weight": landing_weight,
+    }
+
+# Calculate weights and display results
+weights = init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed)
+
+print("Weight Breakdown (Nicolai Method):")
+for key, value in weights.items():
+    value_n = value * LBS_TO_NEWTON  # Convert to Newtons
+    print(f"{key}: {value:.2f} lbs ({value_n:.2f} N)")

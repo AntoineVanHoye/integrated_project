@@ -1,5 +1,9 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from scipy.integrate import trapz
+from wings import fusGeometry as fusgeom
+from wings import wingGeometry as winggeom
+
 
 #C_m : pitching moment coefficient
 
@@ -15,8 +19,10 @@ CL_tail = data_tail[:,1]
 Cm_wings = data_wings[:,4]
 CL_wings = data_wings[:,1]
 
-a = (CL_wings[68]- CL_wings[67])/(AoA_wings[68]-AoA_wings[67])
-a1 = (CL_tail[68]- CL_tail[67])/(AoA_tail[68]-AoA_tail[67])
+#a = (CL_wings[68]- CL_wings[67])/(AoA_wings[68]-AoA_wings[67])*np.pi/180
+#a1 = (CL_tail[68]- CL_tail[67])/(AoA_tail[68]-AoA_tail[67])
+a = 3.211
+a1 = 2
 
 a1_over_a = a1/a
 
@@ -27,13 +33,43 @@ AoA_tip = 3
 AoA_wing = (AoA_root - AoA_tip)/2
 Cm_fus_cruise = -0.1072 #at 0° AoA
 Cm_wings_cruise =  -0.1448 #at AoA_wing
-CL_wing = 0.675
-CL_fus = 0.059
-CL_T = 7
+CL_wing = 0.574 #total wing lift coeff in cruise 
+CL_fus = 0.056
+CL_T = CL_wing*15/100
 
-#calculate the forces 
+b = 29 #span
 S_fus = 110.67
-S_wing = 54.22
+S_wing = 66.44
+surf_tot = 182.56
+
+width_fus = 9
+
+Cm0_airfoil_fus = -0.1158 
+Cm0_airfoil_wing = -0.1533
+
+stop_wing = b/2 - width_fus
+n = 10
+"""
+y_values_wing = np.linspace(0,stop_wing,n)
+y_values_fus = np.linspace(stop_wing,b/2,n)
+"""
+_, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = winggeom() 
+_, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom() 
+c_fus = trailing_fus - leading_fus
+c_wing = trailing_wing - leading_wing
+
+MAC_tot = 9.949 
+Cm0_wing = (2/(surf_tot*MAC_tot)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+Cm0_fus = (2/(surf_tot*MAC_tot)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
+Cm0_tot = Cm0_wing + Cm0_fus
+
+
+print("The blended wing body has a Cm0_tot of",Cm0_tot)
+
+"""
+#calculate the forces 
+
+
 rho = 0.288
 Mach = 0.9
 R = 287                 #[m^2/s^2K]
@@ -41,24 +77,35 @@ gamma = 1.4
 T = 216.5
 speed_sound = np.sqrt(gamma * R * T) #speed of sound 
 V = speed_sound * Mach
-wing_AR = 6.021
+
 
 L_wing = CL_wing * 1/2 * rho* S_wing * V**2
 L_fus = CL_fus * 1/2 * rho* S_fus* V**2
 L_T = 5
+"""
+AR_tot = 1.5
+wing_AR = 6.021
+#values with respect to the airplane nose 
+x_AC_wing = 11.91
+x_CG_plane = 10.4
+x_AC_fus = 1.33
+x_AC_tail = 16.5
+z_AC_wing = 0
+z_AC_tail = 1.51
+z_AC_tot = 0
+MAC_tail = 1.483
+S_T = 5.422
+MAC_wing = 4.141
+MAC_fus = 13.305
+fus_length = 16.8
+fus_width = 9
+x_AC_tot = 8.789
+MAC_tot = 9.949
 
-x_AC_wing = 2
-x_CG_plane = 11
-x_AC_fus = 5
-x_AC_tail = 7
-y_AC_wing = 3
-y_AC_tail = 4
-MAC_wing = 8
-S_T = 2
-
+Cl_tot = 0.244
 #tail volume ratio effectivness 
 
-V_T = S_T * (x_AC_tail - x_CG_plane)/(S_wing * MAC_wing)
+V_T = S_T * (x_AC_tail - x_CG_plane)/(surf_tot* MAC_tail)
 
 def plot_CL(AoA, CL): 
     plt.plot(AoA, CL, color = 'b')
@@ -70,8 +117,8 @@ def plot_CL(AoA, CL):
 
     return
 
-plot_CL(AoA_wings,CL_wings)
-plot_CL(AoA_tail, CL_tail)
+#plot_CL(AoA_wings,CL_wings)
+#plot_CL(AoA_tail, CL_tail)
 
 #to see the trend of Cm with respect to the angle of attack
 def plot_Cm(AoA_fus, AoA_wings, Cm_fus, Cm_wings):
@@ -95,18 +142,24 @@ def plot_Cm(AoA_fus, AoA_wings, Cm_fus, Cm_wings):
 
     return
 
-plot_Cm(AoA_fus, AoA_wings,Cm_fus,Cm_wings)
+#plot_Cm(AoA_fus, AoA_wings,Cm_fus,Cm_wings)
 
 ##################################################################
 ######EQUILIBRIUM IN PITCH
 ##################################################################
+def required_CLT(): 
+    CLT = (Cm0_tot + Cl_tot* (x_CG_plane - x_AC_tot)/MAC_tot)/V_T
+    print("The required lift coefficient of the tail to reach the equilibirum in pitch is CLT =", CLT)
+    return CLT
+
+required_CLT()
 
 def equilibrium() : 
-    Cm_tot = Cm_fus_cruise + 2* Cm_wings_cruise + 2 * CL_wing* (x_AC_wing - x_CG_plane) + CL_fus * (x_AC_fus - x_CG_plane) - 2*CL_T *V_T
+    Cm_tot = Cm0_tot + Cl_tot* (x_CG_plane - x_AC_tot)/MAC_tot - CL_T *V_T
 
     #check the equilibrium at cruise
 
-    if Cm_tot == 0 : 
+    if Cm_tot > -1e-3 and Cm_tot < 1e-3 : 
         print("The airplane is at equilibrium because Cm_tot = 0")
     
     else : 
@@ -121,25 +174,29 @@ equilibrium()
 ##################################################################
 
 def downwash():
-    It = x_AC_tail - x_AC_wing
-    lamb = 0.137
-    b = 29
-    m = (y_AC_tail - y_AC_wing)/b*2
+    It = x_AC_tail - x_AC_tot
+    lamb = 0.161 #taper ratio of the wing 
+    m = (z_AC_tail - z_AC_tot)/b*2 #because (z_AC_tail - z_AC_wing) = mb/2
 
-    deps = (1.75*a)/(np.pi*wing_AR*((2*lamb*It)/b)**1.4*(1 + m))
+    deps = (1.75*a)/(np.pi*AR_tot*(((2*lamb*It)/b)**1.4)*(1 + np.abs(m)))
     
     return deps
 
 eps = downwash()
+print("deps/dalpha is equal to", eps)
+
 
 def long_stat_stab(): #in the pitching plane
     #check the stability
+    #neutral point : position of the cg in order to have the derivative equals 0
     deps = downwash()
-    hn = x_AC_wing + 2*V_T*a1_over_a*(1- deps) #position of the neutral point 
-    derivative = hn - x_CG_plane 
+    
+    hn = x_AC_tot + V_T*a1_over_a*(1- deps) #- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)#position of the neutral point  
+
+    derivative = (x_CG_plane - hn)/MAC_tot
     Kn = - derivative #static margin
 
-    if Kn >= 0.05 : 
+    if Kn >= 0.05 and Kn < 0.15 : 
         print("The static margin has a correct value and is equal to : ", (Kn*100))
 
     else : 
