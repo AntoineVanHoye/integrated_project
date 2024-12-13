@@ -8,6 +8,7 @@ cabin_width = 7         #[m]
 cabin_lenght = 16.8     #[m] 
 AR = 1.5                #Aspect ratio (guess)
 weight = 471511.49122   #[N] = 106000lb (guess from weight code)
+weight_empty =60452.314059821154 * 9.81 #[N] 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
@@ -23,16 +24,32 @@ delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 polar_Cl_Cd = False
 wing_plot = False
 cl_plot = False
-lift_and_drag_plots =True
-
-
-# --- globale constant --- #
-T = 216.5#288.15 - (6.5e-3*alti)
-a = np.sqrt(gamma * R * T)  #[m^2] speed of sound
-v = M*a #[m/s]
-rho = 0.288         #[kg/m^3]
+lift_and_drag_plots =False
 
 #---Code---#
+
+# Function to calculate air density using the ISA model
+def air_density(altitude):
+    # Up to 11 km (Troposphere)
+    if altitude <= 11000:
+        T = 288.15 - 0.0065 * altitude  # Temperature [K]
+        p = 101325 * (T / 288.15) ** 5.2561  # Pressure [Pa]
+    else:
+        # Simplification for stratosphere, constant T [K] above 11 km
+        T = 216.65  # Constant temperature [K]
+        p = 22632 * np.exp(-9.81 * (altitude - 11000) / (287.05 * T))
+    rho = p / (287.05 * T)  # Air density [kg/m^3]
+    return rho, T
+rho, T = air_density(alti)
+
+# Function to calculate the true airspeed at a given altitude
+def true_airspeed_at_altitude(altitude):
+    T = air_density(altitude)[1]
+    a = np.sqrt(gamma * R * T)  # [m/s] Speed of sound
+    v = M * a  # [m/s] Aircraft velocity
+    return v
+v = true_airspeed_at_altitude(alti)
+
 def guess_CL_max():
     CL = np.linspace(0, 1.0, 100)
 
@@ -346,7 +363,10 @@ def getMAC():
     MAC_fus = (2/surface_fuselage) * trapz(c_fus**2, y_fus) #numerical integration via method of trapez
     cy_fus = c_fus*y_fus
     yac_fus = (2/surface_fuselage) * trapz(cy_fus, y_fus)
+
     xac_fus = MAC_fus*0.1  # keep attention that it is an estimation the table don't give the value for this very low AR
+    x_tmp = leading_fus[np.argmin(abs(y_fus - yac_fus))]
+    xac_fus = x_tmp+xac_fus 
 
     # -- wing -- #
     c_wing = trailing_wing - leading_wing
@@ -355,6 +375,9 @@ def getMAC():
     yac_wing = (2/surface_wing) * trapz(cy_wing, y_wing)
     xac_wing = MAC_wing*0.23
     
+    x_tmp = leading_wing[np.argmin(abs(y_wing - yac_wing))]
+    xac_wing = x_tmp+xac_wing + (cabin_lenght - c_wing[0])
+
     y_wing = y_wing + y_fus[-1]
 
     # -- total -- #
@@ -365,7 +388,10 @@ def getMAC():
     yac = (2/surface_total) * trapz(cy, y)
     xac = 0.1*MAC # keep attention that it is an estimation the table don't give the value for this very low AR
 
-    return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac
+    x_tmp = leading_fus[np.argmin(abs(y - yac))]
+    xac = x_tmp+xac 
+
+    return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
 
 def plotAllWing(wing_plot):
     if wing_plot == False:
@@ -428,6 +454,8 @@ def get_Lift_and_drag(AR, delta):
     return Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA
 
 def plotLiftDrag(lift_and_drag_plots):
+    if lift_and_drag_plots == False:
+        return
     Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA =  get_Lift_and_drag(AR, delta)
     plt.figure(figsize=(8,5))
     plt.plot(Cl_tot, Cl_tot/Cd_tot)
@@ -488,32 +516,41 @@ def wingSurfaceWetted():
 def stallVelocity():
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
     _, _, Cl_max, _ , _, _, _= get_Lift_and_drag(AR, delta)
-
-    rho_sl = 1.225
+    rho_sl, T = air_density(0)
 
     Vs = np.sqrt((weight/surface_total) * (2/rho_sl) * (1/(1.133*Cl_max)))
+    
     Cl_max0 = 2 * np.cos(sweep_quarter)
-    W0 = 555 #landing weight
+    W0 = weight_empty #landing weight
     Vs0 = np.sqrt((W0/surface_total) * (2/rho_sl) * (1/(1.133*Cl_max0)))
     return Vs, Vs0
 
-
+def getReynold(altitude, c):
+    rho, T = air_density(altitude)
+    U_inf = true_airspeed_at_altitude(altitude)
+    
+    p_atmo = 99333      #[Pa]
+    T = 12.0 + 273.15   #[k]
+    rho = p_atmo/(287*T)
+    mu = 1.716e-5 * (T/273.15)**(3/2) * ((273.15 + 110.4)/(T + 110.4)) # Sutherland's law
+    Re = (rho * U_inf * c) / mu
+    return Re
 
 def printFunction():
 
     print(f"Cl max used = {Cl_max:.2f} [-]\n")
     print(f"Total area = {surface_total:.2f} [m^2]")
-    print(f"Surface of fuselage = {surface_fuselage:.2f}")
-    print(f"Surface of wing = {surface_wing:.2f} \n")
-    print(f"Compressibility parameter: {beta:.3f}")
+    print(f"Surface of fuselage = {surface_fuselage:.2f} [m^2]")
+    print(f"Surface of wing = {surface_wing:.2f} [m^2] \n")
+    print(f"Compressibility parameter: {beta:.3f} [-]")
     
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
     Cl_wing, Cl_wing_0, Cd_wing, Cl_max_wing, alpha_L0, a_wing = wingCL()
     print("\n-------------- wing values --------------\n")
-    print(f"\nAR wing: {AR_wing:.3f} \nCL_w0 wing = {Cl_wing_0:.3f} \n")
-    print(f"Cord at wing root: {c_root:.3f} \nCorde at wing tip: {c_tip:.3f}")
-    print(f"Taper ratio: {taper_ratio:.3f}")
-    print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
+    print(f"\nAR wing: {AR_wing:.3f} [-] \nCL_w0 wing = {Cl_wing_0:.3f} [-]\n")
+    print(f"Cord at wing root: {c_root:.3f} [m]\nCorde at wing tip: {c_tip:.3f} [m]")
+    print(f"Taper ratio: {taper_ratio:.3f} [-]")
+    print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f} [°]")
     print(f"Wing lift coefficient derivative: {a_wing:.3f}")
     print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
     
@@ -521,44 +558,48 @@ def printFunction():
     b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry()
     Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL()
     print("\n-------------- fuselage values --------------\n")
-    print(f"\nAR fuselage: {AR_fuselage:.3f} \nCL_w0 fuselage = {Cl_fuselage_0:.3f} \n")
-    print(f"Cord at fuselage root: {c_root:.3f} \nCorde at fuselage tip: {c_tip:.3f}")
-    print(f"Taper ratio: {taper_ratio:.3f}")
+    print(f"\nAR fuselage: {AR_fuselage:.3f} [-]\nCL_w0 fuselage = {Cl_fuselage_0:.3f} [-]\n")
+    print(f"Cord at fuselage root: {c_root:.3f} [m]\nCorde at fuselage tip: {c_tip:.3f} [m]")
+    print(f"Taper ratio: {taper_ratio:.3f} [-]")
     print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
     print(f"Fuselage lift coefficient derivative: {a_fus:.3f}\n")
 
     
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
     print("\n-------------- MAC values --------------\n")
-    print(f"MAC fus: {MAC_fus:.3f} \nYac fus: {yac_fus:.3f} \nXac fus: {xac_fus:.3f} \n")
-    print(f"MAC wing: {MAC_wing:.3f} \nYac wing: {yac_wing:.3f} \nXac wing: {xac_wing:.3f} \n")
-    print(f"MAC: {MAC:.3f} \nYac: {yac:.3f} \nXac: {xac:.3f} \n")
+    print(f"MAC fus: {MAC_fus:.3f} [m]\nYac fus: {yac_fus:.3f} [m]\nXac fus: {xac_fus:.3f} [m]\n")
+    print(f"MAC wing: {MAC_wing:.3f} [m]\nYac wing: {yac_wing:.3f} [m]\nXac wing: {xac_wing:.3f} [m]\n")
+    print(f"MAC: {MAC:.3f} [m]\nYac: {yac:.3f} [m]\nXac: {xac:.3f} [m]\n")
     
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
-    lift_coef, drag_coef, CL_max, AoA_L0, _, _, _ = get_Lift_and_drag(AR, delta)
+    lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa = get_Lift_and_drag(AR, delta)
     print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
-    print(f"Cl max: {CL_max:.3f}\n")
+    print(f"Cl max: {CL_max:.3f} [-]")
+    print(f"Lift coefficient derivative CL_alfa: {(cl[-1] - cl[0])/(aoa[-1] - aoa[0]):.3f} [deg^-1] \n")
     
     
     t_root, t_tip,t_bar_over_C = wingMaxthickness()
     print(f"Thickness root: {t_root:.3f}, thickness tip: {t_tip:.3f}")
-    print(f"tbar over c: {t_bar_over_C:.3f}\n")
+    print(f"tbar over c: {t_bar_over_C:.3f} [-]\n")
     #print(f"Mean thinckness: {(t_root+t_tip)/2:.3f}\n")
     
     V_fuel = wingFuelvolume()
-    print(f"Fuel volume in wing: {V_fuel:.3f}\n")
+    print(f"Fuel volume in wing: {V_fuel:.3f} [m^3]\n")
 
     _, _, Swetted = wingSurfaceWetted()
-    print(f"Surface wetted: {Swetted:.3f}\n")
+    print(f"Surface wetted: {Swetted:.3f} [m^2]\n")
     
     Vs, Vs0 = stallVelocity()
-    print(f"Stall velocity: {Vs:.3f} \nStall velocity in approach config: {Vs0:.3f} \n")
+    print(f"Stall velocity: {Vs:.3f} [m/s]\nStall velocity in approach config: {Vs0:.3f} [m/s]\n")
     
     AoA_root = getCalageAngle(Cl_max)
     print(f"AoA root needed: {AoA_root*(180/np.pi):.3} [°]")
     print(f"AoA zero lift: {AoA_L0:.3f} [°]")
     
+    Re = getReynold(alti, MAC)
+    print(f"Re_mac: {Re:.3f} [-]")
+
     return
 
 printFunction()
