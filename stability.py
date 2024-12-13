@@ -21,8 +21,8 @@ CL_wings = data_wings[:,1]
 
 #a = (CL_wings[68]- CL_wings[67])/(AoA_wings[68]-AoA_wings[67])*np.pi/180
 #a1 = (CL_tail[68]- CL_tail[67])/(AoA_tail[68]-AoA_tail[67])
-a = 3.211
-a1 = 2
+a = 1.754
+a1 = 1.5
 
 a1_over_a = a1/a
 
@@ -70,6 +70,16 @@ print("The blended wing body has a Cm0_tot of",Cm0_tot)
 #calculate the forces 
 
 
+
+
+
+
+
+
+L_wing = CL_wing * 1/2 * rho* S_wing * V**2
+L_fus = CL_fus * 1/2 * rho* S_fus* V**2
+L_T = 5
+"""
 rho = 0.288
 Mach = 0.9
 R = 287                 #[m^2/s^2K]
@@ -77,12 +87,6 @@ gamma = 1.4
 T = 216.5
 speed_sound = np.sqrt(gamma * R * T) #speed of sound 
 V = speed_sound * Mach
-
-
-L_wing = CL_wing * 1/2 * rho* S_wing * V**2
-L_fus = CL_fus * 1/2 * rho* S_fus* V**2
-L_T = 5
-"""
 AR_tot = 1.5
 wing_AR = 6.021
 #values with respect to the airplane nose 
@@ -104,8 +108,8 @@ MAC_tot = 9.949
 
 Cl_tot = 0.244
 #tail volume ratio effectivness 
-
-V_T = S_T * (x_AC_tail - x_CG_plane)/(surf_tot* MAC_tail)
+hor_tail_surf = 3.182
+V_T = hor_tail_surf * (x_AC_tail - x_CG_plane)/(surf_tot* MAC_tot)
 
 def plot_CL(AoA, CL): 
     plt.plot(AoA, CL, color = 'b')
@@ -149,14 +153,17 @@ def plot_Cm(AoA_fus, AoA_wings, Cm_fus, Cm_wings):
 ##################################################################
 def required_CLT(): 
     CLT = (Cm0_tot + Cl_tot* (x_CG_plane - x_AC_tot)/MAC_tot)/V_T
-    print("The required lift coefficient of the tail to reach the equilibirum in pitch is CLT =", CLT)
+    L_T = CLT * 1/2 * rho * V**2 * hor_tail_surf
+
+    print("The required lift coefficient of the tail to reach the equilibirum in pitch is CLT =", CLT, "[-] and the required lift equals ", L_T, "[N]")
     return CLT
 
 required_CLT()
 
 def equilibrium() : 
+    
     Cm_tot = Cm0_tot + Cl_tot* (x_CG_plane - x_AC_tot)/MAC_tot - CL_T *V_T
-
+    
     #check the equilibrium at cruise
 
     if Cm_tot > -1e-3 and Cm_tot < 1e-3 : 
@@ -175,7 +182,7 @@ equilibrium()
 
 def downwash():
     It = x_AC_tail - x_AC_tot
-    lamb = 0.161 #taper ratio of the wing 
+    lamb = 0.086190476 #global taper ratio 
     m = (z_AC_tail - z_AC_tot)/b*2 #because (z_AC_tail - z_AC_wing) = mb/2
 
     deps = (1.75*a)/(np.pi*AR_tot*(((2*lamb*It)/b)**1.4)*(1 + np.abs(m)))
