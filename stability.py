@@ -83,7 +83,7 @@ L_wing = CL_wing * 1/2 * rho* S_wing * V**2
 L_fus = CL_fus * 1/2 * rho* S_fus* V**2
 L_T = 5
 """
-
+AR_tot = 1.5
 wing_AR = 6.021
 #values with respect to the airplane nose 
 x_AC_wing = 11.91
@@ -92,6 +92,7 @@ x_AC_fus = 1.33
 x_AC_tail = 16.5
 z_AC_wing = 0
 z_AC_tail = 1.51
+z_AC_tot = 0
 MAC_tail = 1.483
 S_T = 5.422
 MAC_wing = 4.141
@@ -104,7 +105,7 @@ MAC_tot = 9.949
 Cl_tot = 0.244
 #tail volume ratio effectivness 
 
-V_T = S_T * (x_AC_tail - x_CG_plane)/(S_wing * MAC_tail)
+V_T = S_T * (x_AC_tail - x_CG_plane)/(surf_tot* MAC_tail)
 
 def plot_CL(AoA, CL): 
     plt.plot(AoA, CL, color = 'b')
@@ -146,6 +147,12 @@ def plot_Cm(AoA_fus, AoA_wings, Cm_fus, Cm_wings):
 ##################################################################
 ######EQUILIBRIUM IN PITCH
 ##################################################################
+def required_CLT(): 
+    CLT = (Cm0_tot + Cl_tot* (x_CG_plane - x_AC_tot)/MAC_tot)/V_T
+    print("The required lift coefficient of the tail to reach the equilibirum in pitch is CLT =", CLT)
+    return CLT
+
+required_CLT()
 
 def equilibrium() : 
     Cm_tot = Cm0_tot + Cl_tot* (x_CG_plane - x_AC_tot)/MAC_tot - CL_T *V_T
@@ -169,9 +176,9 @@ equilibrium()
 def downwash():
     It = x_AC_tail - x_AC_tot
     lamb = 0.161 #taper ratio of the wing 
-    m = (z_AC_tail - z_AC_wing)/b*2 #because (z_AC_tail - z_AC_wing) = mb/2
+    m = (z_AC_tail - z_AC_tot)/b*2 #because (z_AC_tail - z_AC_wing) = mb/2
 
-    deps = (1.75*a)/(np.pi*wing_AR*(((2*lamb*It)/b)**1.4)*(1 + np.abs(m)))
+    deps = (1.75*a)/(np.pi*AR_tot*(((2*lamb*It)/b)**1.4)*(1 + np.abs(m)))
     
     return deps
 
@@ -183,12 +190,10 @@ def long_stat_stab(): #in the pitching plane
     #check the stability
     #neutral point : position of the cg in order to have the derivative equals 0
     deps = downwash()
-    h0 = (x_AC_fus + x_AC_wing)/2
- 
-    hn = h0 + V_T*a1_over_a*(1- deps) #- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)#position of the neutral point  
+    
+    hn = x_AC_tot + V_T*a1_over_a*(1- deps) #- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)#position of the neutral point  
 
-    MAC = (MAC_wing + MAC_fus)/2
-    derivative = (x_CG_plane - hn)/MAC
+    derivative = (x_CG_plane - hn)/MAC_tot
     Kn = - derivative #static margin
 
     if Kn >= 0.05 and Kn < 0.15 : 
