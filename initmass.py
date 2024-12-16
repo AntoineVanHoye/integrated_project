@@ -40,3 +40,5 @@ def initandfuel_weight(W0,c,LbyD,AR,R,V,W_crew,A,B):
     return We , Wf
 
 print(initandfuel_weight(W0,c,LbyD,AR,R,V,W_crew,A,B))
+
+
