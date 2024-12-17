@@ -7,8 +7,8 @@ span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
 AR = 1.5                #Aspect ratio (guess)
-weight = 471511.49122   #[N] = 106000lb (guess from weight code)
-weight_empty =60452.314059821154 * 9.81 #[N] 
+weight = 526898.738020239# 471511.49122 #  #[N] = 106000lb (guess from weight code)
+weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N] 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
@@ -22,7 +22,7 @@ delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = False
+wing_plot = True
 cl_plot = False
 lift_and_drag_plots =False
 
@@ -79,7 +79,7 @@ def guess_CL_max():
 
 Cl_max = guess_CL_max()
 
-surface_total = 2*weight/(rho*(v**2)*Cl_max)
+surface_total = 2*weight/(rho*(v**2)*Cl_max) 
 
 c_root_fus = cabin_lenght - ((cabin_width/2 +1)/np.tan(30*np.pi/180))
 surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2 +1)/np.tan(30*np.pi/180))))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
@@ -199,7 +199,7 @@ def wingGeometry():
     # ---- Complex wing ---- #
     h = [0.5, 0.25, 0.25, 0.5, 0.5, 0.5, 0.5, (b*0.5) - 3] #[m]
     Yposition = [0, h[0], h[0]+h[1], b/2]
-    c = [c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
+    c = [c_tip_fus, 8.5, 7.8, 7.3, 6.3, 5.7, 5.3, 5.0 , 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     
     S = np.zeros(len(h))
     S_sum =0
@@ -383,12 +383,13 @@ def getMAC():
     # -- total -- #
     c = np.concatenate((c_fus, c_wing[1:]))
     y = np.concatenate((y_fus, y_wing[1:]))
+    leading = np.concatenate((leading_fus, leading_wing+leading_fus[-1]))
     MAC = (2/surface_total) * trapz(c**2, y)
     cy = c*y
     yac = (2/surface_total) * trapz(cy, y)
     xac = 0.1*MAC # keep attention that it is an estimation the table don't give the value for this very low AR
 
-    x_tmp = leading_fus[np.argmin(abs(y - yac))]
+    x_tmp = leading[np.argmin(abs(y - yac))]
     xac = x_tmp+xac 
 
     return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
@@ -449,7 +450,6 @@ def get_Lift_and_drag(AR, delta):
     Cd_tot = np.zeros(len(AoA))
     Cd_tot = Cd_induce + (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
     Cd_tot0 = float(Cd_tot[np.where(abs(AoA) <= 1e-12)])
-
 
     return Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA
 
