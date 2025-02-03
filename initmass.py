@@ -40,11 +40,6 @@ def init_and_fuel_weight(W0, c, LbyD, R, V, W_fixed):
     We_a = W0 * (1 - W_f / W0) - W_fixed  # Available empty weight
     We_r = We_frac * W0  # Required empty weight
 
-<<<<<<< HEAD
-print(initandfuel_weight(W0,c,LbyD,AR,R,V,W_crew,A,B))
-
-
-=======
     # Operational empty weight (OEW) and zero fuel weight (ZFW)
     W_oe = We_a  # Operational empty weight
     W_zf = W0 - W_f  # Zero fuel weight
@@ -74,4 +69,3 @@ print("Weight Breakdown (Nicolai Method):")
 for key, value in weights.items():
     value_n = value * LBS_TO_NEWTON  # Convert to Newtons
     print(f"{key}: {value:.2f} lbs ({value_n:.2f} N)")
->>>>>>> 652f30a4fa0be45cb8b22b791a76903d526fda0b
