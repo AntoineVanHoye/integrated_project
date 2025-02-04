@@ -22,11 +22,18 @@ delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 cl_plot = False
 lift_and_drag_plots =False
 
 #---Code---#
+
+def winglet():
+    #formule from Snoris
+    h = 1 #[m] Choice
+    delta_AR = 1.9*(h/span_max) * AR
+    return delta_AR
+AR = AR + winglet()
 
 # Function to calculate air density using the ISA model
 def air_density(altitude):
@@ -439,14 +446,15 @@ def get_Lift_and_drag(AR, delta):
     # --- total lift computation --- #
     Cl_tot = np.zeros(len(AoA))
     Cl_tot = ((Cl_wing*surface_wing) + (Cl_fuselage*surface_fuselage))/surface_total 
-
+    
     Cl_tot0 = float(Cl_tot[np.where(abs(AoA) <= 1e-12)])
-    AoA_L0 = float(AoA[np.where(abs(Cl_tot) <= 1e-3)])*(180/np.pi)
+    AoA_L0 = float(AoA[np.where(abs(Cl_tot) <= 6e-3)])*(180/np.pi)
 
     Cl_max = ((Cl_max_wing*surface_wing) + (Cl_max_fus*surface_fuselage))/surface_total 
     
     # --- total drag computation --- #
     Cd_induce = ((Cl_tot**2)/(np.pi* AR)) * (1+delta)
+    #print(f"delta Cd = {(((Cl_tot[np.where(abs(AoA) <= 1e-12)]**2)/(np.pi* (AR-winglet()))) * (1+delta))-Cd_induce[np.where(abs(AoA) <= 1e-12)]}")
     Cd_tot = np.zeros(len(AoA))
     Cd_tot = Cd_induce + (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
     Cd_tot0 = float(Cd_tot[np.where(abs(AoA) <= 1e-12)])
@@ -538,6 +546,7 @@ def getReynold(altitude, c):
 
 def printFunction():
 
+    print(f"New AR = {AR:.3f} [-]\n")
     print(f"Cl max used = {Cl_max:.2f} [-]\n")
     print(f"Total area = {surface_total:.2f} [m^2]")
     print(f"Surface of fuselage = {surface_fuselage:.2f} [m^2]")
