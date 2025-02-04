@@ -26,6 +26,20 @@ a = 1.754
 a1 = 1.5
 a1_over_a = a1/a
 weight = 471511.49122
+l_fus = 16.8
+l_cabin = 10.1
+l_cockpit = 2.01
+MAC_fus = 13.305
+MAC_wing = 4.141
+
+chord_tip_fus = 4.622
+sweep_angle_wing = 40*np.pi/180
+sweep_angle_fus = 60*np.pi/180
+
+y_AC_wing = 3.796
+x_AC_wing = 3.733
+y_AC_fus = 2.018
+
 
 Cm0_fus = -0.1158
 Cm0_wing = -0.1533
@@ -67,30 +81,27 @@ config = 2
 
 def CG_position(i): 
     wing_weight = 
-    wing_pos = 
+    wing_pos = (l_fus - chord_tip_fus) + MAC_wing*0.2 + y_AC_wing*np.tan(sweep_angle_wing)
 
     hor_tail_weight = 
-    hor_tail_pos = 
+    hor_tail_pos = l_fus - l_cabin - l_cabin
     vert_tail_weight = 
-    vert_tail_pos = 
+    vert_tail_pos = l_fus - l_cabin - l_cabin
 
     fus_weight = 
-    fus_pos = 
+    fus_pos = 0.2*MAC_fus + y_AC_fus*np.tan(sweep_angle_fus)
 
     land_gear_weight = 
-    land_gear_pos = 
+    land_gear_pos = 0.6*MAC_fus + y_AC_fus*np.tan(sweep_angle_fus)
 
     surf_cont_weight = 
-    surf_cont_pos = 
+    surf_cont_pos = (l_fus - chord_tip_fus) + MAC_wing*0.4 + y_AC_wing*np.tan(sweep_angle_wing)
 
     instr_weight = 
-    instr_pos = 
-
-    elec_syst_weight = 
-    elec_syst_pos = 
+    instr_pos = 0.4*l_cockpit
 
     furn_weight = 
-    furn_pos = 
+    furn_pos = 0.5*l_fus
 
     air_cond_weight = 
     air_cond_pos = 
@@ -98,24 +109,30 @@ def CG_position(i):
     avio_weight = 
     avio_pos = 
     
-    passengers_weight = 
-    if i == 1 : 
-       passengers_pos = 
-       passengers_weight = 0
-    if i == 2 : 
-       passengers_pos = 
-    if i == 3 : 
-       passengers_pos = 
+    motors_weight = 
+    motors_pos = l_cockpit + l_cabin + 1
 
-    total_weight = wing_weight + hor_tail_weight + vert_tail_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + avio_weight + passengers_weight
+    elec_syst_weight = 
+    elec_syst_pos = 0.75*l_fus/2 + 0.25*motors_pos
+
+    passengers_weight = 8*80
+    if i == 1 : 
+       passengers_pos = 1 #arbitrary
+       passengers_weight = 0
+    if i == 2 : #if passengers are as close as possible to the nose
+       passengers_pos = l_cockpit
+    if i == 3 : #if passengers are as far as possible from the nose 
+       passengers_pos = l_cockpit + l_cabin
+
+    total_weight = wing_weight + hor_tail_weight + vert_tail_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + avio_weight + passengers_weight + motors_weight
     
-    total_mom = wing_weight*wing_pos + hor_tail_weight*hor_tail_pos + vert_tail_weight*vert_tail_pos + fus_weight*fus_pos + land_gear_weight*land_gear_pos + surf_cont_weight*surf_cont_pos + instr_weight*instr_pos + elec_syst_weight*elec_syst_pos + furn_weight*furn_pos + air_cond_weight*air_cond_pos + avio_weight*avio_pos + passengers_weight*passengers_pos
+    total_mom = wing_weight*wing_pos + hor_tail_weight*hor_tail_pos + vert_tail_weight*vert_tail_pos + fus_weight*fus_pos + land_gear_weight*land_gear_pos + surf_cont_weight*surf_cont_pos + instr_weight*instr_pos + elec_syst_weight*elec_syst_pos + furn_weight*furn_pos + air_cond_weight*air_cond_pos + avio_weight*avio_pos + passengers_weight*passengers_pos + motors_weight*motors_pos
     position = total_mom/total_weight
 
     return position
 
 print("--------------------------CENTER OF GRAVITY--------------------------------------------")
-print("The center of gravity is positionned at",CG_position(config),"meters from the nose of the airplane.")
+print("The center of gravity is positionned at",CG_position(config)," meters from the nose of the airplane.")
 print("----------------------------------------------------------------------")
 
 
@@ -196,28 +213,3 @@ def long_stat_stab_cruise(i,Cm0_airfoil_fus,Cm0_airfoil_wing): #in the pitching 
 print("--------------------------STATIC MARGIN--------------------------------------------")
 long_stat_stab_cruise(config,Cm0_fus,Cm0_wing)
 print("----------------------------------------------------------------------")
-
-
-##################################################################
-######LATERAL STATIC STABILITY
-##################################################################
-
-def yaw_stab(): #stable if dCn/dbeta < 0
-
-    return 
-
-"""
-def downwash():
-    It = x_AC_tail - x_AC_tot
-    lamb = 0.086190476 #global taper ratio 
-    m = (z_AC_tail - z_AC_tot)/b*2 #because (z_AC_tail - z_AC_wing) = mb/2
-
-    print("m is equal to",m)
-    
-    deps = (1.75*a)/(np.pi*AR_tot*(((2*lamb*It)/b)**1.4)*(1 + np.abs(m)))
-    
-    return deps
-
-eps = downwash()
-print("deps/dalpha is equal to", eps)
-"""
