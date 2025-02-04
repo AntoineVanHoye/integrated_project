@@ -188,11 +188,11 @@ Need_CL=-55387.2468/(1/2*rho*speed**2*S_h)
 
 
 
-print("CL requis",Need_CL)
+print(Need_CL)
     
 alpha_root=changergamma_h(Need_CL)
 
-print("angle d attaque",alpha_root*180/np.pi)
+print(alpha_root*180/np.pi)
     
 
     
