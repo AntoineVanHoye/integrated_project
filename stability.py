@@ -153,7 +153,7 @@ def CL(i,Cm0_airfoil_fus,Cm0_airfoil_wing):
     L_tot, L_T = symbols('L_tot L_T')
     Cm_T = V_T * CL_T
 
-    CG_pos = [2,9.5,8]
+    CG_pos = [2,7.5,8]
     if i == 1: 
         x_CG_tot = CG_pos[0]
     if i == 2: 
@@ -189,14 +189,10 @@ def downwash(i,Cm0_airfoil_fus,Cm0_airfoil_wing):
     Cl_tot = CL(i,Cm0_airfoil_fus,Cm0_airfoil_wing)[2]
     deps = 2*a/(np.pi*AR_tot)
     eps = 2*Cl_tot/(np.pi*AR_tot)
-    eps = 0
-    deps = 0
     return eps, deps
 
-eps = downwash(config,Cm0_fus,Cm0_wing)
-
 print("--------------------------DOWNWASH--------------------------------------------")
-print("The downwash effect eps equals", eps[0]," and deps/dalpha is equal to", eps[1])
+print("The downwash effect eps equals", downwash(config,Cm0_fus,Cm0_wing)[0]," and deps/dalpha is equal to", downwash(config,Cm0_fus,Cm0_wing)[1])
 print("----------------------------------------------------------------------")
 
 ##################################################################
@@ -210,16 +206,37 @@ def long_stat_stab_cruise(i,Cm0_airfoil_fus,Cm0_airfoil_wing): #in the pitching 
     
     hn = x_AC_tot/MAC_tot + V_T*a1_over_a*(1- deps) #- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)  #position of the neutral point  
 
-    derivative = hn - x_CG_tot/MAC_tot 
-    Kn = - derivative #static margin
+    Kn = hn - x_CG_tot/MAC_tot 
 
     if Kn >= 0.05 and Kn < 0.2 : 
-        print("The static margin has a correct value and is equal to : ", (Kn*100), "%")
+        print("The static margin has a correct value and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"from the nose.")
 
     else : 
-        print("The static margin has to be changed and is equal to : ", (Kn*100), "%")
+        print("The static margin has to be changed and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"m from the nose.")
     
     return 
-print("--------------------------STATIC MARGIN--------------------------------------------")
+print("--------------------------STATIC MARGIN AND NEUTRAL POINT--------------------------------------------")
 long_stat_stab_cruise(config,Cm0_fus,Cm0_wing)
+print("----------------------------------------------------------------------")
+
+##################################################################
+######CG POSITIONS RANGE
+##################################################################
+
+def get_CG(i,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn): 
+
+    deps = downwash(i,Cm0_airfoil_fus,Cm0_airfoil_wing)[1]
+    
+    hn = x_AC_tot/MAC_tot + V_T*a1_over_a*(1- deps)
+    x_CG = (hn - Kn)*MAC_tot
+    
+    if Kn == 0.05:
+        print("The center of gravity is positionned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the maximal value of the range.")
+    if Kn == 0.2:
+        print("The center of gravity is positionned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the minimal value of the range.")
+    return 
+
+print("--------------------------ACCEPTABLE POSITIONS FOR THE CENTER OF GRAVITY--------------------------------------------")
+get_CG(config,Cm0_fus,Cm0_wing,0.05)
+get_CG(config,Cm0_fus,Cm0_wing,0.2)
 print("----------------------------------------------------------------------")
