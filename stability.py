@@ -75,11 +75,12 @@ V_T = hor_tail_surf * (x_AC_tail - x_CG_tot)/(surf_tot* MAC_tot)
 
 
 config = 2
+"""
 ##################################################################
 ######CG POSITION
 ##################################################################
 
-def CG_position(i): 
+def CG_position(i,d): 
     wing_weight = 
     wing_pos = (l_fus - chord_tip_fus) + MAC_wing*0.2 + y_AC_wing*np.tan(sweep_angle_wing)
 
@@ -104,10 +105,10 @@ def CG_position(i):
     furn_pos = 0.5*l_fus
 
     air_cond_weight = 
-    air_cond_pos = 
+    air_cond_pos = l_cockpit + l_cabin + 0.5
 
     avio_weight = 
-    avio_pos = 
+    avio_pos = l_cockpit*0.4
     
     motors_weight = 
     motors_pos = l_cockpit + l_cabin + 1
@@ -115,8 +116,15 @@ def CG_position(i):
     elec_syst_weight = 
     elec_syst_pos = 0.75*l_fus/2 + 0.25*motors_pos
 
+    if d == 1 : #no fuel
+        fuel_weight = 0
+        fuel_pos = 1
+    if d == 2 : #full of fuel
+        fuel_weight = 
+        fuel_pos = 
+
     passengers_weight = 8*80
-    if i == 1 : 
+    if i == 1 : #if no passengers 
        passengers_pos = 1 #arbitrary
        passengers_weight = 0
     if i == 2 : #if passengers are as close as possible to the nose
@@ -124,9 +132,9 @@ def CG_position(i):
     if i == 3 : #if passengers are as far as possible from the nose 
        passengers_pos = l_cockpit + l_cabin
 
-    total_weight = wing_weight + hor_tail_weight + vert_tail_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + avio_weight + passengers_weight + motors_weight
+    total_weight = wing_weight + hor_tail_weight + vert_tail_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + avio_weight + passengers_weight + motors_weight + fuel_weight
     
-    total_mom = wing_weight*wing_pos + hor_tail_weight*hor_tail_pos + vert_tail_weight*vert_tail_pos + fus_weight*fus_pos + land_gear_weight*land_gear_pos + surf_cont_weight*surf_cont_pos + instr_weight*instr_pos + elec_syst_weight*elec_syst_pos + furn_weight*furn_pos + air_cond_weight*air_cond_pos + avio_weight*avio_pos + passengers_weight*passengers_pos + motors_weight*motors_pos
+    total_mom = wing_weight*wing_pos + hor_tail_weight*hor_tail_pos + vert_tail_weight*vert_tail_pos + fus_weight*fus_pos + land_gear_weight*land_gear_pos + surf_cont_weight*surf_cont_pos + instr_weight*instr_pos + elec_syst_weight*elec_syst_pos + furn_weight*furn_pos + air_cond_weight*air_cond_pos + avio_weight*avio_pos + passengers_weight*passengers_pos + motors_weight*motors_pos + fuel_pos
     position = total_mom/total_weight
 
     return position
@@ -134,7 +142,7 @@ def CG_position(i):
 print("--------------------------CENTER OF GRAVITY--------------------------------------------")
 print("The center of gravity is positionned at",CG_position(config)," meters from the nose of the airplane.")
 print("----------------------------------------------------------------------")
-
+"""
 
 ##################################################################
 ######EQUILIBRIUM IN PITCH
@@ -181,6 +189,8 @@ def downwash(i,Cm0_airfoil_fus,Cm0_airfoil_wing):
     Cl_tot = CL(i,Cm0_airfoil_fus,Cm0_airfoil_wing)[2]
     deps = 2*a/(np.pi*AR_tot)
     eps = 2*Cl_tot/(np.pi*AR_tot)
+    eps = 0
+    deps = 0
     return eps, deps
 
 eps = downwash(config,Cm0_fus,Cm0_wing)
@@ -198,7 +208,7 @@ def long_stat_stab_cruise(i,Cm0_airfoil_fus,Cm0_airfoil_wing): #in the pitching 
     #neutral point : position of the cg in order to have the derivative equals 0
     deps = downwash(i,Cm0_airfoil_fus,Cm0_airfoil_wing)[1]
     
-    hn = x_AC_tot/MAC_tot + V_T*a1_over_a*(1- deps) #- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)#position of the neutral point  
+    hn = x_AC_tot/MAC_tot + V_T*a1_over_a*(1- deps) #- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)  #position of the neutral point  
 
     derivative = hn - x_CG_tot/MAC_tot 
     Kn = - derivative #static margin
