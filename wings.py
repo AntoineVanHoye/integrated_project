@@ -556,7 +556,8 @@ def getReynold(altitude, c):
 
 def printFunction():
 
-    print(f"New AR = {AR:.3f} [-]\n")
+    print(f"New AR = {AR:.3f} [-]")
+    print(f"Beta = {beta:.3f} [-]\n")
     print(f"Cl max used = {Cl_max:.2f} [-]\n")
     print(f"Total area = {surface_total:.2f} [m^2]")
     print(f"Surface of fuselage = {surface_fuselage:.2f} [m^2]")
