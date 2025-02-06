@@ -23,8 +23,8 @@ AR_tot = 1.6
 b = 29
 MAC_tail = 1.483
 hor_tail_surf = 22.5
-a = 2.965*180/np.pi #for the wing 
-a1 = 0.919*180/np.pi
+a = 2.965 #for the wing 
+a1 = 0.919
 a1_over_a = a1/a
 l_fus = 16.8
 l_cabin = 10.1
@@ -73,7 +73,7 @@ x_AC_tail = l_cabin + l_cockpit + 2
 z_AC_tail = 1.51
 
 
-config = 2
+config = 1
 fuel = 2
 
 ##################################################################
