@@ -360,6 +360,16 @@ def wingCL():
     return CL_w, CL_w0, CD_wing, CL_max, alpha_L0, a
 
 
+def totalGeometry():
+    _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = wingGeometry() 
+    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry() 
+    
+    y = np.concatenate((y_fus, y_wing + y_fus[-1]))
+    leading_edge = np.concatenate((leading_fus, leading_wing + leading_fus[-1]))
+    trailing_edge = np.concatenate((trailing_fus, trailing_wing + leading_fus[-1]))
+    quarter_chord = np.concatenate((quarter_fus, quarter_wing + leading_fus[-1]))
+    return y, leading_edge, trailing_edge, quarter_chord
+
 
 def getMAC():
     _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = wingGeometry() 
@@ -611,4 +621,4 @@ def printFunction():
 
     return
 
-#printFunction()
+printFunction()
