@@ -114,7 +114,8 @@ def get_weight():
     n_pass = 8
     m_pass = 215
     m_bagage = 50 #on prend le worst case des deux dcp
-    m_payload = n_pass * ( m_pass + m_bagage) + wine + m_container  #[lbs]
+    #m_payload = n_pass * ( m_pass + m_bagage) + wine + m_container  #[lbs]
+    m_payload = n_pass * m_bagage + wine + m_container  #[lbs]
     #m_payload = n_pax*(m_pax + m_bgge) + wine + m_container
 
     # Operational Items [kg] ici kg, j'ai vérif
@@ -133,7 +134,8 @@ def get_weight():
     # Fuel [lbs]
     m_fuel = fuel_frac * MTOM
 
-
+    m_eng = 8377.566*2.20462
+    m_fuel = 27790*0.8*2.20462
     m_prediction = m_cab + m_aft + m_wing + m_LG + m_eng + m_nacgrp + m_APU + m_instr + m_hydr + m_furn + m_AC + m_payload + m_ops + m_elec + m_fltcon + m_fuel
 
     # print(f"Mass of the cabin: {m_cab:.2f} lbs")
@@ -184,9 +186,12 @@ def get_weight():
     # Printing the mass of each component and its percentage
     for component, mass in components.items():
         percentage = (mass / m_prediction) * 100
-        print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
+        #print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
 
-    print(f"Total predicted mass: {m_prediction:.2f} lbs")
+    #print(f"Total predicted mass: {m_prediction:.2f} lbs")
+   
+    
+    return m_cab, m_aft, m_wing,m_LG,m_eng,m_nacgrp,m_APU,m_enginst,m_instr,m_hydr,m_furn,m_AC,m_payload,m_ops,m_elec,m_fltcon,m_fuel,m_prediction
 
-    return m_cab, m_aft, m_wing,m_LG,m_eng,m_nacgrp,m_APU,m_enginst,m_fltinst,m_fltinst,m_otherinst,m_instr,m_hydr,m_furn,m_AC,m_payload,m_ops,m_elec,m_fltcon,m_fuel
 
+print(get_weight())
