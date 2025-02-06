@@ -6,6 +6,7 @@ from wings import wingGeometry as winggeom
 from sympy import symbols, Eq, solve
 from wings import air_density
 from wings import true_airspeed_at_altitude
+from weight import get_weight
 
 #values to calculate the coefficients 
 rho = air_density(12500)[0]
@@ -63,7 +64,7 @@ print("----------------------------------------------------------------------")
 
 #Position of the important points
 
-x_CG_tot = 9.5
+x_CG_tot = 14
 x_AC_tot = 8.789
 z_AC_tot = 0
 
@@ -81,6 +82,9 @@ config = 2
 ##################################################################
 
 def CG_position(i,d): 
+
+    wing_weight, hor_tail_weight,vert_tail_weight,fus_weight,land_gear_weight,surf_cont_weight,instr_weight,furn_weight,air_cond_weight,avio_weight,motors_weight,elec_syst_weight = get_weight()
+
     wing_weight = 
     wing_pos = (l_fus - chord_tip_fus) + MAC_wing*0.2 + y_AC_wing*np.tan(sweep_angle_wing)
 
@@ -228,7 +232,8 @@ def get_CG(i,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn):
     deps = downwash(i,Cm0_airfoil_fus,Cm0_airfoil_wing)[1]
     
     hn = x_AC_tot/MAC_tot + V_T*a1_over_a*(1- deps)
-    x_CG = (hn - Kn)*MAC_tot
+    #x_CG = (hn - Kn)*MAC_tot
+    x_CG = x_AC_tot - Kn/(1 + surf_tot/hor_tail_surf*a1_over_a*(1 - deps))
     
     if Kn == 0.05:
         print("The center of gravity is positionned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the maximal value of the range.")
