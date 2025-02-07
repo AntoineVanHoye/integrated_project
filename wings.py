@@ -33,7 +33,7 @@ def winglet():
     h = 1 #[m] Choice
     delta_AR = 1.9*(h/span_max) * AR
     return delta_AR
-AR = AR + winglet()
+#AR = AR + winglet()
 
 # Function to calculate air density using the ISA model
 def air_density(altitude):
@@ -56,6 +56,7 @@ def true_airspeed_at_altitude(altitude):
     v = M * a  # [m/s] Aircraft velocity
     return v
 v = true_airspeed_at_altitude(alti)
+print(f"True airspeed at {alti} m: {v:.2f} m/s")
 
 def guess_CL_max():
     CL = np.linspace(0, 1.0, 100)
@@ -210,9 +211,9 @@ def wingGeometry():
     c = [c_tip_fus, 8.5, 7.8, 7.3, 6.3, 5.7, 5.3, 5.0 , 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     """
 
-    h = [0.5, 1.0, 1.5, 2.0, (b*0.5) - 3.5] #[m]
+    h = [0.2, 0.4, 0.6, 0.8, (b*0.5) - 1.4] #[0.5, 1.0, 1.5, 2.0, 2.5 , (b*0.5) - 3.5] #[m]
     Yposition = [0, h[0], h[0]+h[1], b/2]
-    c = [c_tip_fus, 6.751810808525195, 5.578178429906, 4.6202933997553615, 3.7940656900653904, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
+    c = [c_tip_fus, 7.51864968, 6.78573899, 6.18381709, 5.65259713, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     
     S = np.zeros(len(h))
     S_sum =0

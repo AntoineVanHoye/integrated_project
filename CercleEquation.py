@@ -19,11 +19,10 @@ def distance_horizontale(R, lambda_deg, y):
     d = x_cercle_solution - x_droite
     return d
 
+h = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0]#[0.5, 1, 1.5, 2, 2.5, 3]
+R = 4.0
+c = np.zeros(len(h))
+for i in range(len(h)):
+    c[i] = distance_horizontale(R, 40, h[i])
 
-print(distance_horizontale(3.0, 40, 0.5)) 
-print(distance_horizontale(3.0, 40, 1)) 
-print(distance_horizontale(3.0, 40, 1.5)) 
-print(distance_horizontale(3.0, 40, 2.0)) 
-print(distance_horizontale(3.0, 40, 2.5)) 
-print(distance_horizontale(3.0, 40, 3.0))
-print(distance_horizontale(3.0, 40, 3.5)) 
+print(c)
