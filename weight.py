@@ -134,8 +134,9 @@ def get_weight():
     # Fuel [lbs]
     m_fuel = fuel_frac * MTOM
 
-    m_eng = 8377.566*2.20462
-    m_fuel = 27790*0.8*2.20462
+    vol_fuel = 27790 #L
+    m_eng = 3800*2.20462
+    m_fuel = vol_fuel*0.8*2.20462
     m_prediction = m_cab + m_aft + m_wing + m_LG + m_eng + m_nacgrp + m_APU + m_instr + m_hydr + m_furn + m_AC + m_payload + m_ops + m_elec + m_fltcon + m_fuel
 
     # print(f"Mass of the cabin: {m_cab:.2f} lbs")
@@ -191,7 +192,5 @@ def get_weight():
     #print(f"Total predicted mass: {m_prediction:.2f} lbs")
    
     
-    return m_cab, m_aft, m_wing,m_LG,m_eng,m_nacgrp,m_APU,m_enginst,m_instr,m_hydr,m_furn,m_AC,m_payload,m_ops,m_elec,m_fltcon,m_fuel,m_prediction
-
-
-print(get_weight())
+    return m_cab, m_aft, m_wing,m_LG,m_eng,m_nacgrp,m_APU,m_enginst,m_instr,m_hydr,m_furn,m_AC,m_payload,m_ops,m_elec,m_fltcon,m_fuel,m_prediction,vol_fuel
+ 
