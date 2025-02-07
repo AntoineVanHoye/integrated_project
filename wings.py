@@ -22,7 +22,7 @@ delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 cl_plot = False
 lift_and_drag_plots = False
 

@@ -144,7 +144,7 @@ def CG_position(i,d):
     
     #total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst + payload_weight + ops_weight 
 
-    total_mom = wing_weight*wing_pos + fus_weight*fus_pos + land_gear_weight*land_gear_pos + surf_cont_weight*surf_cont_pos + instr_weight*instr_pos + elec_syst_weight*elec_syst_pos + furn_weight*furn_pos + air_cond_weight*air_cond_pos + passengers_weight*passengers_pos + motors_weight*motors_pos + fuel_pos*fuel_weight + aft_pos*aft_weight + nacelle_pos*nacelle_weight + APU_pos*APU_weight + enginst_pos*enginst_weight + hydr_pos*hydr_syst + payload_pos*payload_weight + ops_pos*ops_weight + passengers_weight*passengers_pos
+    total_mom = (wing_weight*wing_pos) + (fus_weight*fus_pos) + (land_gear_weight*land_gear_pos) + (surf_cont_weight*surf_cont_pos) + (instr_weight*instr_pos) + (elec_syst_weight*elec_syst_pos) + (furn_weight*furn_pos) + (air_cond_weight*air_cond_pos) + (passengers_weight*passengers_pos) + (motors_weight*motors_pos) + (fuel_pos*fuel_weight) + (aft_pos*aft_weight) + (nacelle_pos*nacelle_weight) + (APU_pos*APU_weight) + (enginst_pos*enginst_weight) + (hydr_pos*hydr_syst) + (payload_pos*payload_weight) + (ops_pos*ops_weight) + (passengers_weight*passengers_pos)
     position = total_mom/(total_weight + passengers_weight)
 
     return position, pourc_wings, motors_pos/MAC_tot
