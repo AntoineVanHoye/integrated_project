@@ -22,9 +22,9 @@ delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = False
+wing_plot = True
 cl_plot = False
-lift_and_drag_plots =False
+lift_and_drag_plots = False
 
 #---Code---#
 
@@ -204,9 +204,15 @@ def wingGeometry():
     """
     
     # ---- Complex wing ---- #
+    """
     h = [0.5, 0.25, 0.25, 0.5, 0.5, 0.5, 0.5, (b*0.5) - 3] #[m]
     Yposition = [0, h[0], h[0]+h[1], b/2]
     c = [c_tip_fus, 8.5, 7.8, 7.3, 6.3, 5.7, 5.3, 5.0 , 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
+    """
+
+    h = [0.5, 1.0, 1.5, 2.0, (b*0.5) - 3.5] #[m]
+    Yposition = [0, h[0], h[0]+h[1], b/2]
+    c = [c_tip_fus, 6.751810808525195, 5.578178429906, 4.6202933997553615, 3.7940656900653904, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     
     S = np.zeros(len(h))
     S_sum =0
@@ -437,6 +443,14 @@ def plotAllWing(wing_plot):
 
     plt.plot([-y_fus[-1], -(y_wing[0] + y_fus[-1])], [trailing_edge_fus[-1], (trailing_edge_wing[0] + leading_edge_fus[-1])], color='green')
 
+    MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
+
+    plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(60*(np.pi/180))), color='red')
+    plt.scatter(yac_wing,  xac_wing, color='orange')
+    leading_edge_fus_x = np.interp(yac_fus, y_fus, leading_edge_fus)
+    leading_edge_wing_x = np.interp(yac_wing+3.5, y_wing, leading_edge_wing)
+    plt.plot((yac_fus, yac_fus), (leading_edge_fus_x, leading_edge_fus_x + MAC_fus), color='red')
+    plt.plot((yac_wing, yac_wing), (leading_edge_wing_x , leading_edge_wing_x + MAC_wing), color='orange')
 
     plt.xlabel('$Y$')
     plt.ylabel('$X$')
@@ -622,4 +636,4 @@ def printFunction():
 
     return
 
-#printFunction()
+printFunction()
