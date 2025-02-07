@@ -33,6 +33,8 @@ l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
 MAC_fus = 13.305
 MAC_wing = 4.114
+surf_wing = 188.28
+surf_fus = 116.13
 
 chord_tip_fus = 9.006
 sweep_angle_wing = 40*np.pi/180
@@ -47,10 +49,11 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing):
     _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom() 
     c_fus = trailing_fus - leading_fus
     c_wing = trailing_wing - leading_wing
-
     Cm0_wing = (2/(surf_tot*MAC_tot)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+    print(Cm0_wing)
     Cm0_fus = (2/(surf_tot*MAC_tot)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    Cm0_tot = Cm0_wing + Cm0_fus
+    print(Cm0_fus)
+    Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
     return Cm0_tot
 
 Cm0_plane = Cm0(Cm0_fus,Cm0_wing)
@@ -61,11 +64,11 @@ print("----------------------------------------------------------------------")
 
 #Position of the important points
 
-x_AC_tot = 8.789
+x_AC_tot = 9.037
 z_AC_tot = 0
 z_CG_tot = 0
 
-z_CG_motors = 2
+z_CG_motors = 1
 
 x_AC_tail = l_cabin + l_cockpit + 2
 z_AC_tail = 1.51
@@ -75,7 +78,7 @@ x_AC_wing = 3.733
 y_AC_fus = 2.018
 
 config = 1
-fuel = 1
+fuel = 2
 
 ##################################################################
 ######CG POSITION
@@ -96,7 +99,7 @@ def passengers(i):
 
 def CG_position(i,d): 
 
-    fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,fuel_weight,total_weight,fuel_volume= get_weight()
+    fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst_weight,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,total_weight,fuel_volume= get_weight()
 
     wing_pos = (l_fus - chord_tip_fus) + MAC_wing*0.2 + y_AC_wing*np.tan(sweep_angle_wing)
     
@@ -136,25 +139,44 @@ def CG_position(i,d):
         fuel_pos = 1
         pourc_wings = 0
     if d == 2 : #full of fuel
-        pourc_wings = available_fuel_vol/fuel_volume
-        fuel_pos = wing_pos*pourc_wings + (1 - pourc_wings)* (l_fus - chord_tip_fus)
+        vol_fuel = 26854.56
+        fuel_weight = vol_fuel*0.8*2.20462
+        pourc_wings = available_fuel_vol/vol_fuel
+        fuel_pos = wing_pos
 
     passengers_weight = passengers(i)[0]
     passengers_pos = passengers(i)[1] 
-    
+    """
+    print("wing:",wing_pos, "->", wing_pos/l_fus *100)
+    print("fus:",fus_pos, "->", fus_pos/l_fus *100)
+    print("aft:",aft_pos, "->", aft_pos/l_fus *100)
+    print("APU:",APU_pos, "->", APU_pos/l_fus *100)
+    print("hydr:",hydr_pos, "->", hydr_pos/l_fus *100)
+    print("payload:",payload_pos, "->", payload_pos/l_fus *100) 
+    print("ops:",ops_pos, "->", ops_pos/l_fus *100)
+    print("land_gear:",land_gear_pos, "->", land_gear_pos/l_fus *100)
+    print("surf_cont:",surf_cont_pos, "->", surf_cont_pos/l_fus *100)
+    print("instr:",instr_pos, "->", instr_pos/l_fus *100)
+    print("furn:",furn_pos, "->", furn_pos/l_fus *100)
+    print("air_cond:",air_cond_pos, "->", air_cond_pos/l_fus *100)
+    print("motors:",motors_pos, "->", motors_pos/l_fus *100)
+    print("nacelle:",nacelle_pos, "->", nacelle_pos/l_fus *100)
+    print("enginst:",enginst_pos, "->", enginst_pos/l_fus *100)
+    print("elec_syst:",elec_syst_pos, "->", elec_syst_pos/l_fus *100)
+    """
     #total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst + payload_weight + ops_weight 
-
-    total_mom = (wing_weight*wing_pos) + (fus_weight*fus_pos) + (land_gear_weight*land_gear_pos) + (surf_cont_weight*surf_cont_pos) + (instr_weight*instr_pos) + (elec_syst_weight*elec_syst_pos) + (furn_weight*furn_pos) + (air_cond_weight*air_cond_pos) + (passengers_weight*passengers_pos) + (motors_weight*motors_pos) + (fuel_pos*fuel_weight) + (aft_pos*aft_weight) + (nacelle_pos*nacelle_weight) + (APU_pos*APU_weight) + (enginst_pos*enginst_weight) + (hydr_pos*hydr_syst) + (payload_pos*payload_weight) + (ops_pos*ops_weight) + (passengers_weight*passengers_pos)
+    total_mom = (wing_weight*wing_pos) + (fus_weight*fus_pos) + (land_gear_weight*land_gear_pos) + (surf_cont_weight*surf_cont_pos) + (instr_weight*instr_pos) + (elec_syst_weight*elec_syst_pos) + (furn_weight*furn_pos) + (air_cond_weight*air_cond_pos) + (passengers_weight*passengers_pos) + (motors_weight*motors_pos) + (fuel_pos*fuel_weight) + (aft_pos*aft_weight) + (nacelle_pos*nacelle_weight) + (APU_pos*APU_weight) + (enginst_pos*enginst_weight) + (hydr_pos*hydr_syst_weight) + (payload_pos*payload_weight) + (ops_pos*ops_weight) 
+    total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst_weight + payload_weight + ops_weight
     position = total_mom/(total_weight + passengers_weight)
-
-    return position, pourc_wings, motors_pos/MAC_tot
+    
+    return position, pourc_wings, motors_pos/MAC_tot, total_weight 
 
 print("--------------------------FUEL STORAGE--------------------------------------------")
 print(CG_position(config,fuel)[1]*100,"% of the total fuel volume is stored in the wings.")
 print("----------------------------------------------------------------------")
         
 print("--------------------------CENTER OF GRAVITY--------------------------------------------")
-print("The center of gravity is positionned at",CG_position(config,fuel)[0],"m (",CG_position(config,fuel)[0]*100/l_fus,"%) from the nose of the airplane.")
+print("The center of gravity is positioned at",CG_position(config,fuel)[0],"m (",CG_position(config,fuel)[0]*100/l_fus,"%) from the nose of the airplane.")
 print("----------------------------------------------------------------------")
 
 #tail volume ratio effectivness 
@@ -180,8 +202,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing):
     T = 42676.35
     #drag_tail = 
     x_CG_tot = CG_position(i,d)[0]
-    weight = get_weight()[17]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
-
+    weight = CG_position(i,d)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing)
     M0 = Cm0_tot*((1/2)*rho*(speed**2)*MAC_tot*surf_tot)
     #Cm_tot = Cm0_tot + Cl_tot* (x_CG_tot - x_AC_tot)/MAC_tot - Cm_T
@@ -195,7 +216,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing):
     solution = solve((eq1,eq2),(L_tot,L_T))
     L_tot = solution[L_tot]
     L_T = solution[L_T]
-   
+
     return L_tot,L_T
 
 print("--------------------------CRUISE--------------------------------------------")
