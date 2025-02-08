@@ -14,15 +14,14 @@ M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
 gamma = 1.4
 e = 0.85                #Ostxald's efficiency factor
-CD0 = 0.02              # Zero lift drag coeff
 delta = 0.005 #graph slide 61 lecture 6 aerodinimics
-#sweep_quarter = 15     #[°] sweep angle
+sweep_LE_fus = 55     #[°] sweep angle
 #Lambda = 0.6           # [-] taper ratio
 
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = False
+wing_plot = True
 cl_plot = False
 lift_and_drag_plots = False
 
@@ -60,7 +59,7 @@ print(f"True airspeed at {alti} m: {v:.2f} m/s")
 
 def guess_CL_max():
     CL = np.linspace(0, 1.0, 100)
-
+    CD0 = 0.02              # Zero lift drag coeff
     CD = CD0 + CL*CL / (np.pi * AR * 0.85) # (Zero Lift drag + Induce drag)
 
     CL_CD = CL / CD
@@ -99,7 +98,7 @@ beta = np.sqrt(1-(M**2))
 def fusGeometry():
     b = cabin_width + 2
     AR_fuselage = (b**2)/surface_fuselage
-    sweep_leading =  60 #[°]
+    sweep_leading =  sweep_LE_fus #[°]
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
     c_tip = cabin_lenght - ((b/2)/np.tan((90-sweep_leading)*np.pi/180)) #((2*surface_fuselage)/b) - c_root
     taper_ratio =  c_tip/c_root
@@ -446,7 +445,7 @@ def plotAllWing(wing_plot):
 
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
 
-    plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(60*(np.pi/180))), color='red')
+    plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(sweep_LE_fus*(np.pi/180))), color='red')
     plt.scatter(yac_wing,  xac_wing, color='orange')
     leading_edge_fus_x = np.interp(yac_fus, y_fus, leading_edge_fus)
     leading_edge_wing_x = np.interp(yac_wing+3.5, y_wing, leading_edge_wing)
