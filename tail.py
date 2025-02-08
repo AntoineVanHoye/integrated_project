@@ -127,6 +127,13 @@ print(f"Surface horizontal tail: {surface:.2f} [m^2]")
 print(f"CL target: {Cl_targuet:.2f} [-]")
 
 
+#Maintenant, tu fais tes calcules pour essayer d'obtenir le Cl target. Et donc après avoir choisi la geometrie,
+# l'airfoil, etc, tu peux choisir l'AoA qui te permet d'obtenir le bon Cl.
+# Ca c'est juste pour la tail horizontale, pour la verticale ca je sais pas comment faire c'est à toi de voir. 
+
+
+
+
    
 def geomtail():
     ###TOUS LES CHOIX DE GEOMETRIE ON ETE FAIT POUR RESPECTER LES TABLES 8.13 ET 8.14 DE ROSKAM PART 2 EN HORIZONTAL ET VERTICAL
@@ -167,7 +174,7 @@ def getMACTail():
     MAC_tail = (2/S_tot_tail) * trapz(c_tail**2, y_tail) #numerical integration via method of trapez
     cy_tail = c_tail*y_tail
     yac_wing = (2/S_tot_tail) * trapz(cy_tail, y_tail)
-    xac_wing = MAC_tail*0.2 #Comment as tu choisi 0.2? Regale slide 26 Conception aero de Noels si tu ne l'avais pas vu. 
+    xac_wing = MAC_tail*0.2         # Regarde slide 26 Conception aero de Noels si tu te demande d'ou provie le coeff 0.2. 
     return xac_wing, yac_wing,MAC_tail,sweep_beta_tail, sweep_quarter_tail
 
 
@@ -177,7 +184,7 @@ xac, yac, MACtail, sweep_beta_tail, sweep_quarter_tail=getMACTail()
 def NACA():
     AoA_tail=0
     beta=np.sqrt(1-M**2)
-    cl_alpha=(1.5461-1.0909)/(15-10)* (180/np.pi)
+    cl_alpha=(1.5461-1.0909)/(15-10)* (180/np.pi) #quelle airfoil ?
     alpha_L0=0
     cl_max= 1.4551
     Cd0=0.011781 #at Aoa=0°
