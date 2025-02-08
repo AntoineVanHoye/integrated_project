@@ -14,9 +14,9 @@ M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
 gamma = 1.4
 e = 0.85                #Ostxald's efficiency factor
-CD0 = 0.02              # Zero lift drag coeff
 delta = 0.005 #graph slide 61 lecture 6 aerodinimics
-#sweep_quarter = 15     #[°] sweep angle
+sweep_LE_fus = 55     #[°] sweep angle
+twist_angle = 0         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 
 
@@ -33,7 +33,7 @@ def winglet():
     h = 1 #[m] Choice
     delta_AR = 1.9*(h/span_max) * AR
     return delta_AR
-AR = AR + winglet()
+#AR = AR + winglet()
 
 # Function to calculate air density using the ISA model
 def air_density(altitude):
@@ -56,10 +56,11 @@ def true_airspeed_at_altitude(altitude):
     v = M * a  # [m/s] Aircraft velocity
     return v
 v = true_airspeed_at_altitude(alti)
+print(f"True airspeed at {alti} m: {v:.2f} m/s")
 
 def guess_CL_max():
     CL = np.linspace(0, 1.0, 100)
-
+    CD0 = 0.02              # Zero lift drag coeff
     CD = CD0 + CL*CL / (np.pi * AR * 0.85) # (Zero Lift drag + Induce drag)
 
     CL_CD = CL / CD
@@ -88,8 +89,8 @@ Cl_max = guess_CL_max()
 
 surface_total = 2*weight/(rho*(v**2)*Cl_max) 
 
-c_root_fus = cabin_lenght - ((cabin_width/2 +1)/np.tan(30*np.pi/180))
-surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2 +1)/np.tan(30*np.pi/180))))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
+#c_root_fus = cabin_lenght - ((cabin_width/2 +1)/np.tan(30*np.pi/180))
+surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2 +1)/np.tan((90-sweep_LE_fus)*np.pi/180))))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
 surface_wing = surface_total - surface_fuselage
 
 beta = np.sqrt(1-(M**2))
@@ -98,7 +99,7 @@ beta = np.sqrt(1-(M**2))
 def fusGeometry():
     b = cabin_width + 2
     AR_fuselage = (b**2)/surface_fuselage
-    sweep_leading =  60 #[°]
+    sweep_leading =  sweep_LE_fus #[°]
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
     c_tip = cabin_lenght - ((b/2)/np.tan((90-sweep_leading)*np.pi/180)) #((2*surface_fuselage)/b) - c_root
     taper_ratio =  c_tip/c_root
@@ -131,15 +132,26 @@ def fusPlot(wing_plot):
     plt.axis('equal')
     plt.show() 
     return
-fusPlot(wing_plot)
+#fusPlot(wing_plot)
 
 def fuselageCL():
     # --- airfoil --- #
+    
     cl_alpha = ((1.0498+0.2062)/(5+5)) * (180/np.pi) # SC(2) 0518 M0 Re12M C_m = -0.1158
     cl_max = 1.87
     alpha_L0 = -3.5 * (np.pi/180) #[rad] 
     CD_fuselage = 0.00636 
     """
+    cl_alpha = (0.7712+0.2134)/(5+5) # NACA45118 M0.85 Re12M cm = -0.0026
+    cl_max = 1.7125
+    alpha_L0 = -3 * (np.pi/180) #[rad]
+    CD_fuselage = 0.0026
+    
+    cl_alpha = (0.3769+0.2766)/(5+5) # NACA 67-118 M0.85 Re12M cm = -0.0102
+    cl_max = 1.447
+    alpha_L0 = -1 * (np.pi/180) #[rad]
+    CD_fuselage = 0.00286
+    
     cl_alpha = (0.82-0.2)/(1.5+2) # SC(2)-0714 M0.75 Re6M
     alpha_L0 = -3.5 * (np.pi/180) #[rad]
     CD_fuselage = 0.01 
@@ -210,9 +222,9 @@ def wingGeometry():
     c = [c_tip_fus, 8.5, 7.8, 7.3, 6.3, 5.7, 5.3, 5.0 , 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     """
 
-    h = [0.5, 1.0, 1.5, 2.0, (b*0.5) - 3.5] #[m]
+    h = [0.2, 0.4, 0.6, 0.8, (b*0.5) - 1.4] #[0.5, 1.0, 1.5, 2.0, 2.5 , (b*0.5) - 3.5] #[m]
     Yposition = [0, h[0], h[0]+h[1], b/2]
-    c = [c_tip_fus, 6.751810808525195, 5.578178429906, 4.6202933997553615, 3.7940656900653904, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
+    c = [c_tip_fus, 7.51864968, 6.78573899, 6.18381709, 5.65259713, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     
     S = np.zeros(len(h))
     S_sum =0
@@ -283,10 +295,14 @@ def getCalageAngle(CL):
     b_wing, AR_wing, _, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, _, _, _, _ = wingGeometry()
     _, Cl_fuselage, Cd_fuselage, Cl_max_fus, _ = fuselageCL()
 
-    #cl_alpha wing
-    cl_alpha_wing = (1.4073-0.269)/(5+5) * (180/np.pi)
-    alpha_L0_wing = -7*(np.pi/180)
- 
+    # --- cl_alpha wing --- #
+    cl_alpha_wing = (1.1117+0.0543)/(5+5) * (180/np.pi)
+    alpha_L0_wing = -4.5*(np.pi/180)
+
+    # --- Twist angle --- #
+    alpha_01 = -0.17
+    eta_a_tip = twist_angle 
+    alpha_L0_wing = alpha_L0_wing + (alpha_01 * twist_angle* (np.pi/180))
 
     k = (beta * cl_alpha_wing)/(2*np.pi)
     a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta_wing))))**2 + ((2/(beta * AR_wing))**2) )))/beta
@@ -312,15 +328,20 @@ def wingPlot(wing_plot):
     plt.show() 
 
     return
-wingPlot(wing_plot)
+#wingPlot(wing_plot)
 
 def wingCL():
-    # ----- Airfoil ----- #
+    # ----- Airfoil ----- # /!\ change in getCalageAngle
+    cl_alpha = (1.1117+0.0543)/(5+5) * (180/np.pi) # SC(2)-0710 M0.85 Re12M cm = -0.129
+    cl_max = 2.243
+    alpha_l0 = -4.5*(np.pi/180)
+    CD_wing = 0.00907 #at 6° aoa  and at 0° aoa = 0.006
+    """
     cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
     cl_max = 1.4
     alpha_l0 = -7*(np.pi/180)
     CD_wing = 0.01091 #at 6° aoa  and at 0° aoa = 0.006
-    """
+    
     cl_alpha = (0.5765-0)/(5+0) * (180/np.pi) # SC(2)-0012 M0.85 Re12M
     alpha_l0 = 0
     CD_wing = 0.0059 
@@ -337,10 +358,9 @@ def wingCL():
     AoA_wing = getCalageAngle(Cl_max)
     
     # --- Twist angle --- #
-    twist_angle = -3 * (np.pi/180) #[°]
     alpha_01 = -0.17
     eta_a_tip = twist_angle 
-    alpha_L0 = alpha_l0 + (alpha_01 * twist_angle)
+    alpha_L0 = alpha_l0 + (alpha_01 * twist_angle * (np.pi/180))
     
     # --- Lift --- #
     AoA = np.linspace(-10, 10, 51) * ((np.pi)/180)
@@ -445,7 +465,7 @@ def plotAllWing(wing_plot):
 
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
 
-    plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(60*(np.pi/180))), color='red')
+    plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(sweep_LE_fus*(np.pi/180))), color='red')
     plt.scatter(yac_wing,  xac_wing, color='orange')
     leading_edge_fus_x = np.interp(yac_fus, y_fus, leading_edge_fus)
     leading_edge_wing_x = np.interp(yac_wing+3.5, y_wing, leading_edge_wing)
@@ -471,8 +491,10 @@ def get_Lift_and_drag(AR, delta):
     Cl_tot = np.zeros(len(AoA))
     Cl_tot = ((Cl_wing*surface_wing) + (Cl_fuselage*surface_fuselage))/surface_total 
     
-    Cl_tot0 = float(Cl_tot[np.where(abs(AoA) <= 1e-12)])
-    AoA_L0 = float(AoA[np.where(abs(Cl_tot) <= 6e-3)])*(180/np.pi)
+    #Cl_tot0 = float(Cl_tot[np.where(abs(AoA) <= 1e-12)])
+    #AoA_L0 = float(AoA[np.where(abs(Cl_tot) <= 6.04e-3)])*(180/np.pi)
+    Cl_tot0 = np.interp(0, AoA, Cl_tot)
+    AoA_L0 = np.interp(0, Cl_tot, AoA) * (180 / np.pi)
 
     Cl_max = ((Cl_max_wing*surface_wing) + (Cl_max_fus*surface_fuselage))/surface_total 
     
