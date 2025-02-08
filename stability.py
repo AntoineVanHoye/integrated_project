@@ -18,7 +18,8 @@ Cl_tot = 0
 CL_T = 1.76
 
 #Important general values 
-MAC_tot = 9.951 
+#MAC_tot = 9.951
+MAC_tot = 10.985
 surf_tot = 182.56
 AR_tot = 1.6
 b = 29
@@ -31,17 +32,25 @@ l_fus = 16.8
 l_cabin = 10.1
 l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
-MAC_fus = 13.305
-MAC_wing = 4.114
+#MAC_fus = 13.305
+MAC_fus = 15.639
+#MAC_wing = 4.114
+MAC_wing = 4.863 
 surf_wing = 188.28
 surf_fus = 116.13
 
-chord_tip_fus = 9.006
+#chord_tip_fus = 9.006
+chord_tip_fus = 11.437
 sweep_angle_wing = 40*np.pi/180
-sweep_angle_fus = 60*np.pi/180
+#sweep_angle_fus = 60*np.pi/180
+sweep_angle_fus = 50*np.pi/180
 
+#Cm0_fus = -0.0026
+Cm0_wing = -0.129
+
+#Cm0_fus = -0.0583
 Cm0_fus = -0.1158
-Cm0_wing = -0.1533
+#Cm0_wing = -0.1533
 
 #Calculation of the Cm0_tot ==> separate the integral in to parts
 def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing):
@@ -49,22 +58,25 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing):
     _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom() 
     c_fus = trailing_fus - leading_fus
     c_wing = trailing_wing - leading_wing
-    Cm0_wing = (2/(surf_tot*MAC_tot)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
-    print(Cm0_wing)
-    Cm0_fus = (2/(surf_tot*MAC_tot)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    print(Cm0_fus)
-    Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
-    return Cm0_tot
+    #Cm0_wing = (2/(surf_wing*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+    Cm0_wing = 2*trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+    #Cm0_fus = (2/(surf_fus*MAC_fus)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
+    Cm0_fus = 2 * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
+    Cm0_tot = (Cm0_wing + Cm0_fus)/(MAC_tot*surf_tot)
+    #Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
+    return Cm0_tot,Cm0_fus,Cm0_wing
 
-Cm0_plane = Cm0(Cm0_fus,Cm0_wing)
 
 print("--------------------------CM0--------------------------------------------")
-print("The blended wing body has a Cm0_tot of",Cm0_plane)
+print("The blended wing body has a Cm0_tot of",Cm0(Cm0_fus,Cm0_wing)[0])
+print("The wings have a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing)[2],". It represents",Cm0(Cm0_fus,Cm0_wing)[2]/Cm0(Cm0_fus,Cm0_wing)[0]*100,"% of the pitching moment of the airplane.")
+print("The fuselage has a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing)[1],". It represents",Cm0(Cm0_fus,Cm0_wing)[1]/Cm0(Cm0_fus,Cm0_wing)[0]*100,"% of the pitching moment of the airplane.")
 print("----------------------------------------------------------------------")
 
 #Position of the important points
 
-x_AC_tot = 9.037
+#x_AC_tot = 9.037
+x_AC_tot = 6.853
 z_AC_tot = 0
 z_CG_tot = 0
 
@@ -73,13 +85,15 @@ z_CG_motors = 1
 x_AC_tail = l_cabin + l_cockpit + 2
 z_AC_tail = 1.51
 
-y_AC_wing = 3.796
-x_AC_wing = 3.733
-y_AC_fus = 2.018
+#y_AC_wing = 3.796
+y_AC_wing = 7.575
+#x_AC_wing = 3.733
+x_AC_wing= 9.763 
+#y_AC_fus = 2.018
+y_AC_fus =2.302 
 
 config = 1
-fuel = 2
-
+fuel = 1
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -142,11 +156,14 @@ def CG_position(i,d):
         vol_fuel = 26854.56
         fuel_weight = vol_fuel*0.8*2.20462
         pourc_wings = available_fuel_vol/vol_fuel
-        fuel_pos = wing_pos
+        pourc_wings = 0.7
+        fuel_pos = wing_pos*pourc_wings + (1-pourc_wings)*(wing_pos-3.5)
 
     passengers_weight = passengers(i)[0]
     passengers_pos = passengers(i)[1] 
+
     """
+    print("fuel:",fuel_pos,"->",fuel_pos/l_fus*100)
     print("wing:",wing_pos, "->", wing_pos/l_fus *100)
     print("fus:",fus_pos, "->", fus_pos/l_fus *100)
     print("aft:",aft_pos, "->", aft_pos/l_fus *100)
@@ -203,7 +220,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing):
     #drag_tail = 
     x_CG_tot = CG_position(i,d)[0]
     weight = CG_position(i,d)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
-    Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing)
+    Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing)[0]
     M0 = Cm0_tot*((1/2)*rho*(speed**2)*MAC_tot*surf_tot)
     #Cm_tot = Cm0_tot + Cl_tot* (x_CG_tot - x_AC_tot)/MAC_tot - Cm_T
     #translation equilibrium 
