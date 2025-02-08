@@ -503,9 +503,10 @@ def get_Lift_and_drag(AR, delta):
     #print(f"delta Cd = {(((Cl_tot[np.where(abs(AoA) <= 1e-12)]**2)/(np.pi* (AR-winglet()))) * (1+delta))-Cd_induce[np.where(abs(AoA) <= 1e-12)]}")
     Cd_tot = np.zeros(len(AoA))
     Cd_tot = Cd_induce + (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
-    Cd_tot0 = float(Cd_tot[np.where(abs(AoA) <= 1e-12)])
-
-    return Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA
+    #Cd_tot0 = float(Cd_tot[np.where(abs(AoA) <= 1e-12)])
+    Cd_tot0 = np.interp(0, AoA, Cd_tot)
+    
+    return Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, Cd_tot0
 
 def plotLiftDrag(lift_and_drag_plots):
     if lift_and_drag_plots == False:
@@ -569,7 +570,7 @@ def wingSurfaceWetted():
 
 def stallVelocity():
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = wingGeometry()
-    _, _, Cl_max, _ , _, _, _= get_Lift_and_drag(AR, delta)
+    _, _, Cl_max, _ , _, _, _, _= get_Lift_and_drag(AR, delta)
     rho_sl, T = air_density(0)
 
     Vs = np.sqrt((weight/surface_total) * (2/rho_sl) * (1/(1.133*Cl_max)))
@@ -629,11 +630,11 @@ def printFunction():
     
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
-    lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa = get_Lift_and_drag(AR, delta)
+    lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa, Cd_tot0 = get_Lift_and_drag(AR, delta)
     print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
     print(f"Cl max: {CL_max:.3f} [-]")
-    print(f"Lift coefficient derivative CL_alfa: {(cl[-1] - cl[0])/(aoa[-1] - aoa[0]):.3f} [deg^-1] \n")
-    
+    print(f"Lift coefficient derivative CL_alfa: {(cl[-1] - cl[0])/(aoa[-1] - aoa[0]):.3f} [deg^-1]")
+    print(f"CD0: {Cd_tot0:.3f} [-]\n")
     
     t_root, t_tip,t_bar_over_C = wingMaxthickness()
     print(f"Thickness root: {t_root:.3f}, thickness tip: {t_tip:.3f}")
