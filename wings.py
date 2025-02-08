@@ -7,7 +7,7 @@ span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
 AR = 1.5                #Aspect ratio (guess)
-weight = 526898.738020239# 471511.49122 #  #[N] = 106000lb (guess from weight code)
+weight = 526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
 weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N] 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
@@ -16,13 +16,13 @@ gamma = 1.4
 e = 0.85                #Ostxald's efficiency factor
 delta = 0.005 #graph slide 61 lecture 6 aerodinimics
 sweep_LE_fus = 55     #[°] sweep angle
-twist_angle = 0         #[°] twist angle
+twist_angle = -1         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 cl_plot = False
 lift_and_drag_plots = False
 

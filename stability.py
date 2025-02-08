@@ -19,13 +19,13 @@ CL_T = 1.76
 
 #Important general values 
 #MAC_tot = 9.951
-MAC_tot = 10.985
-surf_tot = 182.56
-AR_tot = 1.6
+MAC_tot = 10.210
+surf_tot = 204.41
+AR_tot = 1.5
 b = 29
 MAC_tail = 1.483
-hor_tail_surf = 28.05
-a = 1.754 #for all the structure  
+hor_tail_surf = 28.05 #34.75
+a = 1.689  #for all the structure  
 a1 = 0.919
 a1_over_a = a1/a
 l_fus = 16.8
@@ -33,17 +33,17 @@ l_cabin = 10.1
 l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
 #MAC_fus = 13.305
-MAC_fus = 15.639
+MAC_fus = 13.846
 #MAC_wing = 4.114
-MAC_wing = 4.863 
-surf_wing = 188.28
-surf_fus = 116.13
+MAC_wing = 4.796 
+surf_wing = 82.13
+surf_fus = 122.28
 
 #chord_tip_fus = 9.006
-chord_tip_fus = 11.437
+chord_tip_fus = 10.373
 sweep_angle_wing = 40*np.pi/180
 #sweep_angle_fus = 60*np.pi/180
-sweep_angle_fus = 50*np.pi/180
+sweep_angle_fus = 55*np.pi/180
 
 #Cm0_fus = -0.0026
 Cm0_wing = -0.129
@@ -76,7 +76,7 @@ print("----------------------------------------------------------------------")
 #Position of the important points
 
 #x_AC_tot = 9.037
-x_AC_tot = 6.853
+x_AC_tot = 7.504
 z_AC_tot = 0
 z_CG_tot = 0
 
@@ -93,7 +93,7 @@ x_AC_wing= 9.763
 y_AC_fus =2.302 
 
 config = 1
-fuel = 1
+fuel = 2
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -300,9 +300,9 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn):
     Fp = prop_force()
     eta = 0.9
     q = 1/2*rho*speed**2
-    hn = (a * x_AC_tot/MAC_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
+    hn = (a * (x_AC_tot/MAC_tot) + eta*a1*(hor_tail_surf/surf_tot)*(1-deps)*(x_AC_tail/MAC_tot)+(Fp/(q*surf_tot))*(1-deps)*engines_pos)/(a + eta*(hor_tail_surf/surf_tot)*a1*(1-deps)+(Fp/(q*surf_tot)))
     #x_CG = x_AC_tot/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps)) + x_AC_tail*a1_over_a*(1-deps)*hor_tail_surf/((1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*surf_tot)- Kn/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*MAC_tot
-    x_CG = hn*MAC_tot - Kn*MAC_tot
+    x_CG = (hn*MAC_tot) - (Kn*MAC_tot)
     if Kn == 0.05:
         print("The center of gravity is positioned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the maximal value of the range.")
     if Kn == 0.15:
