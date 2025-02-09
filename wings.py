@@ -439,12 +439,31 @@ def getMAC():
     return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
 
 def getMAC2():
-    b_wing, AR_wing, sweep_beta_wing, sweep_beta_wing, c_root_wing, taper_ratio, sweep_quarter, c_tip_wing, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry()
+    b_wing, AR_wing, sweep_beta_wing, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing, c, h = wingGeometry()
     b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry()
+    c = np.concatenate(([c_root_fus], c))
+    h = np.concatenate(([b_fus/2], h))
+    s = np.zeros(len(c)-1)
+    for i in range(len(c)-1):
+        s[i] = h[i]*(c[i]+c[i+1])/2
+    
+    b = (b_fus+b_wing)
+    Sw = 0
+    for i in range(len(s)):
+        Sw += (b/surface_total)*((s[i]*c[i]) + (s[i]*c[i+1]))
+    
+    Cwre = 0
+    for i in range(len(s)):
+        Cwre += (2/Sw)*(c[i]*s[i])
+    
+    lambda_tot = c[-1]/c[0]
+    Mgc = (2*c[0]/3)*(1+lambda_tot+lambda_tot**2)/(1+lambda_tot)
 
- 
+    y_mgc = (b/6)*(1+2*lambda_tot)/(1+lambda_tot) 
 
-    return
+    addx =( c_root_fus/2) - (Cwre/2) #/!\
+    return Mgc, y_mgc, Cwre
+
 
 def plotAllWing(wing_plot):
     if wing_plot == False:
@@ -633,10 +652,12 @@ def printFunction():
 
     
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
+    Mgc, y_mgc, Cwre = getMAC2()
     print("\n-------------- MAC values --------------\n")
     print(f"MAC fus: {MAC_fus:.3f} [m]\nYac fus: {yac_fus:.3f} [m]\nXac fus: {xac_fus:.3f} [m]\n")
     print(f"MAC wing: {MAC_wing:.3f} [m]\nYac wing: {yac_wing:.3f} [m]\nXac wing: {xac_wing:.3f} [m]\n")
     print(f"MAC: {MAC:.3f} [m]\nYac: {yac:.3f} [m]\nXac: {xac:.3f} [m]\n")
+    print(f"MGC: {Mgc:.3f} [m]\nY_MGC: {y_mgc:.3f} [m]\nCwre: {Cwre:.3f} [m]\n")
     
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
