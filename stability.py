@@ -8,62 +8,65 @@ from wings import air_density
 from wings import true_airspeed_at_altitude
 from weight import get_weight
 from wings import wingFuelvolume
+from wings import getMAC
+from wings import fusGeometry
+from wings import detSurfac
+from wings import wingCL
+from wings import fuselageCL
+from wings import get_Lift_and_drag
 
 #values to calculate the coefficients 
 rho = air_density(12500)[0]
 speed = true_airspeed_at_altitude(12500)
 
-#CL for equilibrium 
-Cl_tot = 0
-CL_T = 1.76
-
-#Important general values 
-#MAC_tot = 9.951
-MAC_tot = 10.210
-surf_tot = 204.41
+delta = 0.005
 AR_tot = 1.5
+#Important general values 
+MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC()
+print(x_AC_tot)
+surf_tot,surf_fus,surf_wing = detSurfac()
+_,_,_,_,_,_,_,_,a = get_Lift_and_drag(AR_tot,delta)
+a = a*180/np.pi
 b = 29
+mean_chord = surf_tot/b
 MAC_tail = 1.483
 hor_tail_surf = 28.05 #34.75
-a = 1.689  #for all the structure  
 a1 = 0.919
+a1 = a1*180/np.pi
 a1_over_a = a1/a
 l_fus = 16.8
 l_cabin = 10.1
 l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
-#MAC_fus = 13.305
-MAC_fus = 13.846
-#MAC_wing = 4.114
-MAC_wing = 4.796 
-surf_wing = 82.13
-surf_fus = 122.28
 
-#chord_tip_fus = 9.006
-chord_tip_fus = 10.373
+_,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry()
 sweep_angle_wing = 40*np.pi/180
-#sweep_angle_fus = 60*np.pi/180
 sweep_angle_fus = 55*np.pi/180
 
-#Cm0_fus = -0.0026
 Cm0_wing = -0.129
 
-#Cm0_fus = -0.0583
-Cm0_fus = -0.1158
-#Cm0_wing = -0.1533
+#Cm0_fus = -0.0026
+#Cm0_fus = -0.0022
+Cm0_fus = -0.0011
+#Cm0_fus =  -0.0355
+#Cm0_fus = -0.1158
+
+K_f = 0.25
+W_f = 3.024
+Cm_alpha_tot = K_f*l_fus*W_f**2/(MAC_tot*surf_tot)*180/np.pi
 
 #Calculation of the Cm0_tot ==> separate the integral in to parts
 def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing):
-    _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing = winggeom() 
+    _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing,_,_ = winggeom() 
     _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom() 
     c_fus = trailing_fus - leading_fus
     c_wing = trailing_wing - leading_wing
-    #Cm0_wing = (2/(surf_wing*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
-    Cm0_wing = 2*trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
-    #Cm0_fus = (2/(surf_fus*MAC_fus)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    Cm0_fus = 2 * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    Cm0_tot = (Cm0_wing + Cm0_fus)/(MAC_tot*surf_tot)
-    #Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
+    Cm0_wing = (2/(surf_wing*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+    #Cm0_wing = 2*trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+    Cm0_fus = (2/(surf_fus*MAC_fus)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
+    #Cm0_fus = 2 * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
+    #Cm0_tot = (Cm0_wing + Cm0_fus)/(MAC_tot*surf_tot)
+    Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
     return Cm0_tot,Cm0_fus,Cm0_wing
 
 
@@ -74,9 +77,6 @@ print("The fuselage has a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing)[1],". I
 print("----------------------------------------------------------------------")
 
 #Position of the important points
-
-#x_AC_tot = 9.037
-x_AC_tot = 7.504
 z_AC_tot = 0
 z_CG_tot = 0
 
@@ -84,13 +84,6 @@ z_CG_motors = 1
 
 x_AC_tail = l_cabin + l_cockpit + 2
 z_AC_tail = 1.51
-
-#y_AC_wing = 3.796
-y_AC_wing = 7.575
-#x_AC_wing = 3.733
-x_AC_wing= 9.763 
-#y_AC_fus = 2.018
-y_AC_fus =2.302 
 
 config = 1
 fuel = 2
@@ -113,7 +106,7 @@ def passengers(i):
 
 def CG_position(i,d): 
 
-    fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst_weight,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,total_weight,fuel_volume= get_weight()
+    fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst_weight,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,_,_,_= get_weight()
 
     wing_pos = (l_fus - chord_tip_fus) + MAC_wing*0.2 + y_AC_wing*np.tan(sweep_angle_wing)
     
@@ -184,8 +177,8 @@ def CG_position(i,d):
     #total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst + payload_weight + ops_weight 
     total_mom = (wing_weight*wing_pos) + (fus_weight*fus_pos) + (land_gear_weight*land_gear_pos) + (surf_cont_weight*surf_cont_pos) + (instr_weight*instr_pos) + (elec_syst_weight*elec_syst_pos) + (furn_weight*furn_pos) + (air_cond_weight*air_cond_pos) + (passengers_weight*passengers_pos) + (motors_weight*motors_pos) + (fuel_pos*fuel_weight) + (aft_pos*aft_weight) + (nacelle_pos*nacelle_weight) + (APU_pos*APU_weight) + (enginst_pos*enginst_weight) + (hydr_pos*hydr_syst_weight) + (payload_pos*payload_weight) + (ops_pos*ops_weight) 
     total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst_weight + payload_weight + ops_weight
-    position = total_mom/(total_weight + passengers_weight)
-    
+    position = total_mom/total_weight
+
     return position, pourc_wings, motors_pos/MAC_tot, total_weight 
 
 print("--------------------------FUEL STORAGE--------------------------------------------")
@@ -203,9 +196,20 @@ def tail_eff(i,d):
     return V_T
 
 def prop_force(): 
-    A = 1.32**2 *np.pi
-    m_dot = rho*A*speed*2.20462/32.2
-    return m_dot*speed
+    A = 2*1.32**2 *np.pi
+    m_dot = rho*A*speed*0.453592/32.2
+    Fp = m_dot*speed
+    return Fp
+
+def wings_lift():
+    _,CL_w0,_,_,_,_ = wingCL()
+    L_w = CL_w0 * (1/2)*rho*surf_wing*speed**2
+    return L_w
+
+def fus_lift(): 
+    _,CL_f0,_,_,_ = fuselageCL()
+    L_f = CL_f0*(1/2)*rho*surf_fus*speed**2
+    return L_f
 
 ##################################################################
 ######EQUILIBRIUM IN PITCH
@@ -215,20 +219,22 @@ def prop_force():
 def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing): 
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d)
-    Cm_T = V_T * CL_T
     T = 42676.35
     #drag_tail = 
     x_CG_tot = CG_position(i,d)[0]
     weight = CG_position(i,d)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing)[0]
     M0 = Cm0_tot*((1/2)*rho*(speed**2)*MAC_tot*surf_tot)
+    x_CG_motors = CG_position(i,d)[2]
+    Fp = prop_force()
+
     #Cm_tot = Cm0_tot + Cl_tot* (x_CG_tot - x_AC_tot)/MAC_tot - Cm_T
     #translation equilibrium 
-    eq1 = Eq(L_tot + L_T - weight,0)
+    eq1 = Eq(L_tot + L_T - weight - Fp,0)
     
     #rotation equilibrium 
     #eq2 = Eq(Cm0_tot + L_tot*(x_CG_tot-x_AC_tot)/(1/2*rho*speed**2 * MAC_tot*surf_tot)-L_T*(x_AC_tail - x_CG_tot)/(1/2*rho*speed**2 * MAC_tail*hor_tail_surf)*V_T+T*(z_CG_motors - z_CG_tot),0)
-    eq2 = Eq(M0 + L_tot*(x_CG_tot-x_AC_tot)-L_T*(x_AC_tail - x_CG_tot)+T*(z_CG_motors - z_CG_tot),0) #+ drag_tail*(z_AC_tail-z_CG_tot)
+    eq2 = Eq(M0 + L_tot*(x_CG_tot-x_AC_tot)-L_T*(x_AC_tail - x_CG_tot)-T*(z_CG_motors - z_CG_tot) + Fp*(x_CG_tot-x_CG_motors),0) #+ drag_tail*(z_AC_tail-z_CG_tot)
 
     solution = solve((eq1,eq2),(L_tot,L_T))
     L_tot = solution[L_tot]
@@ -244,7 +250,7 @@ print("----------------------------------------------------------------------")
 def downwash(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing):
     #Cl_tot = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing)[2]
     deps = 2*a/(np.pi*AR_tot)
-    eps = 2*Cl_tot/(np.pi*AR_tot)
+    #eps = 2*Cl_tot/(np.pi*AR_tot)
     eps = 0
     deps = 0
     return eps, deps
@@ -267,20 +273,19 @@ def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing): #in the pitchin
     dalpha_prop = 1 - deps
     Fp = prop_force()
     eta = 0.9
-    
     #hn = x_AC_tot/MAC_tot + V_T*a1_over_a*(1- deps) + dalpha_prop * Fp * (engines_pos-x_CG_tot)/MAC_tot#- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)  #position of the neutral point  
 
     #page 416 Raymer
     q = 1/2*rho*speed**2
-    hn = (a * x_AC_tot/MAC_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
+    hn = (a * x_AC_tot/MAC_tot - Cm_alpha_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
 
     Kn = hn - x_CG_tot/MAC_tot 
 
     if Kn >= 0.05 and Kn < 0.3 : 
-        print("The static margin has a correct value and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"from the nose.")
+        print("The static margin has a correct value and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
 
     else : 
-        print("The static margin has to be changed and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"m from the nose.")
+        print("The static margin has to be changed and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"m from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
     
     return 
 print("--------------------------STATIC MARGIN AND NEUTRAL POINT--------------------------------------------")
@@ -300,7 +305,7 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn):
     Fp = prop_force()
     eta = 0.9
     q = 1/2*rho*speed**2
-    hn = (a * (x_AC_tot/MAC_tot) + eta*a1*(hor_tail_surf/surf_tot)*(1-deps)*(x_AC_tail/MAC_tot)+(Fp/(q*surf_tot))*(1-deps)*engines_pos)/(a + eta*(hor_tail_surf/surf_tot)*a1*(1-deps)+(Fp/(q*surf_tot)))
+    hn = (a * x_AC_tot/MAC_tot - Cm_alpha_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
     #x_CG = x_AC_tot/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps)) + x_AC_tail*a1_over_a*(1-deps)*hor_tail_surf/((1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*surf_tot)- Kn/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*MAC_tot
     x_CG = (hn*MAC_tot) - (Kn*MAC_tot)
     if Kn == 0.05:
