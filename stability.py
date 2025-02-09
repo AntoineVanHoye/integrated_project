@@ -20,10 +20,13 @@ rho = air_density(12500)[0]
 speed = true_airspeed_at_altitude(12500)
 
 delta = 0.005
-AR_tot = 1.5
+AR_tot = 1
 #Important general values 
 MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC()
 print(x_AC_tot)
+#x_AC_tot = 16.8/2
+#MAC_tot = 10
+
 surf_tot,surf_fus,surf_wing = detSurfac()
 _,_,_,_,_,_,_,_,a = get_Lift_and_drag(AR_tot,delta)
 a = a*180/np.pi
@@ -41,14 +44,14 @@ l_aft = l_fus - l_cabin - l_cockpit
 
 _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry()
 sweep_angle_wing = 40*np.pi/180
-sweep_angle_fus = 55*np.pi/180
+sweep_angle_fus = 60*np.pi/180
 
 Cm0_wing = -0.129
 
 #Cm0_fus = -0.0026
 #Cm0_fus = -0.0022
-Cm0_fus = -0.0011
-#Cm0_fus =  -0.0355
+#Cm0_fus = -0.0011
+Cm0_fus =  -0.0355
 #Cm0_fus = -0.1158
 
 K_f = 0.25
@@ -86,7 +89,7 @@ x_AC_tail = l_cabin + l_cockpit + 2
 z_AC_tail = 1.51
 
 config = 1
-fuel = 2
+fuel = 1
 ##################################################################
 ######CG POSITION
 ##################################################################
