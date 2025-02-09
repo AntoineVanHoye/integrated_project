@@ -7,7 +7,7 @@ span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
 AR = 1.5                #Aspect ratio (guess)
-weight = 450000 #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
+weight = 304000 #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
 weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N] 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
@@ -147,7 +147,7 @@ def fuselageCL():
     cl_max = 1.7125
     alpha_L0 = -3 * (np.pi/180) #[rad]
     CD_fuselage = 0.0026
-    """
+    
     cl_alpha = (0.7236+0.2617)/(5+5) # NACA35118 M0.85 Re12M cm = -0.0022
     cl_max = 1.6876
     alpha_L0 = -2.5 * (np.pi/180) #[rad]
@@ -157,7 +157,7 @@ def fuselageCL():
     cl_max = 1.6841
     alpha_L0 = -2 * (np.pi/180) #[rad]
     CD_fuselage = 0.00597
-
+    """
     cl_alpha = (0.4819+0.1866)/(5+5) # NACA67-318 M0.85 Re12M cm = -0.0355
     cl_max = 1.4739
     alpha_L0 = -3 * (np.pi/180) #[rad]
