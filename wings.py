@@ -6,17 +6,18 @@ from scipy.integrate import trapz
 span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
-AR = 1               #Aspect ratio (guess)
-weight = 421107.572487209  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
+AR = 3.9              #Aspect ratio (guess)
+weight = 495451.163248632 #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
 weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N] 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
 gamma = 1.4
 e = 0.85                #Ostxald's efficiency factor
-delta = 0.005 #graph slide 61 lecture 6 aerodinimics
-sweep_LE_fus = 60     #[°] sweep angle
-twist_angle = -1         #[°] twist angle
+delta = 0.005           #graph slide 61 lecture 6 aerodinimics
+sweep_LE_fus = 60     #[°] sweep angle fuselage
+sweep_LE_wing = 20     #[°] sweep angle wing
+twist_angle = -2         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 
 
@@ -27,6 +28,8 @@ cl_plot = False
 lift_and_drag_plots = False
 
 #---Code---#
+def getAR():
+    return AR
 
 def winglet():
     #formule from Snoris
@@ -58,8 +61,9 @@ def true_airspeed_at_altitude(altitude):
 v = true_airspeed_at_altitude(alti)
 print(f"True airspeed at {alti} m: {v:.2f} m/s")
 
+"""
 def guess_CL_max():
-    CL = np.linspace(0, 1.0, 100)
+    CL = np.linspace(0, 1.5, 100)
     CD0 = 0.02              # Zero lift drag coeff
     CD = CD0 + CL*CL / (np.pi * AR * 0.85) # (Zero Lift drag + Induce drag)
 
@@ -84,16 +88,18 @@ def guess_CL_max():
     Cl_max = CL_max -  (CL_max*0.1)
 
     return Cl_max
+"""
 
-Cl_max = guess_CL_max()
+
 def detSurfac():
-    surface_total = 2*weight/(rho*(v**2)*Cl_max) 
+    surface_total = span_max**2/AR #2*weight/(rho*(v**2)*Cl_max) 
     surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2 +1)/np.tan((90-sweep_LE_fus)*np.pi/180))))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
     surface_wing = surface_total - surface_fuselage
     return surface_total, surface_fuselage, surface_wing   
 
 surface_total, surface_fuselage, surface_wing = detSurfac()
 
+Cl_max = (2*weight)/(rho*(v**2)*surface_total) #guess_CL_max()
 beta = np.sqrt(1-(M**2))
 
 
@@ -211,7 +217,7 @@ def wingGeometry():
 
     b = span_max - cabin_width - 2
     AR_wing = (b**2)/surface_wing
-    sweep_leading = 40 #[°]
+    sweep_leading = sweep_LE_wing#[°]
     """
     c_tip = 0.8 #[m]
     c_root = (2*surface_wing/b) - c_tip
@@ -238,10 +244,12 @@ def wingGeometry():
     c = [c_tip_fus, 8.5, 7.8, 7.3, 6.3, 5.7, 5.3, 5.0 , 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     """
 
-    h = [0.2, 0.4, 0.6, 0.8, (b*0.5) - 1.4] #[0.5, 1.0, 1.5, 2.0, 2.5 , (b*0.5) - 3.5] #[m]
+    #h = [0.2, 0.4, 0.6, 0.8, (b*0.5) - 1.4] #[0.5, 1.0, 1.5, 2.0, 2.5 , (b*0.5) - 3.5] #[m]
+    h = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, (b*0.5) - 1.4]
     Yposition = [0, h[0], h[0]+h[1], b/2]
-    c = [c_tip_fus, 7.51864968, 6.78573899, 6.18381709, 5.65259713, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
-    
+    #c = [c_tip_fus, 7.51864968, 6.78573899, 6.18381709, 5.65259713, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
+    c = [c_tip_fus, 7.500065654471188, 6.6515342770866, 5.919295847694265, 5.250786658155237, 4.625425101990652, 4.03259169538853, 3.4659748031966577, 2.9214890949003856, 0]
+
     S = np.zeros(len(h))
     S_sum =0
     for i in range(len(c)-2):
@@ -252,7 +260,6 @@ def wingGeometry():
     S[-1] = (surface_wing*0.5) - S_sum
     c[-1] = (2/h[-1]) * S[-1] - c[-2] #c_tip
 
-    sweep_leading = 40 #[°]
     sweep_leading = sweep_leading*((np.pi)/180)
     sweep_quarter = np.zeros(len(c)-1)
     sweep_trailing = np.zeros(len(c)-1)
@@ -555,7 +562,7 @@ def get_Lift_and_drag(AR, delta):
 def plotLiftDrag(lift_and_drag_plots):
     if lift_and_drag_plots == False:
         return
-    Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, CL_alfa =  get_Lift_and_drag(AR, delta)
+    Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, Cd_tot0, CL_alfa =  get_Lift_and_drag(AR, delta)
     plt.figure(figsize=(8,5))
     plt.plot(Cl_tot, Cl_tot/Cd_tot)
     plt.xlabel('$CL$')
@@ -570,14 +577,14 @@ def plotLiftDrag(lift_and_drag_plots):
 
     plt.figure(figsize=(8,5))
     plt.plot(AoA, Cl_tot)
-    plt.xlabel('$AoA$')
+    plt.xlabel('$AoA$ [rad]')
     plt.ylabel('$CL$')
     plt.show()
 
     plt.figure(figsize=(8,5))
     plt.plot(AoA, Cd_tot)
-    plt.xlabel('$AoA$')
-    plt.ylabel('$CL$')
+    plt.xlabel('$AoA$ [rad]')
+    plt.ylabel('$CD$')
     plt.show()
     return
 plotLiftDrag(lift_and_drag_plots)

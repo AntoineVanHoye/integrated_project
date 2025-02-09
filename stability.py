@@ -14,13 +14,14 @@ from wings import detSurfac
 from wings import wingCL
 from wings import fuselageCL
 from wings import get_Lift_and_drag
+from wings import getAR
 
 #values to calculate the coefficients 
 rho = air_density(12500)[0]
 speed = true_airspeed_at_altitude(12500)
 
 delta = 0.005
-AR_tot = 1
+AR_tot = getAR()
 #Important general values 
 MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC()
 print(x_AC_tot)
@@ -43,7 +44,7 @@ l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
 
 _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry()
-sweep_angle_wing = 40*np.pi/180
+sweep_angle_wing = 20*np.pi/180
 sweep_angle_fus = 60*np.pi/180
 
 Cm0_wing = -0.129
