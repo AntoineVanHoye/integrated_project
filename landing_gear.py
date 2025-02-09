@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import initmass as init
+import weight as whe
 
 #geometry
 x_cg = 9.4                 # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
@@ -199,4 +200,19 @@ print(w_g2,w_nose,w_rear)
 
 
 
+#CAD
+M =  0.453592 * np.array(whe.get_weight())
+print (M)
+Vol_aile = 3.98238578552851391
+Vol_aile2 = 3.98921089024740887
+Vol_fus = 12.04511198465683556
+densite_aile = M[2]/ (2*Vol_aile)
+densite_aile2 = M[2]/ (2*Vol_aile2)
+densite_ 
+
+
+print(densite_aile)
+print(densite_aile2)
+
 plt.show()
+3989210890.24740887
