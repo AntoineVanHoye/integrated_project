@@ -148,6 +148,11 @@ def fuselageCL():
     alpha_L0 = -3 * (np.pi/180) #[rad]
     CD_fuselage = 0.0026
     """
+    cl_alpha = (0.4819+0.1866)/(5+5) # NACA67-318 M0.85 Re12M cm = -0.0355
+    cl_max = 1.4739
+    alpha_L0 = -3 * (np.pi/180) #[rad]
+    CD_fuselage = 0.00431
+    
     cl_alpha = (0.3769+0.2766)/(5+5) # NACA 67-118 M0.85 Re12M cm = -0.0102
     cl_max = 1.447
     alpha_L0 = -1 * (np.pi/180) #[rad]
