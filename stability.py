@@ -15,6 +15,9 @@ from wings import wingCL
 from wings import fuselageCL
 from wings import get_Lift_and_drag
 from wings import getAR
+from wings import getSweep
+from wings import getAirfoilFus
+from wings import getAirfoilWing
 
 #values to calculate the coefficients 
 rho = air_density(12500)[0]
@@ -24,19 +27,15 @@ delta = 0.005
 AR_tot = getAR()
 #Important general values 
 MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC()
-print(x_AC_tot)
-#x_AC_tot = 16.8/2
-#MAC_tot = 10
 
 surf_tot,surf_fus,surf_wing = detSurfac()
 _,_,_,_,_,_,_,_,a = get_Lift_and_drag(AR_tot,delta)
-a = a*180/np.pi
 b = 29
+a = 8
 mean_chord = surf_tot/b
 MAC_tail = 1.483
 hor_tail_surf = 28.05 #34.75
 a1 = 0.919
-a1 = a1*180/np.pi
 a1_over_a = a1/a
 l_fus = 16.8
 l_cabin = 10.1
@@ -44,20 +43,11 @@ l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
 
 _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry()
-sweep_angle_wing = 20*np.pi/180
-sweep_angle_fus = 60*np.pi/180
+sweep_angle_wing = getSweep()[1]*np.pi/180
+sweep_angle_fus = getSweep()[0]*np.pi/180
 
-Cm0_wing = -0.129
-
-#Cm0_fus = -0.0026
-#Cm0_fus = -0.0022
-#Cm0_fus = -0.0011
-Cm0_fus =  -0.0355
-#Cm0_fus = -0.1158
-
-K_f = 0.25
-W_f = 3.024
-Cm_alpha_tot = K_f*l_fus*W_f**2/(MAC_tot*surf_tot)*180/np.pi
+Cm0_wing = getAirfoilWing()[4]
+Cm0_fus = getAirfoilFus()[4]
 
 #Calculation of the Cm0_tot ==> separate the integral in to parts
 def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing):
@@ -90,7 +80,7 @@ x_AC_tail = l_cabin + l_cockpit + 2
 z_AC_tail = 1.51
 
 config = 1
-fuel = 1
+fuel = 2
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -153,7 +143,6 @@ def CG_position(i,d):
         vol_fuel = 26854.56
         fuel_weight = vol_fuel*0.8*2.20462
         pourc_wings = available_fuel_vol/vol_fuel
-        pourc_wings = 0.7
         fuel_pos = wing_pos*pourc_wings + (1-pourc_wings)*(wing_pos-3.5)
 
     passengers_weight = passengers(i)[0]
@@ -234,7 +223,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing):
 
     #Cm_tot = Cm0_tot + Cl_tot* (x_CG_tot - x_AC_tot)/MAC_tot - Cm_T
     #translation equilibrium 
-    eq1 = Eq(L_tot + L_T - weight - Fp,0)
+    eq1 = Eq(L_tot + L_T - weight + Fp,0)
     
     #rotation equilibrium 
     #eq2 = Eq(Cm0_tot + L_tot*(x_CG_tot-x_AC_tot)/(1/2*rho*speed**2 * MAC_tot*surf_tot)-L_T*(x_AC_tail - x_CG_tot)/(1/2*rho*speed**2 * MAC_tail*hor_tail_surf)*V_T+T*(z_CG_motors - z_CG_tot),0)
@@ -281,7 +270,7 @@ def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing): #in the pitchin
 
     #page 416 Raymer
     q = 1/2*rho*speed**2
-    hn = (a * x_AC_tot/MAC_tot - Cm_alpha_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
+    hn = (a * x_AC_tot/MAC_tot +eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
 
     Kn = hn - x_CG_tot/MAC_tot 
 
@@ -309,7 +298,7 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn):
     Fp = prop_force()
     eta = 0.9
     q = 1/2*rho*speed**2
-    hn = (a * x_AC_tot/MAC_tot - Cm_alpha_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
+    hn = (a * x_AC_tot/MAC_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
     #x_CG = x_AC_tot/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps)) + x_AC_tail*a1_over_a*(1-deps)*hor_tail_surf/((1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*surf_tot)- Kn/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*MAC_tot
     x_CG = (hn*MAC_tot) - (Kn*MAC_tot)
     if Kn == 0.05:
