@@ -29,15 +29,15 @@ def get_weight():
     
         c_1 = 0.028  # for long range transport aircraft 
         b = 29  # Wingspan in m
-        s = 66.44  # Wing area in m²
-        Angle_25 = 32.123  # Quarter-chord sweep angle in degrees
-        lamda = 0.161  # Wing taper ratio
+        s = 70.76  # Wing area in m²
+        Angle_25 = 15.373  # Quarter-chord sweep angle in degrees
+        lamda = 0.272  # Wing taper ratio
         n = 2.5  #  Design normal acceleration factor
         v_cr = 340*0.9  # Cruise speed
         v_D = 1.25*v_cr  # Design dive speed in m/s (EAS : Equivalent Airspeed, airspeed at sea level that would produce the same dynamic pressure as the true airspeed at the aircraft's current altitude)
     
     
-        tau = 0.086/4.114   #mean thickness of airfoil/mean aerodynamic chord of wing  # Average thickness to chord ratio.
+        tau = 0.076/3.707   #mean thickness of airfoil/mean aerodynamic chord of wing  # Average thickness to chord ratio. /
         T_TO = 150 #?????? # Takeoff thrust per engine in kN
         T_pTO = 150 * 220.48089  # Takeoff thrust per engine in pounds of force
         BPR = 5  #?????? # Bypass ratio of engines
@@ -132,7 +132,7 @@ def get_weight():
         m_fuel = fuel_frac * MTOW
     
         # New values corrected 
-        m_eng = 3.565*2 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value)
+        m_eng = 3234.2*2.20462 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value) 
         m_fuel = 26854.56*0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
         
         # --- Compute new MTOW estimate --- 

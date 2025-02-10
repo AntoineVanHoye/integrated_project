@@ -7,7 +7,7 @@ span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
 AR = 4.5              #Aspect ratio (guess)
-weight = 439694.551776516 #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
+weight = 601216.369016191  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
 weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N] 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
@@ -16,7 +16,7 @@ gamma = 1.4
 e = 0.85                #Ostxald's efficiency factor
 delta = 0.005           #graph slide 61 lecture 6 aerodinimics
 sweep_LE_fus = 60     #[°] sweep angle fuselage
-sweep_LE_wing = 25     #[°] sweep angle wing
+sweep_LE_wing = 20     #[°] sweep angle wing
 twist_angle = -2         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 
@@ -42,7 +42,7 @@ def getSweep():
     return sweep_LE_fus, sweep_LE_wing
 
 def getAirfoilFus():
-    airfoil = 5
+    airfoil = 2
     if airfoil == 1:
         cl_alpha = ((1.0498+0.2062)/(5+5)) * (180/np.pi) # SC(2) 0518 M0 Re12M C_m = -0.1158
         cl_max = 1.87
@@ -219,7 +219,7 @@ def fusPlot(wing_plot):
     plt.axis('equal')
     plt.show() 
     return
-fusPlot(wing_plot)
+#fusPlot(wing_plot)
 
 def fuselageCL():
     # --- airfoil --- #
@@ -347,8 +347,7 @@ def getCalageAngle(CL):
     _, Cl_fuselage, Cd_fuselage, Cl_max_fus, _ = fuselageCL()
 
     # --- cl_alpha wing --- #
-    cl_alpha_wing = (1.1117+0.0543)/(5+5) * (180/np.pi)
-    alpha_L0_wing = -4.5*(np.pi/180)
+    cl_alpha_wing, cl_max, alpha_L0_wing, CD_wing, cm = getAirfoilWing()
 
     # --- Twist angle --- #
     alpha_01 = -0.17

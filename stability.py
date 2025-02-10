@@ -18,6 +18,7 @@ from wings import getAR
 from wings import getSweep
 from wings import getAirfoilFus
 from wings import getAirfoilWing
+from wings import getClAlfa
 
 #values to calculate the coefficients 
 rho = air_density(12500)[0]
@@ -28,14 +29,16 @@ AR_tot = getAR()
 #Important general values 
 MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC()
 
+
 surf_tot,surf_fus,surf_wing = detSurfac()
-_,_,_,_,_,_,_,_,a = get_Lift_and_drag(AR_tot,delta)
+_,_,_,_,_,_,_,_,_= get_Lift_and_drag(AR_tot,delta)
+a = getClAlfa()
 b = 29
 #a = 8
 mean_chord = surf_tot/b
-MAC_tail = 1.483
-hor_tail_surf = 28.05 #34.75
-a1 = 0.919
+
+hor_tail_surf = 47#34.75
+a1 = 3.16
 a1_over_a = a1/a
 l_fus = 16.8
 l_cabin = 10.1
@@ -73,10 +76,14 @@ print("----------------------------------------------------------------------")
 #Position of the important points
 z_AC_tot = 0
 z_CG_tot = 0
-
+MAC_tail = 4.56
 z_CG_motors = 1
 
-x_AC_tail = l_cabin + l_cockpit + 2
+x_AC_tail_local = 0.91
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local
+l_tail = 4.26
+
+
 z_AC_tail = 1.51
 
 config = 1
@@ -112,7 +119,7 @@ def CG_position(i,d):
 
     hydr_pos = 0.75*((l_fus - chord_tip_fus) + MAC_wing*0.2 + y_AC_wing*np.tan(sweep_angle_wing)) + 0.25 *(l_cockpit + l_cabin + 2)
 
-    payload_pos = l_cockpit + l_cabin
+    payload_pos = 0.75*(l_cockpit + l_cabin) + 0.25*l_cabin
 
     ops_pos = l_cockpit + 1
 
@@ -143,7 +150,7 @@ def CG_position(i,d):
         vol_fuel = 26854.56
         fuel_weight = vol_fuel*0.8*2.20462
         pourc_wings = available_fuel_vol/vol_fuel
-        fuel_pos = wing_pos*pourc_wings + (1-pourc_wings)*(wing_pos-3.5)
+        fuel_pos = wing_pos*pourc_wings + (1-pourc_wings)*l_fus*0.44
 
     passengers_weight = passengers(i)[0]
     passengers_pos = passengers(i)[1] 
@@ -174,10 +181,14 @@ def CG_position(i,d):
 
     return position, pourc_wings, motors_pos/MAC_tot, total_weight 
 
-print("--------------------------FUEL STORAGE--------------------------------------------")
-print(CG_position(config,fuel)[1]*100,"% of the total fuel volume is stored in the wings.")
+print("--------------------------TAIL--------------------------------------------")
+print("The position of the aerodynamic center of the tail is at",x_AC_tail," m and the end of the tail is at",x_AC_tail- x_AC_tail_local + l_tail,"m from the nose and the distance between x_AC_tail and x_CG_tot is",x_AC_tail - CG_position(config,fuel)[0],"m.")
 print("----------------------------------------------------------------------")
-        
+
+print("--------------------------FUEL STORAGE--------------------------------------------")
+print(CG_position(config,fuel)[1]*100,"% of the total fuel volume is stored in the wings and we need",(1-CG_position(config,fuel)[1])*26854.56/1000,"m³ in the fuselage.")
+print("----------------------------------------------------------------------")
+
 print("--------------------------CENTER OF GRAVITY--------------------------------------------")
 print("The center of gravity is positioned at",CG_position(config,fuel)[0],"m (",CG_position(config,fuel)[0]*100/l_fus,"%) from the nose of the airplane.")
 print("----------------------------------------------------------------------")
@@ -213,6 +224,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing):
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d)
     T = 42676.35
+    #T = 160000
     #drag_tail = 
     x_CG_tot = CG_position(i,d)[0]
     weight = CG_position(i,d)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
