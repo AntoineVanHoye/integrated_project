@@ -31,7 +31,7 @@ MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_to
 surf_tot,surf_fus,surf_wing = detSurfac()
 _,_,_,_,_,_,_,_,a = get_Lift_and_drag(AR_tot,delta)
 b = 29
-a = 8
+#a = 8
 mean_chord = surf_tot/b
 MAC_tail = 1.483
 hor_tail_surf = 28.05 #34.75
