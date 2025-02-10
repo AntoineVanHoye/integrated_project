@@ -17,7 +17,7 @@ e = 0.85                #Ostxald's efficiency factor
 delta = 0.005           #graph slide 61 lecture 6 aerodinimics
 sweep_LE_fus = 60     #[°] sweep angle fuselage
 sweep_LE_wing = 20     #[°] sweep angle wing
-twist_angle = -2         #[°] twist angle
+twist_angle = -1         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 
 
@@ -240,7 +240,7 @@ def fuselageCL():
         if AoA[i] <= 0:
             if AoA[i+1] >= 0:
                 CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
-    CL_w0 = a*(0 - alpha_L0)
+    CL_w0 = a*(2*(np.pi/180) - alpha_L0)
 
     if cl_plot:
         plt.plot(AoA*(180/(np.pi)), CL_w)
@@ -525,7 +525,7 @@ def plotAllWing(wing_plot):
     plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(sweep_LE_fus*(np.pi/180))), color='red')
     plt.scatter(yac_wing,  xac_wing, color='orange')
     leading_edge_fus_x = np.interp(yac_fus, y_fus, leading_edge_fus)
-    leading_edge_wing_x = np.interp(yac_wing+3.5, y_wing, leading_edge_wing)
+    leading_edge_wing_x = np.interp(yac_wing , y_wing, leading_edge_wing)
     plt.plot((yac_fus, yac_fus), (leading_edge_fus_x, leading_edge_fus_x + MAC_fus), color='red')
     plt.plot((yac_wing, yac_wing), (leading_edge_wing_x , leading_edge_wing_x + MAC_wing), color='orange')
 
