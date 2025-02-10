@@ -29,7 +29,6 @@ AR_tot = getAR()
 #Important general values 
 MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC()
 
-
 surf_tot,surf_fus,surf_wing = detSurfac()
 _,_,_,_,_,_,_,_,_= get_Lift_and_drag(AR_tot,delta)
 a = getClAlfa()
@@ -37,8 +36,8 @@ b = 29
 #a = 8
 mean_chord = surf_tot/b
 
-hor_tail_surf = 47#34.75
-a1 = 3.16
+hor_tail_surf = 43.60964131949314#34.75
+a1 = 3.285342243217947
 a1_over_a = a1/a
 l_fus = 16.8
 l_cabin = 10.1
@@ -67,6 +66,10 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing):
     return Cm0_tot,Cm0_fus,Cm0_wing
 
 
+print("--------------------------AERODYNAMIC CENTER--------------------------------------------")
+print("The aerodynamic center is positioned at",x_AC_tot,"from the nose of the airplane, which represents",x_AC_tot*100/l_fus,"% of the total length.")
+print("----------------------------------------------------------------------")
+
 print("--------------------------CM0--------------------------------------------")
 print("The blended wing body has a Cm0_tot of",Cm0(Cm0_fus,Cm0_wing)[0])
 print("The wings have a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing)[2],". It represents",Cm0(Cm0_fus,Cm0_wing)[2]/Cm0(Cm0_fus,Cm0_wing)[0]*100,"% of the pitching moment of the airplane.")
@@ -76,18 +79,18 @@ print("----------------------------------------------------------------------")
 #Position of the important points
 z_AC_tot = 0
 z_CG_tot = 0
-MAC_tail = 4.56
+MAC_tail = 4.05579208235978
 z_CG_motors = 1
 
-x_AC_tail_local = 0.91
-x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local
-l_tail = 4.26
+x_AC_tail_local = MAC_tail*0.2
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 0.4
+l_tail = MAC_tail
 
 
 z_AC_tail = 1.51
 
-config = 1
-fuel = 2
+config = 3
+fuel = 1
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -117,9 +120,9 @@ def CG_position(i,d):
 
     APU_pos = l_cockpit + l_cabin
 
-    hydr_pos = 0.75*((l_fus - chord_tip_fus) + MAC_wing*0.2 + y_AC_wing*np.tan(sweep_angle_wing)) + 0.25 *(l_cockpit + l_cabin + 2)
+    hydr_pos = 0.75*wing_pos + 0.25 *x_AC_tail
 
-    payload_pos = 0.75*(l_cockpit + l_cabin) + 0.25*l_cabin
+    payload_pos = 0.25*(l_cockpit + l_cabin) + 0.75*l_cockpit
 
     ops_pos = l_cockpit + 1
 
@@ -223,7 +226,7 @@ def fus_lift():
 def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing): 
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d)
-    T = 42676.35
+    T = 49734.78
     #T = 160000
     #drag_tail = 
     x_CG_tot = CG_position(i,d)[0]

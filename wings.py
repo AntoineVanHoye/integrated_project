@@ -6,17 +6,17 @@ from scipy.integrate import trapz
 span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
-AR = 4.5              #Aspect ratio (guess)
-weight = 601216.369016191  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
-weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N] 
+AR = 4.57           #Aspect ratio (guess)
+weight =   595938.928245302  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
+weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N]S 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
 gamma = 1.4
 e = 0.85                #Ostxald's efficiency factor
 delta = 0.005           #graph slide 61 lecture 6 aerodinimics
-sweep_LE_fus = 60     #[°] sweep angle fuselage
-sweep_LE_wing = 20     #[°] sweep angle wing
+sweep_LE_fus = 55   #[°] sweep angle fuselage
+sweep_LE_wing = 22.5 #[°] sweep angle wing
 twist_angle = -1         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 
@@ -103,14 +103,18 @@ def getAirfoilWing():
         cl_max = 1.4
         alpha_l0 = -7*(np.pi/180)
         CD_wing = 0.01091 #at 6° aoa  and at 0° aoa = 0.006
+        cm = -0.1518
     elif airfoil == 3:
         cl_alpha = (0.5765-0)/(5+0) * (180/np.pi) # SC(2)-0012 M0.85 Re12M
         alpha_l0 = 0
         CD_wing = 0.0059 
+
     elif airfoil == 4:
         cl_alpha = (0.8293+0.3558)/(5+5) * (180/np.pi) # SC(2)-0410 M0.85 Re12M
         alpha_l0 = -2*(np.pi/180)
+        cl_max = 2.1599
         CD_wing = 0.006
+        cm = -0.077
     elif airfoil == 5:
         cl_alpha = (1.7-0)/(4+12) * (180/np.pi) # NACA 64209 M0.85 Re6M
         alpha_l0 = -12*(np.pi/180)
@@ -194,7 +198,7 @@ def fusGeometry():
     sweep_quarter = np.arctan(np.tan(sweep_leading) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
     sweep_trailing = 0 # np.arctan(np.tan(sweep_quarter) + (4/AR_fuselage) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
     sweep_beta = np.arctan2(np.tan(sweep_quarter), beta) 
-
+    
     y = np.linspace(0, b/2, 10)
     quarter_line = np.zeros(len(y))
     leading_edge = np.zeros(len(y))
@@ -437,7 +441,7 @@ def getMAC():
     cy_fus = c_fus*y_fus
     yac_fus = (2/surface_fuselage) * trapz(cy_fus, y_fus)
 
-    xac_fus = MAC_fus*0.1  # keep attention that it is an estimation the table don't give the value for this very low AR
+    xac_fus = MAC_fus*0.4  # keep attention that it is an estimation the table don't give the value for this very low AR
     x_tmp = leading_fus[np.argmin(abs(y_fus - yac_fus))]
     xac_fus = x_tmp+xac_fus 
 
@@ -446,7 +450,7 @@ def getMAC():
     MAC_wing = (2/surface_wing) * trapz(c_wing**2, y_wing) #numerical integration via method of trapez
     cy_wing = c_wing*y_wing
     yac_wing = (2/surface_wing) * trapz(cy_wing, y_wing)
-    xac_wing = MAC_wing*0.23
+    xac_wing = MAC_wing*0.29
     
     x_tmp = leading_wing[np.argmin(abs(y_wing - yac_wing))]
     xac_wing = x_tmp+xac_wing + (cabin_lenght - c_wing[0])
@@ -460,7 +464,9 @@ def getMAC():
     MAC = (2/surface_total) * trapz(c**2, y)
     cy = c*y
     yac = (2/surface_total) * trapz(cy, y)
-    xac = 0.1*MAC # keep attention that it is an estimation the table don't give the value for this very low AR
+
+    MAC = ((MAC_wing*surface_wing) + (MAC_fus*surface_fuselage))/surface_total
+    xac = 0.275*MAC # keep attention that it is an estimation the table don't give the value for this very low AR
 
     x_tmp = leading[np.argmin(abs(y - yac))]
     xac = x_tmp+xac 
