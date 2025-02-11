@@ -90,7 +90,7 @@ l_tail = MAC_tail
 z_AC_tail = 1.51
 
 config = 3
-fuel = 1
+fuel = 2
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -230,7 +230,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing):
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d)
     T = 49734.78
-    #T = 160000
+    #T = 200000
     #drag_tail = 
     x_CG_tot = CG_position(i,d)[0]
     weight = CG_position(i,d)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592

@@ -7,7 +7,7 @@ span_max = 29           #[m] Span  max span for airport
 cabin_width = 7         #[m] 
 cabin_lenght = 16.8     #[m] 
 AR = 4.57           #Aspect ratio (guess)
-weight =   595938.928245302  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
+weight =   644501.924618083  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
 weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N]S 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
