@@ -23,9 +23,9 @@ twist_angle = -1         #[°] twist angle
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 cl_plot = False
-lift_and_drag_plots = False
+lift_and_drag_plots = True
 
 #---Code---#
 def getAR():
@@ -566,15 +566,17 @@ def get_Lift_and_drag(AR, delta):
     Cd_induce = ((Cl_tot**2)/(np.pi* AR)) * (1+delta)
     #print(f"delta Cd = {(((Cl_tot[np.where(abs(AoA) <= 1e-12)]**2)/(np.pi* (AR-winglet()))) * (1+delta))-Cd_induce[np.where(abs(AoA) <= 1e-12)]}")
     Cd_tot = np.zeros(len(AoA))
-    Cd_tot = Cd_induce + (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
+    cd0 = 0.018 # Snorri's book page 755
+    Cd_tot = Cd_induce + cd0 #(((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
+    #print("cd0: ", (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total))
+    
     #Cd_tot0 = float(Cd_tot[np.where(abs(AoA) <= 1e-12)])
     Cd_tot0 = np.interp(0, AoA, Cd_tot)
     
     CL_alfa = (Cl_tot[-1] - Cl_tot[0])/(AoA[-1] - AoA[0])
-    #print(f"CL_alfa_wing = {a_wing}")
-    #print(f"CL_alfa_fuselage = {a_fus}")
+    
     CL_alfa = ((a_wing*surface_wing) + (a_fus*surface_fuselage))/surface_total 
-    #print(f"CL_alfa = {CL_alfa}")
+    
     return Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, Cd_tot0, CL_alfa
 
 def getClAlfa():
@@ -681,17 +683,21 @@ def getReynold(altitude, c):
     return Re
 
 def printFunction():
-
+    _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry()
+    _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry()
+    print("\n-------------- Total values --------------\n")
     print(f"New AR = {AR:.3f} [-]")
     print(f"Beta = {beta:.3f} [-]\n")
     print(f"Cl max used = {Cl_max:.2f} [-]\n")
     print(f"Total area = {surface_total:.2f} [m^2]")
     print(f"Surface of fuselage = {surface_fuselage:.2f} [m^2]")
-    print(f"Surface of wing = {surface_wing:.2f} [m^2] \n")
+    print(f"Surface of wing = {surface_wing:.2f} [m^2]")
     print(f"Compressibility parameter: {beta:.3f} [-]")
+    print(f"Taper ratio: {c_tip_wing/c_root_fus:.3f} [-]")
     
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry()
     Cl_wing, Cl_wing_0, Cd_wing, Cl_max_wing, alpha_L0, a_wing = wingCL()
+    cl_alpha_wing, cl_max_wing, alpha_l0_wing, CD_wing, cm_wing = getAirfoilWing()
     print("\n-------------- wing values --------------\n")
     print(f"\nAR wing: {AR_wing:.3f} [-] \nCL_w0 wing = {Cl_wing_0:.3f} [-]\n")
     print(f"Cord at wing root: {c_root:.3f} [m]\nCorde at wing tip: {c_tip:.3f} [m]")
@@ -699,17 +705,21 @@ def printFunction():
     print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f} [°]")
     print(f"Wing lift coefficient derivative: {a_wing:.3f}")
     print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
+    print(f"Cl max wing: {Cl_max_wing} [-]")
+    print(f"cl alpha wing: {cl_alpha_wing:.3f} [rad^-1]\n")
     
 
     b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry()
     Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL()
+    cl_alpha_fus, cl_max_fus, alpha_l0_fus, CD_fus, cm_fus = getAirfoilFus()
     print("\n-------------- fuselage values --------------\n")
     print(f"\nAR fuselage: {AR_fuselage:.3f} [-]\nCL_w0 fuselage = {Cl_fuselage_0:.3f} [-]\n")
     print(f"Cord at fuselage root: {c_root:.3f} [m]\nCorde at fuselage tip: {c_tip:.3f} [m]")
     print(f"Taper ratio: {taper_ratio:.3f} [-]")
     print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
-    print(f"Fuselage lift coefficient derivative: {a_fus:.3f}\n")
-
+    print(f"Fuselage lift coefficient derivative: {a_fus:.3f}")
+    print(f"Cl max fuselage: {Cl_max_fus:.3f} [-]")
+    print(f"cl alpha fuselage: {cl_alpha_fus:.3f} [rad^-1]\n")
     
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
     Mgc, y_mgc, Cwre = getMAC2()
@@ -722,12 +732,14 @@ def printFunction():
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
     lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa, Cd_tot0, CL_alfa = get_Lift_and_drag(AR, delta)
+    print("\n-------------- Lift and drag --------------\n")
     print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
     print(f"Cl max: {CL_max:.3f} [-]")
     print(f"Lift coefficient derivative CL_alfa: {CL_alfa:.3f} [rad^-1]")
     print(f"CD0: {Cd_tot0:.3f} [-]\n")
     
     t_root, t_tip,t_bar_over_C = wingMaxthickness()
+    print("\n-------------- Other value --------------\n")
     print(f"Thickness root: {t_root:.3f}, thickness tip: {t_tip:.3f}")
     print(f"tbar over c: {t_bar_over_C:.3f} [-]\n")
     #print(f"Mean thinckness: {(t_root+t_tip)/2:.3f}\n")
@@ -742,7 +754,7 @@ def printFunction():
     print(f"Stall velocity: {Vs:.3f} [m/s]\nStall velocity in approach config: {Vs0:.3f} [m/s]\n")
     
     AoA_root,_ = getCalageAngle(Cl_max)
-    print(f"AoA root needed: {AoA_root*(180/np.pi):.3} [°]")
+    print(f"Setting angle: {AoA_root*(180/np.pi):.3} [°]")
     print(f"AoA zero lift: {AoA_L0:.3f} [°]")
     
     Re = getReynold(alti, MAC)
