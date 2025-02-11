@@ -5,9 +5,9 @@ import initmass as init
 import weight as whe
 
 #geometry
-x_cg = 9.4                 # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
-y_cg = -0.5                    # coordinate in y of the center of gravity (estimate)
-Vstall = 52.57              # stalling velocity with flaps(m/s)
+x_cg = 10.44                  # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
+y_cg = 0                # coordinate in y of the center of gravity (estimate)
+Vstall = 52.57* 3.2808399   # stalling velocity with flaps(m/s)
 Cl0 = 0.244                 # lift coefficient at 0 degree angle
 a = 1.754                   # Cl derivative in alpha
 S = 204.41                  # Surface of the wing m^2
@@ -15,8 +15,8 @@ S = 204.41                  # Surface of the wing m^2
 x_fus = 16.8                # lenght of fuselage
 
 #takeoff general data
-theta_LOF = 15               # maximum pitch angle margin to take before takeoff
-theta_margin = 2
+theta_LOF = 20              # maximum pitch angle margin to take before takeoff
+theta_margin = 0
 theta_TOA = 25              # turnover angle
 S = 1829                        # maximum airplane runway (less than 1800 m idealy)
 rhoair_grnd_20 = 1.395          # air density on the ground kg/m3 at 20° Fahrenheit
@@ -198,21 +198,63 @@ w_nose = w_nfwd * w_g1
 w_rear = w_mfwd * w_g1
 print(w_g2,w_nose,w_rear)
 
+# wheel
+
+M_sl_m = w_maft* W_l/2* 1.07*1.25                           # maximum static load main gear
+M_sl_n = w_nfwd* W_l* 1.07*1.25                             # maximum static load nose gear
+M_bl_n = (M_sl_n + (10*H*W_l)/(32.2*(x_w-x_n)))* 1.07*1.25  # maximum braking load nose gear
+
+N_w_main = 2
+N_w_nose = 2
+
+M_w_m = M_sl_m / N_w_main
+M_w_n = M_sl_n / N_w_nose
+M_wb_n = M_bl_n / N_w_nose
+M_wb_n2 = M_wb_n /1.3
+print(f'Total weight: {W_l}, Static load main weel: {M_w_m}, Static load nose wheel: {M_w_n}, Braking load nose gear: {M_wb_n} (all lbs), Braking load nose gear (for diameter): {M_wb_n2} (all lbs)')
+
+# main wheel :
+D_max_m = 39.80 #inch
+W_max_m = 14 #inch
+D_wheel_m = 16  #inch
+Rr_m = 16.5
+
+# nose wheel :
+D_max_m = 29.40     #inch
+W_max_m = 7.85      #inch
+D_wheel_m = 16      #inch
+Rr_n = 12.7         #inch
+
+# braking
+
+KE_b = 1/2*(W_l/32.2)*(Vstall)**2
+
+KE_b_w = KE_b /4
+
+print(f'Braking kinetic energy per wheel : {KE_b_w}')
+
+
+S = 3625.94344325
+
+N = np.int64((30*W_l*Rr_m/12)/(4*np.pi*((8/12)**3-(2/12)**3)*S*4*32.2)+1)
+print(f'n: {N}')
+# damping
+
 
 
 #CAD
 M =  0.453592 * np.array(whe.get_weight())
-print (M)
+#print (M)
 Vol_aile = 3.98238578552851391
 Vol_aile2 = 3.98921089024740887
 Vol_fus = 12.04511198465683556
 densite_aile = M[2]/ (2*Vol_aile)
 densite_aile2 = M[2]/ (2*Vol_aile2)
-densite_ 
 
 
-print(densite_aile)
-print(densite_aile2)
+#print(densite_aile)
+#print(densite_aile2)
+
 
 plt.show()
-3989210890.24740887
+
