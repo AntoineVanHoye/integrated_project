@@ -1,7 +1,34 @@
 import numpy as np
 import math
 
+# Function to calculate air density using the ISA model
+# Up to 11 km (Troposphere)
+R = 287.05  # [m^2/s^2K]
+gamma = 1.4
+T_0 = 288.15 #[K]
+rho_0 = 1.225  #[kg/m^3]
+g = 9.81 #[m/s^2]
+L =  0.0065
+p_0 = 101325
 
+
+def air_density(altitude):
+    # Up to 11 km (Troposphere)
+    if altitude <= 11000:
+        T = T_0 - L * altitude  # Temperature [K]
+        p = p_0 * (T / 288.15) ** 5.2561  # Pressure [Pa]
+    else:
+        # Simplification for stratosphere, constant T [K] above 11 km
+        T = 216.65  # Constant temperature [K]
+        p = 22632 * np.exp(-9.81 * (altitude - 11000) / (287.05 * T))
+    rho = p / (287.05 * T)  # Air density [kg/m^3]
+    return rho, T, p
+
+def true_airspeed_at_altitude(M, altitude):
+    T = air_density(altitude)[1]
+    a = np.sqrt(gamma * R * T)  # [m/s] Speed of sound
+    v = M * a  # [m/s] Aircraft velocity
+    return v
 
 # -----------------
 # Weight Estimation
@@ -29,15 +56,18 @@ def get_weight():
     
         c_1 = 0.028  # for long range transport aircraft 
         b = 29  # Wingspan in m
-        s = 66.44  # Wing area in m²
-        Angle_25 = 32.123  # Quarter-chord sweep angle in degrees
-        lamda = 0.161  # Wing taper ratio
+        s = 70.76  # Wing area in m²
+        Angle_25 = 15.373  # Quarter-chord sweep angle in degrees
+        lamda = 0.272  # Wing taper ratio
         n = 2.5  #  Design normal acceleration factor
-        v_cr = 340*0.9  # Cruise speed
-        v_D = 1.25*v_cr  # Design dive speed in m/s (EAS : Equivalent Airspeed, airspeed at sea level that would produce the same dynamic pressure as the true airspeed at the aircraft's current altitude)
+
+        altitude = 12500
+        rho_alt, T_alt, p_alt = air_density(altitude)
+        v_cr = true_airspeed_at_altitude(0.9, altitude)
+        v_cr = v_cr * np.sqrt(rho_alt/rho_0)
+        v_D = 1.25 * v_cr  # Design dive speed in m/s (EAS : Equivalent Airspeed, airspeed at sea level that would produce the same dynamic pressure as the true airspeed at the aircraft's current altitude)
     
-    
-        tau = 0.086/4.114   #mean thickness of airfoil/mean aerodynamic chord of wing  # Average thickness to chord ratio.
+        tau = 0.076/3.707   #mean thickness of airfoil/mean aerodynamic chord of wing  # Average thickness to chord ratio. /
         T_TO = 150 #?????? # Takeoff thrust per engine in kN
         T_pTO = 150 * 220.48089  # Takeoff thrust per engine in pounds of force
         BPR = 5  #?????? # Bypass ratio of engines
@@ -71,7 +101,7 @@ def get_weight():
     
         # Wing (from Howe's but with corrections for use of composites)  [kg]
         m_wing = 0.8 * c_1 * ((b*s/np.cos(np.pi/180*Angle_25)) * ((1 + 2* lamda)/(3 + 3*lamda)) * (MTOW/2.204*n/s)**(0.3) * ((v_D/tau))**(0.5) )**(0.9)   #Le mec l'utilise directement en lbs mais je pense qu'il faut convertir pcq l'article sur lequel c'est basé parle en kg
-        m_wing = m_wing * 2.205 # converted in kg
+        m_wing = m_wing * 2.205 # converted in lbs
     
         # Landing Gear [lbs] 
         m_LG = 0.0445 * MTOW
@@ -132,8 +162,9 @@ def get_weight():
         m_fuel = fuel_frac * MTOW
     
         # New values corrected 
-        m_eng = 3.565*2 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value)
+        m_eng = 3234.2*2.20462 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value) 
         m_fuel = 26854.56*0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
+        m_fuel = 0
         
         # --- Compute new MTOW estimate --- 
         m_prediction = m_cab + m_aft + m_wing + m_LG + m_eng + m_nacgrp + m_APU + m_instr + m_hydr + m_furn + m_AC + m_payload + m_passenger + m_ops + m_elec + m_fltcon + m_fuel
@@ -155,10 +186,10 @@ def get_weight():
         percentage = (mass / m_prediction) * 100
         print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
     
-    print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
-    print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
-    print("") # Vertical line space
-    print(f"The MOTW converged in {iteration} iterations.")
+    #print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
+    #print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
+    #print("") # Vertical line space
+    #print(f"The MOTW converged in {iteration} iterations.")
 
     return (m_cab, m_aft, m_wing, m_LG, m_eng, m_nacgrp, m_APU, m_enginst, m_instr, m_hydr,
             m_furn, m_AC, m_payload, m_ops, m_elec, m_fltcon, m_fuel, m_prediction, m_passenger)
