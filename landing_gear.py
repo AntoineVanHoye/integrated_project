@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import math
 import initmass as init
 import weight as whe
+import pandas as pd
+
 
 #geometry
 x_cg = 8.980632020973697                 # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
@@ -56,22 +58,23 @@ print(f"At 20 degree F :{AlphaLOF_20}",f"At 85 degree F :{AlphaLOF_85}")
 
 
  #affichage figure
-
-# Load the points from a Selig-format file
-with open("sc2018.txt", "r") as file:
-    # Skip the first line (airfoil name)
-    airfoil_name = file.readline().strip()
     
     # Load coordinates from the remaining lines
-    points = np.loadtxt(file)
-
+points = pd.read_csv(r"Airfoils\NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
 # Extract x and y coordinates
+print(points)
 x, y = points[:, 0]*x_fus, points[:, 1]*x_fus
 
 transla = np.ones((len(x))) *16.185
 transla_b = np.ones((len(x))) *7.794
-x_t, y_t = points[:, 0]*1.448 + transla , points[:, 1]*1.448 #draw the rear wing limit
-x_b, y_b = points[:, 0]*9.006+ transla_b , points[:, 1]*9.006
+
+
+points2 = pd.read_csv(r"Airfoils\NASASC(2)0010.csv", sep=",", header=None).to_numpy()
+transla = np.ones((len(points2[:,0]))) *16.185
+transla_b = np.ones((len(points2[:,0]))) *7.794
+print(points2)
+x_t, y_t = points2[:, 0]*1.448 + transla , points2[:, 1]*1.448 #draw the rear wing limit
+x_b, y_b = points2[:, 0]*9.006+ transla_b , points2[:, 1]*9.006
 
 H = (x_t[-1]-x_cg-np.tan(np.pi/2-np.radians(theta_LOF))*(-y_cg + y_t[-1]))/(np.tan(np.radians(theta_LOF+theta_margin))+np.tan(np.pi/2-np.radians(theta_LOF)))
 h = H * np.tan(np.radians(theta_LOF+theta_margin))
@@ -98,8 +101,8 @@ print(f'Coordinates of forward landing gear (m): {x_w,y_w}')
 plt.figure(figsize=(8, 4))
 z_cg = 0
 z = np.zeros((len(x)))
-z_b = np.ones((len(x))) * 4.5
-z_t = np.ones((len(x))) * 14.5
+z_b = np.ones((len(x_b))) * 4.5
+z_t = np.ones((len(x_t))) * 14.5
 z_n = 0
 plt.plot(z,x, marker=None, markersize=2, linestyle='-', color='blue')
 
