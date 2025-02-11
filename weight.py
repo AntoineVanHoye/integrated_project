@@ -56,9 +56,9 @@ def get_weight():
     
         c_1 = 0.028  # for long range transport aircraft 
         b = 29  # Wingspan in m
-        s = 70.76  # Wing area in m²
-        Angle_25 = 15.373  # Quarter-chord sweep angle in degrees
-        lamda = 0.272  # Wing taper ratio
+        s = 61.75  # Wing area in m² #change
+        Angle_25 = 16.646  # Quarter-chord sweep angle in degrees #change
+        lamda = 0.144  # Wing taper ratio #change
         n = 2.5  #  Design normal acceleration factor
 
         altitude = 12500
@@ -67,9 +67,9 @@ def get_weight():
         v_cr = v_cr * np.sqrt(rho_alt/rho_0)
         v_D = 1.25 * v_cr  # Design dive speed in m/s (EAS : Equivalent Airspeed, airspeed at sea level that would produce the same dynamic pressure as the true airspeed at the aircraft's current altitude)
     
-        tau = 0.076/3.707   #mean thickness of airfoil/mean aerodynamic chord of wing  # Average thickness to chord ratio. /
+        tau = 0.077/3.476   #mean thickness of airfoil/mean aerodynamic chord of wing  # Average thickness to chord ratio. #change
         T_TO = 150 #?????? # Takeoff thrust per engine in kN
-        T_pTO = 150 * 220.48089  # Takeoff thrust per engine in pounds of force
+        T_pTO = 95*2* 220.48089  # Takeoff thrust per engine in pounds of force
         BPR = 5  #?????? # Bypass ratio of engines
         n_fdcrew = 2  # Number of pilots
         n_pax = 8  # Number of passengers
@@ -162,9 +162,8 @@ def get_weight():
         m_fuel = fuel_frac * MTOW
     
         # New values corrected 
-        m_eng = 3234.2*2.20462 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value) 
+        m_eng = 4354*2.20462 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value) 
         m_fuel = 26854.56*0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
-        m_fuel = 0
         
         # --- Compute new MTOW estimate --- 
         m_prediction = m_cab + m_aft + m_wing + m_LG + m_eng + m_nacgrp + m_APU + m_instr + m_hydr + m_furn + m_AC + m_payload + m_passenger + m_ops + m_elec + m_fltcon + m_fuel
@@ -184,7 +183,7 @@ def get_weight():
 
     for component, mass in components.items():
         percentage = (mass / m_prediction) * 100
-        print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
+        #print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
     
     #print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
     #print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
