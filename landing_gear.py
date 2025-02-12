@@ -3,9 +3,11 @@ import matplotlib.pyplot as plt
 import math
 import initmass as init
 import weight as whe
+import pandas as pd
+
 
 #geometry
-x_cg = 10.44                  # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
+x_cg = 8.980632020973697                 # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
 y_cg = 0                # coordinate in y of the center of gravity (estimate)
 Vstall = 52.57* 3.2808399   # stalling velocity with flaps(m/s)
 Cl0 = 0.244                 # lift coefficient at 0 degree angle
@@ -15,7 +17,7 @@ S = 204.41                  # Surface of the wing m^2
 x_fus = 16.8                # lenght of fuselage
 
 #takeoff general data
-theta_LOF = 20              # maximum pitch angle margin to take before takeoff
+theta_LOF = 16              # maximum pitch angle margin to take before takeoff
 theta_margin = 0
 theta_TOA = 25              # turnover angle
 S = 1829                        # maximum airplane runway (less than 1800 m idealy)
@@ -56,22 +58,23 @@ print(f"At 20 degree F :{AlphaLOF_20}",f"At 85 degree F :{AlphaLOF_85}")
 
 
  #affichage figure
-
-# Load the points from a Selig-format file
-with open("sc2018.txt", "r") as file:
-    # Skip the first line (airfoil name)
-    airfoil_name = file.readline().strip()
     
     # Load coordinates from the remaining lines
-    points = np.loadtxt(file)
-
+points = pd.read_csv(r"Airfoils\NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
 # Extract x and y coordinates
+print(points)
 x, y = points[:, 0]*x_fus, points[:, 1]*x_fus
 
 transla = np.ones((len(x))) *16.185
 transla_b = np.ones((len(x))) *7.794
-x_t, y_t = points[:, 0]*1.448 + transla , points[:, 1]*1.448 #draw the rear wing limit
-x_b, y_b = points[:, 0]*9.006+ transla_b , points[:, 1]*9.006
+
+
+points2 = pd.read_csv(r"Airfoils\NASASC(2)0010.csv", sep=",", header=None).to_numpy()
+transla = np.ones((len(points2[:,0]))) *16.185
+transla_b = np.ones((len(points2[:,0]))) *7.794
+print(points2)
+x_t, y_t = points2[:, 0]*1.448 + transla , points2[:, 1]*1.448 #draw the rear wing limit
+x_b, y_b = points2[:, 0]*9.006+ transla_b , points2[:, 1]*9.006
 
 H = (x_t[-1]-x_cg-np.tan(np.pi/2-np.radians(theta_LOF))*(-y_cg + y_t[-1]))/(np.tan(np.radians(theta_LOF+theta_margin))+np.tan(np.pi/2-np.radians(theta_LOF)))
 h = H * np.tan(np.radians(theta_LOF+theta_margin))
@@ -87,35 +90,7 @@ y_cgfwd = y_cg
 
 print(f'Coordinates of forward landing gear (m): {x_w,y_w}')
 
-# Plot the airfoil
-plt.figure(figsize=(8, 4))
-plt.plot(x, y, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(x_t, y_t, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(x_b, y_b, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(x_cg,y_cg,marker='o', markersize=7,color= 'red',label ='cg.aft')
-plt.plot(x_w ,y_w ,marker='o', markersize=7,color= 'black')
 
-plt.plot(x_n,y_n ,marker='o', markersize=7,color= 'black')
-plt.plot(x_cgfwd,y_cgfwd ,marker='x', markersize=7,color= 'red',label = 'cg.fwd')
-
-
-#Draw lines
-line = [[x_t[-1],x_w],[y_t[-1],y_w]]
-line_cg = [[x_cg,x_w],[y_cg,y_w]]
-plt.plot(line[0], line[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
-plt.plot(line_cg[0], line_cg[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
-
-line = [[x_t[-1],x_w],[y_t[-1],y_w]]
-line_cg = [[x_cg,x_w],[y_cg,y_w]]
-plt.plot(line[0], line[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
-plt.plot(line_cg[0], line_cg[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
-
-
-plt.title(f"Longitudinal disposition of the landing gear")
-plt.xlabel("x-[m]")
-plt.ylabel("y-[m]")
-plt.axis("equal")  # Ensure equal scaling on both axes
-plt.grid(True)
 
 
 
@@ -126,8 +101,8 @@ plt.grid(True)
 plt.figure(figsize=(8, 4))
 z_cg = 0
 z = np.zeros((len(x)))
-z_b = np.ones((len(x))) * 4.5
-z_t = np.ones((len(x))) * 14.5
+z_b = np.ones((len(x_b))) * 4.5
+z_t = np.ones((len(x_t))) * 14.5
 z_n = 0
 plt.plot(z,x, marker=None, markersize=2, linestyle='-', color='blue')
 
@@ -214,16 +189,16 @@ M_wb_n2 = M_wb_n /1.3
 print(f'Total weight: {W_l}, Static load main weel: {M_w_m}, Static load nose wheel: {M_w_n}, Braking load nose gear: {M_wb_n} (all lbs), Braking load nose gear (for diameter): {M_wb_n2} (all lbs)')
 
 # main wheel :
-D_max_m = 39.80 #inch
-W_max_m = 14 #inch
-D_wheel_m = 16  #inch
-Rr_m = 16.5
+D_max_m = 39.80     #inch
+W_max_m = 14        #inch
+D_wheel_m = 16      #inch
+Rr_m = 16.5         # rolling radius main gear
 
 # nose wheel :
-D_max_m = 29.40     #inch
-W_max_m = 7.85      #inch
-D_wheel_m = 16      #inch
-Rr_n = 12.7         #inch
+D_max_n = 29.40     #inch
+W_max_n = 7.85      #inch
+D_wheel_n = 16      #inch
+Rr_n = 12.7         # rolling radius nose gear
 
 # braking
 
@@ -238,8 +213,29 @@ S = 3625.94344325
 
 N = np.int64((30*W_l*Rr_m/12)/(4*np.pi*((8/12)**3-(2/12)**3)*S*4*32.2)+1)
 print(f'n: {N}')
-# damping
+# damping (oleo pneumatic)
 
+V_v = 10            # ft/s safety limit for vertical landing speed to absorb
+nu =0.75            # efficiency of the shock absorber
+nu_t = 0.47         # efficiency of the tire
+Ngear = 3          # Gear load factor
+
+
+KE_v = 1/2*(W_l/32.2)*(V_v)**2 # kinetic energy to absorb
+
+S = ((V_v**2)/(2*32.2*nu*Ngear)-nu_t/nu*(D_max_m/2-Rr_m)/12)*12 +1 #stroke of the shock absorber (inches)
+
+print(f'Kinetic energy to absorb: {KE_v}, Stroke of the shock absorber: {S}')
+
+#supposing minimal lenght of 8 inches of the shock absorber 
+S = 8
+L = S * 2.5
+print(f'Length of the shock absorber: {L}')
+#D_m_d = 1.3*((4*M_sl_m)/(1800*np.pi))**1/2      #diameter damping main gear
+D_m_d = 0.04*(M_sl_m)**(1/2)
+#D_n_d = 1.3*((4*M_sl_n)/(1800*np.pi))**1/2      #diameter damping nose gear
+D_n_d = 0.04*(M_bl_n)**(1/2)
+print(f'Diameter damping main gear: {D_m_d}, Diameter damping nose gear: {D_n_d}')
 
 
 #CAD
@@ -255,6 +251,46 @@ densite_aile2 = M[2]/ (2*Vol_aile2)
 #print(densite_aile)
 #print(densite_aile2)
 
+# Plot the airfoil
+plt.figure(figsize=(8, 4))
+plt.plot(x, y, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(x_t, y_t, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(x_b, y_b, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(x_cg,y_cg,marker='o', markersize=7,color= 'red',label ='cg.aft')
+plt.plot(x_w ,y_w ,marker='x', markersize=7,color= 'black')
+
+
+plt.plot(x_n,y_n ,marker='x', markersize=7,color= 'black')
+plt.plot(x_cgfwd,y_cgfwd ,marker='x', markersize=7,color= 'red',label = 'cg.fwd')
+
+
+#Draw lines
+line = [[x_t[-1],x_w],[y_t[-1],y_w]]
+line_cg = [[x_cg,x_w],[y_cg,y_w]]
+plt.plot(line[0], line[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
+plt.plot(line_cg[0], line_cg[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
+
+line = [[x_t[-1],x_w],[y_t[-1],y_w]]
+line_cg = [[x_cg,x_w],[y_cg,y_w]]
+plt.plot(line[0], line[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
+plt.plot(line_cg[0], line_cg[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
+
+circle_w = plt.Circle((x_w, y_w+(Rr_m)*0.0254), (Rr_m)*0.0254, color='black', fill=False)
+circle_n = plt.Circle((x_n, y_n+(Rr_n)*0.0254), (Rr_n)*0.0254, color='black', fill=False)
+circle_w_roll = plt.Circle((x_w, y_w+(Rr_m)*0.0254), (D_max_m/2)*0.0254, color='black',linestyle='--', fill=False)
+circle_n_roll = plt.Circle((x_n, y_n+(Rr_n)*0.0254), (D_max_n/2)*0.0254, color='black',linestyle='--', fill=False)
+ax = plt.gca()
+ax.add_patch(circle_w)
+ax.add_patch(circle_n)
+ax.add_patch(circle_w_roll)
+ax.add_patch(circle_n_roll)
+
+plt.title(f"Longitudinal disposition of the landing gear")
+plt.xlabel("x-[m]")
+plt.ylabel("y-[m]")
+plt.axis("equal")  # Ensure equal scaling on both axes
+plt.grid(True)
 
 plt.show()
+
 
