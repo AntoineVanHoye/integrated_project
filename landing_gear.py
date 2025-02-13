@@ -128,8 +128,19 @@ print(f'Coordinates of forward landing gear (m): {x_w,y_w}')
 #Uper view of landing gear repartition
 
 #plot fuselage lines
+plt.rcParams.update({
+    "text.usetex": True,              # Use LaTeX for all text rendering
+    "font.family": "serif",           # Use LaTeX's default font family
+    "font.serif": ["Computer Modern"],# Use Computer Modern for a LaTeX-like font
+    "font.size": 22,                  # Global font size to match LaTeX
+    "axes.titlesize": 22,             # Font size for title
+    "axes.labelsize": 20,             # Font size for axis labels
+    "xtick.labelsize": 20,            # Font size for x-axis ticks
+    "ytick.labelsize": 20,            # Font size for y-axis ticks
+    "legend.fontsize": 18             # Font size for legend
+})
+plt.figure(figsize=(10, 6),dpi=300)
 
-plt.figure(figsize=(8, 4))
 z_cg = 0
 z = np.zeros((len(x)))
 z_b = np.ones((len(x_b))) * 4.5
@@ -176,11 +187,11 @@ ax.annotate('', xy=(-z_w*3.28084, x_w*3.28084), xytext=(z_w*3.28084, x_w*3.28084
 plt.text((0)/2*3.28084, (x_w)*3.28084, 'D_lg', fontsize=12, ha='right', va='bottom', color='black')
 
 plt.legend()
-plt.title(f"Latteral disposition of the landing gear")
+#plt.title(f"Latteral disposition of the landing gear")
 plt.xlabel("y-[inch]")
 plt.ylabel("x-[inch]")
 plt.axis("equal")  # Ensure equal scaling on both axes
-plt.grid(True)
+plt.grid(False)
 plt.savefig(r'Plots\Latteral_disposition_landing_gear.pdf',format='pdf')
 
 # Weight determination (statistical)
@@ -248,7 +259,7 @@ print(f'Braking kinetic energy per wheel : {KE_b_w}')
 
 S = 3625.94344325
 
-N = np.int64((30*W_l*Rr_m/12)/(4*np.pi*((8/12)**3-(2/12)**3)*S*4*32.2)+1)
+N = np.int64((30*W_l*Rr_m/12)/(4*np.pi*((7.5/12)**3-(3/12)**3)*S*4*32.2)+1)
 print(f'n: {N}')
 # damping (oleo pneumatic)
 
@@ -289,7 +300,7 @@ densite_aile2 = M[2]/ (2*Vol_aile2)
 #print(densite_aile2)
 
 # Plot the airfoil
-plt.figure(figsize=(8, 4))
+plt.figure(figsize=(10, 6),dpi=300)
 plt.plot(x*3.28084, y*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
 plt.plot(x_t*3.28084, y_t*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
 plt.plot(x_b*3.28084, y_b*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
@@ -330,11 +341,11 @@ plt.text((x_cg+x_cg)/2*3.28084, (y_cg+y_w)/2*3.28084, 'Zcg', fontsize=12, ha='ri
 plt.text((x_w + 2.5)*3.28084, (y_w +0.3)*3.28084, f'θ', fontsize=12, verticalalignment='center')
 plt.text((x_w -0.5)*3.28084, (y_w +3)*3.28084, f'βcg', fontsize=12, verticalalignment='center')
 plt.legend()
-plt.title(f"Longitudinal disposition of the landing gear")
+#plt.title(f"Longitudinal disposition of the landing gear")
 plt.xlabel("x-[inch]")
 plt.ylabel("z-[inch]")
 plt.axis("equal")  # Ensure equal scaling on both axes
-plt.grid(True)
+plt.grid(False)
 plt.savefig(r'Plots\Longitudinal_disposition_landing_gear.pdf',format='pdf')
 
 
