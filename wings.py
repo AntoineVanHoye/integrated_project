@@ -144,10 +144,10 @@ def true_airspeed_at_altitude(altitude):
 v = true_airspeed_at_altitude(alti)
 print(f"True airspeed at {alti} m: {v:.2f} m/s")
 
-"""
+
 def guess_CL_max():
     CL = np.linspace(0, 1.5, 100)
-    CD0 = 0.02              # Zero lift drag coeff
+    CD0 = 0.007              # Zero lift drag coeff
     CD = CD0 + CL*CL / (np.pi * AR * 0.85) # (Zero Lift drag + Induce drag)
 
     CL_CD = CL / CD
@@ -171,7 +171,7 @@ def guess_CL_max():
     Cl_max = CL_max -  (CL_max*0.1)
 
     return Cl_max
-"""
+print("cl guess is", guess_CL_max())
 
 
 def detSurfac():
@@ -566,7 +566,7 @@ def get_Lift_and_drag(AR, delta):
     Cd_induce = ((Cl_tot**2)/(np.pi* AR)) * (1+delta)
     #print(f"delta Cd = {(((Cl_tot[np.where(abs(AoA) <= 1e-12)]**2)/(np.pi* (AR-winglet()))) * (1+delta))-Cd_induce[np.where(abs(AoA) <= 1e-12)]}")
     Cd_tot = np.zeros(len(AoA))
-    cd0 = 0.018 # Snorri's book page 755
+    cd0 = 0.007#0.018 # Snorri's book page 755
     Cd_tot = Cd_induce + cd0 #(((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
     #print("cd0: ", (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total))
     
@@ -577,7 +577,7 @@ def get_Lift_and_drag(AR, delta):
     
     CL_alfa = ((a_wing*surface_wing) + (a_fus*surface_fuselage))/surface_total 
     
-    return Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, Cd_tot0, CL_alfa
+    return Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, cd0, CL_alfa
 
 def getClAlfa():
     sweep_LE_tot = (sweep_LE_wing*surface_wing + sweep_LE_fus*surface_fuselage)/surface_total
@@ -706,7 +706,7 @@ def printFunction():
     print(f"Wing lift coefficient derivative: {a_wing:.3f}")
     print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
     print(f"Cl max wing: {Cl_max_wing} [-]")
-    print(f"cl alpha wing: {cl_alpha_wing:.3f} [rad^-1]\n")
+    print(f"cl alpha wing airfoil: {cl_alpha_wing:.3f} [rad^-1]\n")
     
 
     b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry()
@@ -719,7 +719,7 @@ def printFunction():
     print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
     print(f"Fuselage lift coefficient derivative: {a_fus:.3f}")
     print(f"Cl max fuselage: {Cl_max_fus:.3f} [-]")
-    print(f"cl alpha fuselage: {cl_alpha_fus:.3f} [rad^-1]\n")
+    print(f"cl alpha fuselage airfoil: {cl_alpha_fus:.3f} [rad^-1]\n")
     
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC()
     Mgc, y_mgc, Cwre = getMAC2()
