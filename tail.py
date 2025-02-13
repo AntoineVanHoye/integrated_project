@@ -30,12 +30,12 @@ AR_tail=3.5 # choix chelou mais ancien projet prenait ça
 sweep_leading_tail=3 #[°] roskam
 incidence_angle=0 # comme dans roskam
 lambda_tail=1 #roskam
-L_VT=5.082619441305688#[ft] distance frome the tail quarter chord (25% of the mean chord length measure back ffrom the leading of the mean chord) to the wing quarter chord
+L_VT=4.35047143507#[ft] distance frome the tail quarter chord (25% of the mean chord length measure back ffrom the leading of the mean chord) to the wing quarter chord
 L_HT=L_VT#[ft] distance frome the tail quarter chord (25% of the mean chord length measure back ffrom the leading of the mean chord) to the wing quarter chord
 c_HT=0.720625 # Horizontal tail volume coefficient for jet transport Daniel P.Raymer
 c_VT=0.072875 # Vertical tail volume coefficient for jet transport Daniel P.Raymer
-b_w=65.6168/3.28084 #[ft] wing span
-S_w=61.75 # [ft^2]wing area####NACA
+b_w= 20#[ft] wing span
+S_w=61.75# [ft^2]wing area####NACA
 ##PLOT###############
 cl_plot=True
 
@@ -88,6 +88,8 @@ def geomtail():
    
 
     return  c_tip_tail, C_bar_tail,gamma_h,S_HT,S_VT,c_root_tail ,b_tail,S_tot_tail
+b_tail = _,_,_,_,_,_,b_tail,_ = geomtail()
+print("span =",b_tail)
 
 c_tip_tail,chord_tail,gamma,S_h,S_v,c_root_tail,b_tail,S_tot_tail_real=geomtail()
 print("Surface horizontale de la tail:",S_h)
@@ -124,10 +126,10 @@ xac, yac, MACtail, sweep_beta_tail, sweep_quarter_tail=getMACTail()
 def NACA():
     AoA_tail=0
     beta=np.sqrt(1-M**2)
-    cl_alpha=(1.5461-1.0909)/(15-10)* (180/np.pi)
+    cl_alpha=(0.5413-0.6572)/(5-6)/np.pi*180
     alpha_L0=0
-    cl_max= 1.4551
-    C_d=0.011781 #at Aoa=0°
+    cl_max= 1.423
+    C_d=0.014 #at Aoa=0°
     c_tip_tail, chord_tail,gamma_h,S_h,S_v,c_root_tail ,b_tail,S_tot_tail= geomtail()
     xac_wing, yac_wing,MAC_tail,sweep_beta_tail,sweep_quarter_tail=getMACTail()
     k = (beta * cl_alpha)/(2*np.pi)
@@ -156,8 +158,8 @@ def changergamma_h(CL):
     beta=np.sqrt(1-M**2)
     cl_alpha=(1.5461-1.0909)/(15-10)* (180/np.pi)
     alpha_L0=0
-    cl_max= 1.4551
-    C_d=0.011781 #at Aoa=0°
+    cl_max= 1.423
+    C_d=0.014#at Aoa=0°
     k = (beta * cl_alpha)/(2*np.pi)
     a = ((2*np.pi)/((2/(beta*AR_tail)) + np.sqrt((1/((k * np.cos(sweep_beta_tail))))**2 + ((2/(beta * AR_tail))**2) )))/beta
    
@@ -201,7 +203,7 @@ rho, T=   air_density(altitude)
 Re=getReynold(altitude)
 speed=true_airspeed_at_altitude(altitude)
 S_h_en_mettrecarré=S_h#/10.7639
-Need_CL=-165079.090861193 /(1/2*rho*speed**2*S_h_en_mettrecarré)
+Need_CL=-305990.760081231/(1/2*rho*speed**2*S_h_en_mettrecarré)
 
 
 
