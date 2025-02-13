@@ -666,7 +666,7 @@ def stallVelocity():
 
     Vs = np.sqrt((weight/surface_total) * (2/rho_sl) * (1/(1.133*Cl_max)))
     
-    Cl_max0 = 2 * np.cos(sweep_quarter)
+    Cl_max0 = 2.1 #Amos' value   #2 * np.cos(sweep_quarter)
     W0 = weight_empty #landing weight
     Vs0 = np.sqrt((W0/surface_total) * (2/rho_sl) * (1/(1.133*Cl_max0)))
     return Vs, Vs0
@@ -689,7 +689,7 @@ def getHighLiftDevice():
     CL_max_tot = get_Lift_and_drag(AR, delta)[2]
     sweep_LE_tot = ((sweep_LE_wing*surface_wing + sweep_LE_fus*surface_fuselage)/surface_total)*(np.pi/180)
     sweep_HL = np.arctan(np.tan(sweep_LE_tot) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.70)))
-    delta_CL_max = 2.1 - CL_max_tot
+    delta_CL_max = 2.1 - CL_max_tot  #2.1 Amos' value
     delta_cl_max = delta_CL_max* (1/(0.8* np.cos(sweep_HL)))
     return delta_cl_max
 
