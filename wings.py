@@ -25,7 +25,7 @@ twist_angle = -1         #[°] twist angle
 polar_Cl_Cd = False
 wing_plot = False
 cl_plot = False
-lift_and_drag_plots = True
+lift_and_drag_plots = False
 
 #---Code---#
 def getAR():

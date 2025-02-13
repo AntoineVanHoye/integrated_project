@@ -30,12 +30,12 @@ AR_tail=3.5 # choix chelou mais ancien projet prenait ça
 sweep_leading_tail=3 #[°] roskam
 incidence_angle=0 # comme dans roskam
 lambda_tail=1 #roskam
-L_VT=4.32115841647#[ft] distance frome the tail quarter chord (25% of the mean chord length measure back ffrom the leading of the mean chord) to the wing quarter chord
+L_VT=5.082619441305688#[ft] distance frome the tail quarter chord (25% of the mean chord length measure back ffrom the leading of the mean chord) to the wing quarter chord
 L_HT=L_VT#[ft] distance frome the tail quarter chord (25% of the mean chord length measure back ffrom the leading of the mean chord) to the wing quarter chord
 c_HT=0.720625 # Horizontal tail volume coefficient for jet transport Daniel P.Raymer
 c_VT=0.072875 # Vertical tail volume coefficient for jet transport Daniel P.Raymer
 b_w=65.6168/3.28084 #[ft] wing span
-S_w=761.6543/10.7639 # [ft^2]wing area####NACA
+S_w=61.75 # [ft^2]wing area####NACA
 ##PLOT###############
 cl_plot=True
 
@@ -201,7 +201,7 @@ rho, T=   air_density(altitude)
 Re=getReynold(altitude)
 speed=true_airspeed_at_altitude(altitude)
 S_h_en_mettrecarré=S_h#/10.7639
-Need_CL=-164651.854268424/(1/2*rho*speed**2*S_h_en_mettrecarré)
+Need_CL=-165079.090861193 /(1/2*rho*speed**2*S_h_en_mettrecarré)
 
 
 

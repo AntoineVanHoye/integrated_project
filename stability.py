@@ -36,7 +36,7 @@ b = 29
 #a = 8
 mean_chord = surf_tot/b
 
-hor_tail_surf = 43.60964131949314#34.75
+hor_tail_surf = 27.031220769074665#34.75
 a1 = 3.285342243217947
 a1_over_a = a1/a
 l_fus = 16.8
@@ -79,11 +79,11 @@ print("----------------------------------------------------------------------")
 #Position of the important points
 z_AC_tot = 0
 z_CG_tot = 0
-MAC_tail = 4.05579208235978
+MAC_tail = 3.8328065459758953
 z_CG_motors = 1
 
 x_AC_tail_local = MAC_tail*0.2
-x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 0.4
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1.1
 l_tail = MAC_tail
 
 
@@ -146,7 +146,24 @@ def CG_position(i,d):
     enginst_pos = motors_pos
 
     elec_syst_pos = 0.75*l_fus/2 + 0.25*motors_pos
-
+    """
+    print("Wings",wing_pos*3.28084)
+    print("Fuselage",fus_pos*3.28084)
+    print("Aft",aft_pos*3.28084)
+    print("APU",APU_pos*3.28084)
+    print("Hydr",hydr_pos*3.28084)
+    print("Payload",payload_pos*3.28084)
+    print("Ops",ops_pos*3.28084)
+    print("Land gear",land_gear_pos*3.28084)
+    print("Surf cont",surf_cont_pos*3.28084)
+    print("Instr",instr_pos*3.28084)
+    print("Furn",furn_pos*3.28084)
+    print("Air cond",air_cond_pos*3.28084)
+    print("Motors",motors_pos*3.28084)
+    print("Nacelle",nacelle_pos*3.28084)
+    print("Enginst",enginst_pos*3.28084)
+    print("Elec syst",elec_syst_pos*3.28084)
+"""
     available_fuel_vol = wingFuelvolume()*1000
     if d == 1 : #no fuel
         fuel_weight = 0
@@ -229,8 +246,8 @@ def fus_lift():
 def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing): 
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d)
-    T = 49734.78
-    #T = 200000
+    #T = 49734.78
+    T = 153500
     #drag_tail = 
     x_CG_tot = CG_position(i,d)[0]
     weight = CG_position(i,d)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
