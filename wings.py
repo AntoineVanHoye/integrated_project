@@ -682,9 +682,21 @@ def getReynold(altitude, c):
     Re = (rho * U_inf * c) / mu
     return Re
 
+def getHighLiftDevice():
+    _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry()
+    _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry()
+    taper_ratio = c_tip_wing/c_root_fus
+    CL_max_tot = get_Lift_and_drag(AR, delta)[2]
+    sweep_LE_tot = ((sweep_LE_wing*surface_wing + sweep_LE_fus*surface_fuselage)/surface_total)*(np.pi/180)
+    sweep_HL = np.arctan(np.tan(sweep_LE_tot) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.70)))
+    delta_CL_max = 2.1 - CL_max_tot
+    delta_cl_max = delta_CL_max* (1/(0.8* np.cos(sweep_HL)))
+    return delta_cl_max
+
 def printFunction():
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry()
     _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry()
+    delta_cl_max = getHighLiftDevice()
     print("\n-------------- Total values --------------\n")
     print(f"New AR = {AR:.3f} [-]")
     print(f"Beta = {beta:.3f} [-]\n")
@@ -694,6 +706,7 @@ def printFunction():
     print(f"Surface of wing = {surface_wing:.2f} [m^2]")
     print(f"Compressibility parameter: {beta:.3f} [-]")
     print(f"Taper ratio: {c_tip_wing/c_root_fus:.3f} [-]")
+    print(f"High lift device delta clmax: {delta_cl_max:.3f} [-]\n")
     
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry()
     Cl_wing, Cl_wing_0, Cd_wing, Cl_max_wing, alpha_L0, a_wing = wingCL()
