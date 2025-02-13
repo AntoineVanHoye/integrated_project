@@ -4,28 +4,29 @@ import math
 import initmass as init
 import weight as whe
 import pandas as pd
+import matplotlib.patches as patches
 
 
 #geometry
-x_cg = 8.980632020973697                 # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
-y_cg = 0                # coordinate in y of the center of gravity (estimate)
-Vstall = 52.57* 3.2808399   # stalling velocity with flaps(m/s)
-Cl0 = 0.244                 # lift coefficient at 0 degree angle
-a = 1.754                   # Cl derivative in alpha
-S = 204.41                  # Surface of the wing m^2
+x_cg = 8.980632020973697        # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
+y_cg = 0                        # coordinate in y of the center of gravity (estimate)
+Vstall = 52.57* 3.2808399       # stalling velocity with flaps(m/s)
+Cl0 = 0.244                     # lift coefficient at 0 degree angle
+a = 1.754                       # Cl derivative in alpha
+S = 204.41                      # Surface of the wing m^2
 
-x_fus = 16.8                # lenght of fuselage
+x_fus = 16.8                    # lenght of fuselage
 
 #takeoff general data
-theta_LOF = 16              # maximum pitch angle margin to take before takeoff
+theta_LOF = 15                  # maximum pitch angle margin to take before takeoff
 theta_margin = 0
-theta_TOA = 25              # turnover angle
+theta_TOA = 45                  # turnover angle
 S = 1829                        # maximum airplane runway (less than 1800 m idealy)
 rhoair_grnd_20 = 1.395          # air density on the ground kg/m3 at 20° Fahrenheit
 rhoair_grnd_85 = 1.146          # air density on the ground kg/m3 at 85° Fahrenheit
 g = 9.81
-w_naft = 0.08                       # weight fraction on the forward lg at takeoff
-w_maft = 1 - w_naft                    # weight fraction on the rear lg at takeoff
+w_naft = 0.08                   # weight fraction on the forward lg at takeoff
+w_maft = 1 - w_naft             # weight fraction on the rear lg at takeoff
 w_nfwd = 0.15                   # weight fraction on the forward lg for the most forward position of cg
 w_mfwd = 1 - w_nfwd             # weight fraction on the rear lg for the most forward position of cg
 
@@ -61,22 +62,52 @@ print(f"At 20 degree F :{AlphaLOF_20}",f"At 85 degree F :{AlphaLOF_85}")
     
     # Load coordinates from the remaining lines
 points = pd.read_csv(r"Airfoils\NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
+angle = np.radians(2)                                   # attack angle
+
+# Matrice de rotation (attack angle)
+rotation_matrix = np.array([
+    [np.cos(angle), -np.sin(angle)],
+    [np.sin(angle), np.cos(angle)]
+])
+points = np.dot(points[:,:2]*x_fus, rotation_matrix)    #proportionnal to the fuselage lenght
 # Extract x and y coordinates
-print(points)
-x, y = points[:, 0]*x_fus, points[:, 1]*x_fus
 
-transla = np.ones((len(x))) *16.185
-transla_b = np.ones((len(x))) *7.794
+x, y = points[:, 0], points[:, 1]
 
 
-points2 = pd.read_csv(r"Airfoils\NASASC(2)0010.csv", sep=",", header=None).to_numpy()
-transla = np.ones((len(points2[:,0]))) *16.185
-transla_b = np.ones((len(points2[:,0]))) *7.794
-print(points2)
-x_t, y_t = points2[:, 0]*1.448 + transla , points2[:, 1]*1.448 #draw the rear wing limit
-x_b, y_b = points2[:, 0]*9.006+ transla_b , points2[:, 1]*9.006
 
-H = (x_t[-1]-x_cg-np.tan(np.pi/2-np.radians(theta_LOF))*(-y_cg + y_t[-1]))/(np.tan(np.radians(theta_LOF+theta_margin))+np.tan(np.pi/2-np.radians(theta_LOF)))
+points2 = pd.read_csv(r"Airfoils\NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
+
+angle = np.radians(2)                                   # attack angle
+
+# Matrice de rotation (attack angle)
+rotation_matrix = np.array([
+    [np.cos(angle), -np.sin(angle)],
+    [np.sin(angle), np.cos(angle)]
+])
+points2 = np.dot(points2[:,:2]*10.3733339696600000000, rotation_matrix)    #proportionnal to the fuselage lenght
+
+transla_b = np.ones((len(points2[:,0]))) *6.42666603034
+x_b, y_b = points2[:, 0]+ transla_b , points2[:, 1] #draw root wing limit
+
+
+
+points3 = pd.read_csv(r"Airfoils\NASASC(2)0010.csv", sep=",", header=None).to_numpy()
+angle = np.radians(1)                                   # attack angle
+
+# Matrice de rotation (attack angle)
+rotation_matrix = np.array([
+    [np.cos(angle), -np.sin(angle)],
+    [np.sin(angle), np.cos(angle)]
+])
+points3 = np.dot(points3[:,:2]*1.497, rotation_matrix)    #proportionnal to the fuselage lenght
+
+
+transla = np.ones((len(points3[:,0]))) *10.56880165407
+x_t, y_t = points3[:, 0] + transla , points3[:, 1] #draw the rear wing limit
+
+
+H = (x[-1]-x_cg-np.tan(np.pi/2-np.radians(theta_LOF))*(-y_cg + y[-1]))/(np.tan(np.radians(theta_LOF+theta_margin))+np.tan(np.pi/2-np.radians(theta_LOF)))
 h = H * np.tan(np.radians(theta_LOF+theta_margin))
 
 
@@ -104,47 +135,53 @@ z = np.zeros((len(x)))
 z_b = np.ones((len(x_b))) * 4.5
 z_t = np.ones((len(x_t))) * 14.5
 z_n = 0
-plt.plot(z,x, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(z*3.28084,x*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
 
-plt.plot(z_t ,x_t,  marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(-z_t ,x_t, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(z_b ,x_b, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(-z_b ,x_b, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(z_t*3.28084 ,x_t*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(-z_t*3.28084 ,x_t*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(z_b*3.28084 ,x_b*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(-z_b*3.28084 ,x_b*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
 
 line = [[z[len(x)//2],z_b[len(x)//2]],[x[len(x)//2],x_b[len(x)//2]]]
 line_minus = [[-z[len(x)//2],-z_b[len(x)//2]],[x[len(x)//2],x_b[len(x)//2]]]
-plt.plot(line[0] ,line[1],  marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(line_minus[0] ,line_minus[1],  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line[0])*3.28084 ,np.array(line[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line_minus[0])*3.28084 ,np.array(line_minus[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
 
 line = [[z_b[len(x)//2],z_t[len(x)//2]],[x_b[len(x)//2],x_t[len(x)//2]]]
 line_minus = [[-z_b[len(x)//2],-z_t[len(x)//2]],[x_b[len(x)//2],x_t[len(x)//2]]]
-plt.plot(line[0] ,line[1],  marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(line_minus[0] ,line_minus[1],  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line[0])*3.28084 ,np.array(line[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line_minus[0])*3.28084 ,np.array(line_minus[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
 
 line = [[z[0],z_b[0]],[x[0],x_b[0]]]
 line_minus = [[-z[0],-z_b[0]],[x[0],x_b[0]]]
-plt.plot(line[0] ,line[1],  marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(line_minus[0] ,line_minus[1],  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line[0])*3.28084 ,np.array(line[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line_minus[0])*3.28084 ,np.array(line_minus[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
 
 line = [[z_t[0],z_b[len(x)//2]],[x_t[0],x_b[len(x)//2]+4.622]]
 line_minus = [[-z_t[0],-z_b[len(x)//2]],[x_t[0],x_b[len(x)//2]+4.622]]
-plt.plot(line[0] ,line[1],  marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(line_minus[0] ,line_minus[1],  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line[0])*3.28084 ,np.array(line[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(np.array(line_minus[0])*3.28084 ,np.array(line_minus[1])*3.28084,  marker=None, markersize=2, linestyle='-', color='blue')
 
 # Draw cg and landing gear
 z_n = 0
 z_w =z_n + (x_w-x_n)*np.tan(np.arcsin((y_cg-y_w)/(x_cg-x_n)*1/(np.tan(np.radians(theta_TOA)))))
-plt.plot(z_cg,x_cg,marker='o', markersize=7,color= 'red',label ='cg.aft')
-plt.plot(z_n,x_n,marker='o', markersize=7,color= 'black',label ='cg.aft')
-plt.plot(z_w,x_w,marker='o', markersize=7,color= 'black',label ='cg.aft')
-plt.plot(-z_w,x_w,marker='o', markersize=7,color= 'black',label ='cg.aft')
+plt.plot(z_cg*3.28084,x_cg*3.28084,marker='o', markersize=7,color= 'red',label ='cg.aft')
+plt.plot(z_n*3.28084,x_n*3.28084,marker='x', markersize=7,color= 'black',label ='landing gear')
+plt.plot(z_w*3.28084,x_w*3.28084,marker='x', markersize=7,color= 'black')
+plt.plot(-z_w*3.28084,x_w*3.28084,marker='x', markersize=7,color= 'black')
+plt.plot(z_cg*3.28084,x_cgfwd*3.28084 ,marker='x', markersize=7, linestyle='',color= 'red',label = 'cg.fwd(max)')
 
+ax = plt.gca()
+ax.annotate('', xy=(-z_w*3.28084, x_w*3.28084), xytext=(z_w*3.28084, x_w*3.28084),arrowprops=dict(arrowstyle='<|-|>', color='gray', linewidth=2))
+plt.text((0)/2*3.28084, (x_w)*3.28084, 'D_lg', fontsize=12, ha='right', va='bottom', color='black')
+
+plt.legend()
 plt.title(f"Latteral disposition of the landing gear")
-plt.xlabel("y-[m]")
-plt.ylabel("x-[m]")
+plt.xlabel("y-[inch]")
+plt.ylabel("x-[inch]")
 plt.axis("equal")  # Ensure equal scaling on both axes
 plt.grid(True)
-
+plt.savefig(r'Plots\Latteral_disposition_landing_gear.pdf',format='pdf')
 
 # Weight determination (statistical)
 
@@ -253,44 +290,55 @@ densite_aile2 = M[2]/ (2*Vol_aile2)
 
 # Plot the airfoil
 plt.figure(figsize=(8, 4))
-plt.plot(x, y, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(x_t, y_t, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(x_b, y_b, marker=None, markersize=2, linestyle='-', color='blue')
-plt.plot(x_cg,y_cg,marker='o', markersize=7,color= 'red',label ='cg.aft')
-plt.plot(x_w ,y_w ,marker='x', markersize=7,color= 'black')
+plt.plot(x*3.28084, y*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(x_t*3.28084, y_t*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(x_b*3.28084, y_b*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
+plt.plot(x_cg*3.28084,y_cg*3.28084,marker='o', markersize=7, linestyle='',color= 'red',label ='cg.aft')
+plt.plot(x_w *3.28084,y_w*3.28084 ,marker='x', markersize=7, linestyle='',color= 'black',label ='landing gear')
 
 
-plt.plot(x_n,y_n ,marker='x', markersize=7,color= 'black')
-plt.plot(x_cgfwd,y_cgfwd ,marker='x', markersize=7,color= 'red',label = 'cg.fwd')
+plt.plot(x_n*3.28084,y_n*3.28084 ,marker='x', markersize=7,color= 'black')
+plt.plot(x_cgfwd*3.28084,y_cgfwd*3.28084 ,marker='x', markersize=7, linestyle='',color= 'red',label = 'cg.fwd(max)')
 
 
 #Draw lines
-line = [[x_t[-1],x_w],[y_t[-1],y_w]]
+line = [[x[-1],x_w],[y[-1],y_w]]
 line_cg = [[x_cg,x_w],[y_cg,y_w]]
-plt.plot(line[0], line[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
-plt.plot(line_cg[0], line_cg[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
+plt.plot(np.array(line[0])*3.28084, np.array(line[1])*3.28084, marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
+plt.plot(np.array(line_cg[0])*3.28084, np.array(line_cg[1])*3.28084, marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
 
-line = [[x_t[-1],x_w],[y_t[-1],y_w]]
-line_cg = [[x_cg,x_w],[y_cg,y_w]]
-plt.plot(line[0], line[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
-plt.plot(line_cg[0], line_cg[1], marker=None, markersize=2, linestyle='--', linewidth=1, color='black')
 
-circle_w = plt.Circle((x_w, y_w+(Rr_m)*0.0254), (Rr_m)*0.0254, color='black', fill=False)
-circle_n = plt.Circle((x_n, y_n+(Rr_n)*0.0254), (Rr_n)*0.0254, color='black', fill=False)
-circle_w_roll = plt.Circle((x_w, y_w+(Rr_m)*0.0254), (D_max_m/2)*0.0254, color='black',linestyle='--', fill=False)
-circle_n_roll = plt.Circle((x_n, y_n+(Rr_n)*0.0254), (D_max_n/2)*0.0254, color='black',linestyle='--', fill=False)
+circle_w = plt.Circle((x_w*3.28084, (y_w+(Rr_m)*0.0254)*3.28084), (Rr_m)*0.0254*3.28084, color='black', fill=False)
+circle_n = plt.Circle((x_n*3.28084, (y_n+(Rr_n)*0.0254)*3.28084), (Rr_n)*0.0254*3.28084, color='black', fill=False)
+circle_w_roll = plt.Circle((x_w*3.28084, (y_w+(Rr_m)*0.0254)*3.28084), (D_max_m/2)*0.0254*3.28084, color='black',linestyle='--', fill=False)
+circle_n_roll = plt.Circle((x_n*3.28084, (y_n+(Rr_n)*0.0254)*3.28084), (D_max_n/2)*0.0254*3.28084, color='black',linestyle='--', fill=False)
+arc = patches.Arc((x_w*3.28084,y_w*3.28084), 5*3.28084, 5*3.28084, angle=0, theta1=0, theta2=theta_LOF, color='gray', linewidth=2)
+arc2 = patches.Arc((x_w*3.28084,y_w*3.28084), 5*3.28084, 5*3.28084, angle=0, theta1=90, theta2=theta_LOF+90, color='gray', linewidth=2)
 ax = plt.gca()
 ax.add_patch(circle_w)
 ax.add_patch(circle_n)
 ax.add_patch(circle_w_roll)
 ax.add_patch(circle_n_roll)
+ax.add_patch(arc)
+ax.add_patch(arc2)
+ax.annotate('', xy=(x_w*3.28084, y_w*3.28084), xytext=(x_n*3.28084, y_n*3.28084),arrowprops=dict(arrowstyle='<|-|>', color='gray', linewidth=2))
+plt.text((x_w+x_n)/2*3.28084, (y_w+y_n)/2*3.28084, 't', fontsize=12, ha='center', va='bottom', color='black')
 
+ax.annotate('', xy=(x_cg*3.28084, y_cg*3.28084), xytext=(x_cg*3.28084, y_w*3.28084),arrowprops=dict(arrowstyle='<|-|>', color='gray', linewidth=2))
+plt.text((x_cg+x_cg)/2*3.28084, (y_cg+y_w)/2*3.28084, 'Zcg', fontsize=12, ha='right', va='bottom', color='black')
+
+plt.text((x_w + 2.5)*3.28084, (y_w +0.3)*3.28084, f'θ', fontsize=12, verticalalignment='center')
+plt.text((x_w -0.5)*3.28084, (y_w +3)*3.28084, f'βcg', fontsize=12, verticalalignment='center')
+plt.legend()
 plt.title(f"Longitudinal disposition of the landing gear")
-plt.xlabel("x-[m]")
-plt.ylabel("y-[m]")
+plt.xlabel("x-[inch]")
+plt.ylabel("z-[inch]")
 plt.axis("equal")  # Ensure equal scaling on both axes
 plt.grid(True)
+plt.savefig(r'Plots\Longitudinal_disposition_landing_gear.pdf',format='pdf')
+
+
+
+print(f't:{(x_w-x_n)*3.28084}',f'H:{(y_w-y_cg)*3.28084}',f'{((x_w-x_cg)**2+(y_w-y_cg)**2)**0.5*3.28084}',f'{2*z_w*3.28084}')
 
 plt.show()
-
-
