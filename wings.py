@@ -658,8 +658,8 @@ def plotLiftDrag(lift_and_drag_plots):
 
     plt.figure(figsize=(8,5))
     plt.plot(Cd_tot, Cl_tot)
-    plt.xlabel('$CD$')
-    plt.ylabel('$CL$')
+    plt.xlabel('$C_D$')
+    plt.ylabel('$C_L$')
     plt.show()
 
     plt.figure(figsize=(8,5))

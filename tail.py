@@ -93,6 +93,8 @@ print("span =",b_tail)
 
 c_tip_tail,chord_tail,gamma,S_h,S_v,c_root_tail,b_tail,S_tot_tail_real=geomtail()
 print("Surface horizontale de la tail:",S_h)
+print("L'angle de la tail:",gamma*180/np.pi)
+print("La surface totale de la tail:",S_tot_tail_real)
 print("Corde à la racine de la tail et dans notre cas aussi la MAC:",c_root_tail)
 gamma_deg=gamma*180/np.pi  
 
