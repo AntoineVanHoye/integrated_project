@@ -61,7 +61,7 @@ print(f"At 20 degree F :{AlphaLOF_20}",f"At 85 degree F :{AlphaLOF_85}")
  #affichage figure
     
     # Load coordinates from the remaining lines
-points = pd.read_csv(r"Airfoils\NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
+points = pd.read_csv(r"Airfoils/NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
 angle = np.radians(2)                                   # attack angle
 
 # Matrice de rotation (attack angle)
@@ -76,7 +76,7 @@ x, y = points[:, 0], points[:, 1]
 
 
 
-points2 = pd.read_csv(r"Airfoils\NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
+points2 = pd.read_csv(r"Airfoils/NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
 
 angle = np.radians(2)                                   # attack angle
 
@@ -92,7 +92,7 @@ x_b, y_b = points2[:, 0]+ transla_b , points2[:, 1] #draw root wing limit
 
 
 
-points3 = pd.read_csv(r"Airfoils\NASASC(2)0010.csv", sep=",", header=None).to_numpy()
+points3 = pd.read_csv(r"Airfoils/NASASC(2)0010.csv", sep=",", header=None).to_numpy()
 angle = np.radians(1)                                   # attack angle
 
 # Matrice de rotation (attack angle)
@@ -114,7 +114,7 @@ h = H * np.tan(np.radians(theta_LOF+theta_margin))
 x_w, y_w = x_cg + h , y_cg - H
 x_n = x_w -(x_w-x_cg)/w_naft
 y_n = y_w
-print(x_n/16.8)
+print(f'forward{x_n}',f'main{x_w}')
 x_cgfwd = x_w - w_nfwd *(x_w-x_n)
 y_cgfwd = y_cg
 
@@ -131,12 +131,12 @@ print(f'Coordinates of forward landing gear (m): {x_w,y_w}')
 plt.rcParams.update({
     "text.usetex": True,              # Use LaTeX for all text rendering
     "font.family": "serif",           # Use LaTeX's default font family
-    "font.serif": ["Computer Modern"],# Use Computer Modern for a LaTeX-like font
+    "font.serif": ["Times"],# Use Computer Modern for a LaTeX-like font
     "font.size": 22,                  # Global font size to match LaTeX
     "axes.titlesize": 22,             # Font size for title
     "axes.labelsize": 20,             # Font size for axis labels
-    "xtick.labelsize": 20,            # Font size for x-axis ticks
-    "ytick.labelsize": 20,            # Font size for y-axis ticks
+    "xtick.labelsize": 18,            # Font size for x-axis ticks
+    "ytick.labelsize": 18,            # Font size for y-axis ticks
     "legend.fontsize": 18             # Font size for legend
 })
 plt.figure(figsize=(10, 6),dpi=300)
@@ -184,15 +184,15 @@ plt.plot(z_cg*3.28084,x_cgfwd*3.28084 ,marker='x', markersize=7, linestyle='',co
 
 ax = plt.gca()
 ax.annotate('', xy=(-z_w*3.28084, x_w*3.28084), xytext=(z_w*3.28084, x_w*3.28084),arrowprops=dict(arrowstyle='<|-|>', color='gray', linewidth=2))
-plt.text((0)/2*3.28084, (x_w)*3.28084, 'D_lg', fontsize=12, ha='right', va='bottom', color='black')
+plt.text((0)/2*3.28084, (x_w)*3.28084, '$D_{lg}$', fontsize=18, ha='right', va='bottom', color='black')
 
 plt.legend()
 #plt.title(f"Latteral disposition of the landing gear")
-plt.xlabel("y-[inch]")
-plt.ylabel("x-[inch]")
+plt.xlabel("y-[ft]")
+plt.ylabel("x-[ft]")
 plt.axis("equal")  # Ensure equal scaling on both axes
 plt.grid(False)
-plt.savefig(r'Plots\Latteral_disposition_landing_gear.pdf',format='pdf')
+plt.savefig(r'Plots/Latteral_disposition_landing_gear.pdf',format='pdf')
 
 # Weight determination (statistical)
 
@@ -333,20 +333,20 @@ ax.add_patch(circle_n_roll)
 ax.add_patch(arc)
 ax.add_patch(arc2)
 ax.annotate('', xy=(x_w*3.28084, y_w*3.28084), xytext=(x_n*3.28084, y_n*3.28084),arrowprops=dict(arrowstyle='<|-|>', color='gray', linewidth=2))
-plt.text((x_w+x_n)/2*3.28084, (y_w+y_n)/2*3.28084, 't', fontsize=12, ha='center', va='bottom', color='black')
+plt.text((x_w+x_n)/2*3.28084, (y_w+y_n)/2*3.28084, 't', fontsize=18, ha='center', va='bottom', color='black')
 
 ax.annotate('', xy=(x_cg*3.28084, y_cg*3.28084), xytext=(x_cg*3.28084, y_w*3.28084),arrowprops=dict(arrowstyle='<|-|>', color='gray', linewidth=2))
-plt.text((x_cg+x_cg)/2*3.28084, (y_cg+y_w)/2*3.28084, 'Zcg', fontsize=12, ha='right', va='bottom', color='black')
+plt.text((x_cg+x_cg)/2*3.28084, (y_cg+y_w)/2*3.28084, 'Zcg', fontsize=18, ha='right', va='bottom', color='black')
 
-plt.text((x_w + 2.5)*3.28084, (y_w +0.3)*3.28084, f'θ', fontsize=12, verticalalignment='center')
-plt.text((x_w -0.5)*3.28084, (y_w +3)*3.28084, f'βcg', fontsize=12, verticalalignment='center')
+plt.text((x_w + 2.5)*3.28084, (y_w +0.3)*3.28084, '$\Theta$', fontsize=18, verticalalignment='center')
+plt.text((x_w -0.5)*3.28084, (y_w +3)*3.28084, f"$\gamma$", fontsize=18, verticalalignment='center')
 plt.legend()
 #plt.title(f"Longitudinal disposition of the landing gear")
-plt.xlabel("x-[inch]")
-plt.ylabel("z-[inch]")
+plt.xlabel("x-[ft]")
+plt.ylabel("z-[ft]")
 plt.axis("equal")  # Ensure equal scaling on both axes
 plt.grid(False)
-plt.savefig(r'Plots\Longitudinal_disposition_landing_gear.pdf',format='pdf')
+plt.savefig('Plots/Longitudinal_disposition_landing_gear.pdf',format='pdf')
 
 
 
