@@ -9,7 +9,7 @@ cabin_width = 7         #[m]
 cabin_lenght = 16.8     #[m] 
 AR = 4.57           #Aspect ratio (guess)
 weight =   644501.924618083  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
-weight_empty = 253488.33 #60452.314059821154 * 9.81 #[N]S 
+weight_empty = 526898.7380202 #60452.314059821154 * 9.81 #[N]S 
 alti = 12500            #[m]
 M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
@@ -26,7 +26,7 @@ twist_angle = -1         #[°] twist angle
 plt.rcParams.update({
     "text.usetex": True,              # Use LaTeX for all text rendering
     "font.family": "serif",           # Use LaTeX's default font family
-    "font.serif": ["Times New Roman"],# Use Computer Modern for a LaTeX-like font
+    "font.serif": ["Times"],# Use Computer Modern for a LaTeX-like font
     "font.size": 22,                  # Global font size to match LaTeX
     "axes.titlesize": 22,             # Font size for title
     "axes.labelsize": 20,             # Font size for axis labels
@@ -41,7 +41,7 @@ plt.rcParams.update({
 polar_Cl_Cd = False
 wing_plot = False
 cl_plot = False
-lift_and_drag_plots = False
+lift_and_drag_plots = True
 plot_airfoil = False
 
 #---Code---#
@@ -49,8 +49,8 @@ def getAR():
     return AR
 
 def winglet():
-    #formule from Snoris
-    h = 1 #[m] Choice
+    #formule from Snorri
+    h = 0.5 #[m] Choice
     delta_AR = 1.9*(h/span_max) * AR
     return delta_AR
 #AR = AR + winglet()
@@ -159,7 +159,7 @@ def plotAirfoil(plot_airfoil):
     #plt.show()
 
     # ---- Deuxième figure : Airfoil aile ----
-    fig, ax = plt.subplots(figsize=(11, 2.6), dpi=300)
+    fig, ax = plt.subplots(figsize=(11, 2.7), dpi=300)
     ax.set_aspect('equal')  # Assurer une échelle identique
     ax.plot(data_wing.iloc[:, 0], data_wing.iloc[:, 1])
     ax.set_yticks([-0.08, 0, 0.08])
@@ -610,7 +610,9 @@ def get_Lift_and_drag(AR, delta):
     cl_max = ((Cl_max_wing*surface_wing) + (Cl_max_fus*surface_fuselage))/surface_total 
     
     # --- total drag computation --- #
+    print("AR is", AR)
     Cd_induce = ((Cl_tot**2)/(np.pi* AR)) * (1+delta)
+
     #print(f"delta Cd = {(((Cl_tot[np.where(abs(AoA) <= 1e-12)]**2)/(np.pi* (AR-winglet()))) * (1+delta))-Cd_induce[np.where(abs(AoA) <= 1e-12)]}")
     Cd_tot = np.zeros(len(AoA))
     cd0 = 0.007#0.018 # Snorri's book page 755
@@ -656,10 +658,11 @@ def plotLiftDrag(lift_and_drag_plots):
     plt.ylabel('$CL/CD$')
     plt.show()
 
-    plt.figure(figsize=(8,5))
+    plt.figure(figsize=(10, 6),dpi=300)
     plt.plot(Cd_tot, Cl_tot)
-    plt.xlabel('$C_D$')
-    plt.ylabel('$C_L$')
+    plt.xlabel('$C_D$ [-]')
+    plt.ylabel('$C_L$ [-]')
+    plt.savefig("/Users/antoinevanhoye/Documents/M1/PI/integrated_project/Airfoils/drag_polar.pdf", dpi=300)
     plt.show()
 
     plt.figure(figsize=(8,5))
