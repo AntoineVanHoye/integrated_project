@@ -35,10 +35,6 @@ a = getClAlfa()
 b = 29
 #a = 8
 mean_chord = surf_tot/b
-
-hor_tail_surf = 27.031220769074665#34.75
-a1 = 3.285342243217947
-a1_over_a = a1/a
 l_fus = 16.8
 l_cabin = 10.1
 l_cockpit = 2.01
@@ -79,18 +75,20 @@ print("----------------------------------------------------------------------")
 #Position of the important points
 z_AC_tot = 0
 z_CG_tot = 0
-MAC_tail = 3.8328065459758953
-z_CG_motors = 1
+z_CG_motors = 2
 
+MAC_tail = 3.5766928376055023
+hor_tail_surf = 31.58034945261383
+a1 = 3.734185216903529
 x_AC_tail_local = MAC_tail*0.2
-x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1.1
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +0.5
 l_tail = MAC_tail
 
-
 z_AC_tail = 1.51
+a1_over_a = a1/a
 
 config = 3
-fuel = 2
+fuel =1
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -113,33 +111,33 @@ def CG_position(i,d):
     fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst_weight,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,_,_,_= get_weight()
 
     pilots_weight = 220.462*2
-    pilots_pos = l_cockpit*0.4
+    pilots_pos = l_cockpit*0.35
 
     wing_pos = (l_fus - chord_tip_fus) + MAC_wing*0.24 + y_AC_wing*np.tan(sweep_angle_wing)
     
-    fus_pos = (l_cabin + l_cockpit)*0.545 #0.2*MAC_fus + y_AC_fus*np.tan(sweep_angle_fus)
+    fus_pos = (l_cabin + l_cockpit)*0.465 #0.2*MAC_fus + y_AC_fus*np.tan(sweep_angle_fus)
 
-    aft_pos = l_cockpit + l_cabin + l_aft*0.34
+    aft_pos = l_cockpit + l_cabin + l_aft*0.3
 
     APU_pos = l_cockpit + l_cabin
 
     hydr_pos = 0.75*wing_pos + 0.25 *x_AC_tail
 
-    payload_pos = 0.25*(l_cockpit + l_cabin) + 0.75*l_cockpit
+    payload_pos = 0.35*(l_cockpit + l_cabin) + 0.65*l_cockpit
 
     ops_pos = l_cockpit 
 
-    land_gear_pos = (0.5*MAC_fus + y_AC_fus*np.tan(sweep_angle_fus))*0.7 + 0.3*0.2*l_fus
-
+    land_gear_pos = 9.703*0.7 + 0.3*0.673
     surf_cont_pos = (l_fus - chord_tip_fus) + MAC_wing*0.35 + y_AC_wing*np.tan(sweep_angle_wing)
 
     instr_pos = 0.35*l_cockpit
 
     furn_pos = 0.4*l_fus
 
-    air_cond_pos = l_cockpit
+    air_cond_pos = l_cockpit-0.2
     
-    motors_pos = l_cockpit + l_cabin + 0.75
+    motors_pos = l_cockpit + l_cabin + 0.6
+
 
     nacelle_pos = motors_pos
 
@@ -170,7 +168,7 @@ def CG_position(i,d):
         fuel_pos = 1
         pourc_wings = 0
     if d == 2 : #full of fuel
-        vol_fuel = 26854.56
+        vol_fuel = 27300
         fuel_weight = vol_fuel*0.8*2.20462
         pourc_wings = available_fuel_vol/vol_fuel
         fuel_pos = wing_pos*pourc_wings + (1-pourc_wings)*l_fus*0.44
@@ -213,7 +211,7 @@ print(CG_position(config,fuel)[1]*100,"% of the total fuel volume is stored in t
 print("----------------------------------------------------------------------")
 
 print("--------------------------CENTER OF GRAVITY--------------------------------------------")
-print("The center of gravity is positioned at",CG_position(config,fuel)[0],"m (",CG_position(config,fuel)[0]*100/l_fus,"%) from the nose of the airplane.")
+print("The center of gravity is positioned at",CG_position(config,fuel)[0],"m (in feet :",CG_position(config,fuel)[0]*3.28," (",CG_position(config,fuel)[0]*100/l_fus,"%) from the nose of the airplane.")
 print("----------------------------------------------------------------------")
 
 #tail volume ratio effectivness 

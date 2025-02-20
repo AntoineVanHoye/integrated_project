@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.integrate import trapz
+import pandas as pd
 
 #---Guesses---#
 span_max = 29           #[m] Span  max span for airport
@@ -21,11 +22,27 @@ twist_angle = -1         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 
 
+#--- Figure settings ---#
+plt.rcParams.update({
+    "text.usetex": True,              # Use LaTeX for all text rendering
+    "font.family": "serif",           # Use LaTeX's default font family
+    "font.serif": ["Times New Roman"],# Use Computer Modern for a LaTeX-like font
+    "font.size": 22,                  # Global font size to match LaTeX
+    "axes.titlesize": 22,             # Font size for title
+    "axes.labelsize": 20,             # Font size for axis labels
+    "xtick.labelsize": 20,            # Font size for x-axis ticks
+    "ytick.labelsize": 20,            # Font size for y-axis ticks
+    "legend.fontsize": 18             # Font size for legend
+})
+
+
+
 #---Commande---#
 polar_Cl_Cd = False
 wing_plot = False
 cl_plot = False
 lift_and_drag_plots = False
+plot_airfoil = False
 
 #---Code---#
 def getAR():
@@ -121,6 +138,36 @@ def getAirfoilWing():
         CD_wing = 0.007 
     return cl_alpha, cl_max, alpha_l0, CD_wing, cm
 
+import pandas as pd
+import matplotlib.pyplot as plt
+
+def plotAirfoil(plot_airfoil):
+    if not plot_airfoil:
+        return
+
+    # Lire les fichiers CSV
+    data_fus = pd.read_csv("NACA45118_XYZ.csv")  
+    data_wing = pd.read_csv("sc20710_XYZ.csv")
+
+    # ---- Première figure : Airfoil fuselage ----
+    fig, ax = plt.subplots(figsize=(11, 3), dpi=300)  # Créer une figure et un axe
+    ax.set_aspect('equal')  # Assurer une échelle identique sur les axes
+    ax.plot(data_fus.iloc[:, 0], data_fus.iloc[:, 1])
+    ax.set_xlabel('$x/c [-]$')  # Légende de l'axe des abscisses
+    ax.set_ylabel('$y [-]$')  # Légende de l'axe des ordonnées
+    plt.savefig("/Users/antoinevanhoye/Documents/M1/PI/integrated_project/Airfoils/airfoil_fus.pdf", dpi=300)  # Sauvegarder avant d'afficher
+    #plt.show()
+
+    # ---- Deuxième figure : Airfoil aile ----
+    fig, ax = plt.subplots(figsize=(11, 2.6), dpi=300)
+    ax.set_aspect('equal')  # Assurer une échelle identique
+    ax.plot(data_wing.iloc[:, 0], data_wing.iloc[:, 1])
+    ax.set_yticks([-0.08, 0, 0.08])
+    ax.set_xlabel('$x/c [-]$')  # Légende de l'axe des abscisses
+    ax.set_ylabel('$y [-]$')  # Légende de l'axe des ordonnées
+    plt.savefig("/Users/antoinevanhoye/Documents/M1/PI/integrated_project/Airfoils/airfoil_wing.pdf", dpi=300)  
+    #plt.show()
+plotAirfoil(plot_airfoil)
 # Function to calculate air density using the ISA model
 def air_density(altitude):
     # Up to 11 km (Troposphere)
@@ -611,8 +658,8 @@ def plotLiftDrag(lift_and_drag_plots):
 
     plt.figure(figsize=(8,5))
     plt.plot(Cd_tot, Cl_tot)
-    plt.xlabel('$CD$')
-    plt.ylabel('$CL$')
+    plt.xlabel('$C_D$')
+    plt.ylabel('$C_L$')
     plt.show()
 
     plt.figure(figsize=(8,5))
@@ -689,6 +736,7 @@ def getHighLiftDevice():
     CL_max_tot = get_Lift_and_drag(AR, delta)[2]
     sweep_LE_tot = ((sweep_LE_wing*surface_wing + sweep_LE_fus*surface_fuselage)/surface_total)*(np.pi/180)
     sweep_HL = np.arctan(np.tan(sweep_LE_tot) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.70)))
+    print(sweep_HL*(180/np.pi))
     delta_CL_max = 2.1 - CL_max_tot  #2.1 Amos' value
     delta_cl_max = delta_CL_max* (1/(0.8* np.cos(sweep_HL)))
     return delta_cl_max
