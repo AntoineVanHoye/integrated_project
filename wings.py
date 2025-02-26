@@ -41,7 +41,7 @@ plt.rcParams.update({
 polar_Cl_Cd = False
 wing_plot = False
 cl_plot = False
-lift_and_drag_plots = True
+lift_and_drag_plots = False
 plot_airfoil = False
 
 #---Code---#
@@ -610,8 +610,9 @@ def get_Lift_and_drag(AR, delta):
     cl_max = ((Cl_max_wing*surface_wing) + (Cl_max_fus*surface_fuselage))/surface_total 
     
     # --- total drag computation --- #
+    AR_cd = AR + winglet()
     print("AR is", AR)
-    Cd_induce = ((Cl_tot**2)/(np.pi* AR)) * (1+delta)
+    Cd_induce = ((Cl_tot**2)/(np.pi* AR_cd)) * (1+delta)
 
     #print(f"delta Cd = {(((Cl_tot[np.where(abs(AoA) <= 1e-12)]**2)/(np.pi* (AR-winglet()))) * (1+delta))-Cd_induce[np.where(abs(AoA) <= 1e-12)]}")
     Cd_tot = np.zeros(len(AoA))
@@ -797,7 +798,8 @@ def printFunction():
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
     lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa, Cd_tot0, CL_alfa = get_Lift_and_drag(AR, delta)
     print("\n-------------- Lift and drag --------------\n")
-    print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.3f}[-] \n")
+    print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.5f}[-] \n")
+    print(f"Lift to drag ratio: {(lift_coef/drag_coef):.3f} [-]")
     print(f"Cl max: {CL_max:.3f} [-]")
     print(f"Lift coefficient derivative CL_alfa: {CL_alfa:.3f} [rad^-1]")
     print(f"CD0: {Cd_tot0:.3f} [-]\n")
