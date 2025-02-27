@@ -103,6 +103,7 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
     fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst_weight,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,_,_,_= get_weight()
     _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry(AR, sweep_LE_fus)
+    #force = CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0] ## Boucle infinie en utilisant ceci
 
     sweep_angle_wing = sweep_LE_wing*np.pi/180
     sweep_angle_fus = sweep_LE_fus*np.pi/180
@@ -158,7 +159,7 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
     print("Enginst",enginst_pos*3.28084)
     print("Elec syst",elec_syst_pos*3.28084)
 """
-    available_fuel_vol = wingFuelvolume(AR, sweep_LE_fus, sweep_LE_wing)*1000
+    available_fuel_vol = 30 * 1000 #wingFuelvolume(AR, sweep_LE_fus, sweep_LE_wing, force)*1000 
     if d == 1 : #no fuel
         fuel_weight = 0
         fuel_pos = 1
@@ -216,7 +217,8 @@ def prop_force():
 
 def wings_lift(AR ,sweep_LE_fus, sweep_LE_wing):
     surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    _,CL_w0,_,_,_,_ = wingCL(AR ,sweep_LE_fus, sweep_LE_wing)
+    force = CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0]
+    _,CL_w0,_,_,_,_ = wingCL(AR ,sweep_LE_fus, sweep_LE_wing, force)
 
     L_w = CL_w0 * (1/2)*rho*surf_wing*speed**2
     return L_w
@@ -378,3 +380,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     get_CG(config,fuel,Cm0_fus,Cm0_wing,0.15, AR, sweep_LE_fus, sweep_LE_wing)
     print("----------------------------------------------------------------------")
     return
+#printFunction(3, 35, 20)
