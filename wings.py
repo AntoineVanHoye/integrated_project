@@ -845,4 +845,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, weight):
     plotAllWing(wing_plot, sweep_LE_fus, sweep_LE_wing, AR)
     return
 
-printFunction(5.052631578947368, 57.93103448275862, 28.421052631578945, 432074.163340165)
+printFunction(5.368421052631579, 53.793103448275865, 29.473684210526315, 337475.698303858)

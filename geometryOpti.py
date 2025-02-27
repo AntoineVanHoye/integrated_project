@@ -22,13 +22,13 @@ for i in range(len(AR)):
     for j in range(len(sweep_fus)):
         for k in range(len(sweep_wing)):
             stability = s.long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k]) 
-            if 5 < stability < 10:
+            if 5 < (stability*100) < 10:
                 force = s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0]
                 cl = w.getCl(AR[i], sweep_fus[j], force)
                 setting_angle = w.getCalageAngle(cl, AR[i], sweep_fus[j], sweep_wing[k])[0]
                 
                 if (setting_angle*180/np.pi) <= 6:
-                    tmp = [AR[i], sweep_fus[j], sweep_wing[k], stability, s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0], s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[1]]
+                    tmp = [AR[i], sweep_fus[j], sweep_wing[k], stability*100, s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0], s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[1]]
                     results = np.vstack([results, tmp])
                     print(tmp)
 results = np.delete(results, 0, 0)
