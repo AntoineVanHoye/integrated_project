@@ -35,7 +35,7 @@ delta = 0.005
 b = 28.95
 #a = 8
 #mean_chord = surf_tot/b
-l_fus = 16.8
+l_fus = 17.8
 l_cabin = 10.1
 l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
@@ -81,7 +81,7 @@ z_AC_tail = 1.51
 #a1_over_a = a1/a
 
 config = 3
-fuel = 1
+fuel = 2
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -307,7 +307,7 @@ def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus
     else : 
         print("The static margin has to be changed and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"m from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
     """
-    return Kn*100
+    return Kn, hn
 
 
 ##################################################################
@@ -372,11 +372,11 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     print("----------------------------------------------------------------------")
 
     print("--------------------------STATIC MARGIN AND NEUTRAL POINT--------------------------------------------")
-    Kn = long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)
+    Kn, hn = long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)
     if Kn >= 0.05 and Kn < 0.3 : 
-        print("The static margin has a correct value and is equal to : ", (Kn*100), "%.") # and the neutral point is positioned at",hn*MAC_tot,"from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
+        print("The static margin has a correct value and is equal to : ", (Kn*100), "%  and the neutral point is positioned at",hn*MAC_tot,"from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
     else : 
-        print("The static margin has to be changed and is equal to : ", (Kn*100), "%.") # and the neutral point is positioned at",hn*MAC_tot,"m from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
+        print("The static margin has to be changed and is equal to : ", (Kn*100), "%.  and the neutral point is positioned at",hn*MAC_tot,"m from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------ACCEPTABLE POSITIONS FOR THE CENTER OF GRAVITY--------------------------------------------")
@@ -384,4 +384,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     get_CG(config,fuel,Cm0_fus,Cm0_wing,0.15, AR, sweep_LE_fus, sweep_LE_wing)
     print("----------------------------------------------------------------------")
     return
-printFunction(5.368421052631579, 53.793103448275865, 29.473684210526315)
+#printFunction(4.7368421052631575, 53.793103448275865, 25.0)

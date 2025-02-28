@@ -7,30 +7,49 @@ import stability as s
 # ---------------------------------------- #
 # Constants
 config = 3
-fuel = 1
+fuel = 2
 Cm0_wing = w.getAirfoilWing()[4]
 Cm0_fus = w.getAirfoilFus()[4]
 # ---------------------------------------- #
 
-AR = np.linspace(4, 6, 20)
+AR = np.linspace(2, 6, 41)
 AR = np.flip(AR)
-sweep_fus = np.linspace(30, 60, 30)
-sweep_wing = np.linspace(20, 40, 20)
+sweep_fus = np.linspace(10, 60, 51)
+sweep_wing = np.linspace(25, 45, 21)
 
 results = np.array([0, 0, 0, 0, 0, 0])
 for i in range(len(AR)):
     for j in range(len(sweep_fus)):
         for k in range(len(sweep_wing)):
-            stability = s.long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k]) 
-            if 5 < (stability*100) < 10:
+            stability, _ = s.long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k]) 
+
+            if 5 < (stability*100) < 15:
+
                 force = s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0]
                 cl = w.getCl(AR[i], sweep_fus[j], force)
                 setting_angle = w.getCalageAngle(cl, AR[i], sweep_fus[j], sweep_wing[k])[0]
                 
-                if (setting_angle*180/np.pi) <= 6:
+                if (setting_angle*180/np.pi) <= 4:
                     tmp = [AR[i], sweep_fus[j], sweep_wing[k], stability*100, s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0], s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[1]]
                     results = np.vstack([results, tmp])
                     print(tmp)
+
 results = np.delete(results, 0, 0)
 print(np.shape(results))
 #print(resutls)
+
+# ------ Optimisation manuel -------- #
+
+#Airfoil ? 
+AR = 4
+sweep_fus = 50
+sweep_wing = 30
+Cabin_width = 7
+Cabin_length = 18.8
+#Position tail ? 
+
+force = 694123.11242362
+
+
+#w.printFunction(AR, sweep_fus, sweep_wing, force)
+#s.printFunction(AR, sweep_fus, sweep_wing)

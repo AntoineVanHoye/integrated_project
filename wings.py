@@ -5,8 +5,8 @@ import pandas as pd
 
 #---Guesses---#
 span_max = 28.95           #[m] Span  max span for airport
-cabin_width = 7         #[m] 
-cabin_lenght = 16.8     #[m] 
+cabin_width = 9         #[m] 
+cabin_lenght = 17.8     #[m] 
 #AR = 4           #Aspect ratio (guess)
 #weight =   655202.751944230  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
 weight_empty = 526898.7380202 #60452.314059821154 * 9.81 #[N]S 
@@ -27,7 +27,7 @@ beta = np.sqrt(1-(M**2))
 plt.rcParams.update({
     "text.usetex": True,              # Use LaTeX for all text rendering
     "font.family": "serif",           # Use LaTeX's default font family
-    "font.serif": ["Times"],# Use Computer Modern for a LaTeX-like font
+    "font.serif": ["Times"],          # Use Computer Modern for a LaTeX-like font
     "font.size": 22,                  # Global font size to match LaTeX
     "axes.titlesize": 22,             # Font size for title
     "axes.labelsize": 20,             # Font size for axis labels
@@ -225,7 +225,7 @@ def guess_CL_max(AR):
 
 def detSurfac(AR, sweep_LE_fus):
     surface_total = span_max**2/AR #2*weight/(rho*(v**2)*Cl_max) 
-    surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2 +1)/np.tan((90-sweep_LE_fus)*np.pi/180))))/2 * (cabin_width+2) #(cabin_width * cabin_lenght)
+    surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2)/np.tan((90-sweep_LE_fus)*np.pi/180))))/2 * (cabin_width) #(cabin_width * cabin_lenght)
     surface_wing = surface_total - surface_fuselage
     
     return surface_total, surface_fuselage, surface_wing   
@@ -241,7 +241,7 @@ def getCl(AR, sweep_LE_fus, weight):
 
 def fusGeometry(AR, sweep_LE_fus):
     surface_total, surface_fuselage, surface_wing = detSurfac(AR, sweep_LE_fus)
-    b = cabin_width + 2
+    b = cabin_width 
     AR_fuselage = (b**2)/surface_fuselage
     sweep_leading =  sweep_LE_fus #[°]
     c_root = cabin_lenght # (surface_wing/b)* (2/(1+taper_ratio))
@@ -316,7 +316,7 @@ def fuselageCL(AR, sweep_LE_fus):
 def wingGeometry(AR,sweep_LE_fus, sweep_LE_wing):
     b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(AR, sweep_LE_fus)
     surface_total, surface_fuselage, surface_wing = detSurfac(AR, sweep_LE_fus)
-    b = span_max - cabin_width - 2
+    b = span_max - cabin_width 
     AR_wing = (b**2)/surface_wing
     sweep_leading = sweep_LE_wing#[°]
     
@@ -585,9 +585,9 @@ def plotAllWing(wing_plot, sweep_LE_fus, sweep_LE_wing, AR):
     plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(sweep_LE_fus*(np.pi/180))), color='red')
     plt.scatter(yac_wing,  xac_wing, color='orange')
     leading_edge_fus_x = np.interp(yac_fus, y_fus, leading_edge_fus)
-    leading_edge_wing_x = np.interp(yac_wing , y_wing, leading_edge_wing)
+    leading_edge_wing_x = np.interp(yac_wing , y_wing + cabin_width/2, leading_edge_wing)
     plt.plot((yac_fus, yac_fus), (leading_edge_fus_x, leading_edge_fus_x + MAC_fus), color='red')
-    plt.plot((yac_wing, yac_wing), (leading_edge_wing_x , leading_edge_wing_x + MAC_wing), color='orange')
+    plt.plot((yac_wing, yac_wing), (leading_edge_wing_x + leading_edge_fus[-1], leading_edge_wing_x+ leading_edge_fus[-1] + MAC_wing), color='orange')
 
     plt.xlabel('$Y$')
     plt.ylabel('$X$')
@@ -845,4 +845,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, weight):
     plotAllWing(wing_plot, sweep_LE_fus, sweep_LE_wing, AR)
     return
 
-printFunction(5.368421052631579, 53.793103448275865, 29.473684210526315, 337475.698303858)
+#printFunction(4, 53.793103448275865, 25.0, 694123.11242362)

@@ -193,4 +193,4 @@ def get_weight():
     return (m_cab, m_aft, m_wing, m_LG, m_eng, m_nacgrp, m_APU, m_enginst, m_instr, m_hydr,
             m_furn, m_AC, m_payload, m_ops, m_elec, m_fltcon, m_fuel, m_prediction, m_passenger)
 
-print(get_weight())
+#print(get_weight())
