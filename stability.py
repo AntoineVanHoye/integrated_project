@@ -14,8 +14,6 @@ from wings import detSurfac
 from wings import wingCL
 from wings import fuselageCL
 from wings import get_Lift_and_drag
-#from wings import getAR
-#from wings import getSweep
 from wings import getAirfoilFus
 from wings import getAirfoilWing
 from wings import getClAlfa
@@ -25,24 +23,11 @@ rho = air_density(12500)[0]
 speed = true_airspeed_at_altitude(12500)
 
 delta = 0.005
-#AR_tot = getAR()
-#Important general values 
-#MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
-
-#surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-#_,_,_,_,_,_,_,_,_= get_Lift_and_drag(AR_tot,delta, sweep_LE_fus, sweep_LE_wing)
-#a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
 b = 28.95
-#a = 8
-#mean_chord = surf_tot/b
 l_fus = 17.8
 l_cabin = 10.1
 l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
-
-#_,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry(AR, sweep_LE_fus)
-#sweep_angle_wing = getSweep()[1]*np.pi/180
-#sweep_angle_fus = getSweep()[0]*np.pi/180
 
 Cm0_wing = getAirfoilWing()[4]
 Cm0_fus = getAirfoilFus()[4]
@@ -71,8 +56,8 @@ z_CG_tot = 0
 z_CG_motors = 2
 
 MAC_tail = 3.5766928376055023
-hor_tail_surf = 31.58034945261383
-a1 = 3.734185216903529
+hor_tail_surf = 40
+a1 = 4.436666682557715
 x_AC_tail_local = MAC_tail*0.2
 x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +0.5
 l_tail = MAC_tail
@@ -384,4 +369,5 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     get_CG(config,fuel,Cm0_fus,Cm0_wing,0.15, AR, sweep_LE_fus, sweep_LE_wing)
     print("----------------------------------------------------------------------")
     return
-#printFunction(4.7368421052631575, 53.793103448275865, 25.0)
+
+printFunction(4.7368421052631575, 53.793103448275865, 25.0)

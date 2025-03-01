@@ -13,7 +13,7 @@ Group member:
 - Amos David            - Antoine Van Hoye
 - Guillaume Vaillot
 """
-
+"""
 import numpy as np
 import matplotlib as plt
 from scipy.integrate import trapz
@@ -260,3 +260,90 @@ def stab_directional():
         print ("je ne sais pas encore si C_N_beta doit être plus grand ou plus petit que zero, pas clair dans le cours")
     else:
         print ("je ne sais pas encore si C_N_beta doit être plus grand ou plus petit que zero, pas clair dans le cours")
+
+"""
+
+
+
+import numpy as np
+import matplotlib as plt
+from scipy.integrate import trapz
+import matplotlib.pyplot as plt
+from wings import detSurfac
+from wings import air_density
+from wings import true_airspeed_at_altitude
+from wings import getReynold
+
+M=0.9 
+beta=np.sqrt(1-M**2)
+R=287
+M_C=0.9
+
+speed = true_airspeed_at_altitude(12500)
+rho = air_density(12500)[0]
+
+sweep_leading_tail=3*np.pi/180 #choice
+incidence_angle=0 #choice
+taper_ratio=0.6 #choice
+
+AR_tot = 4.5
+sweep_LE_fus = 55
+surf_tot,surf_fus,surf_wing=detSurfac(AR_tot,sweep_LE_fus)
+
+surf_hor_tail = 40 #choice
+
+def geomtail():
+    gamma_h=30*np.pi/180 #choice
+    surf_vert_tail = surf_hor_tail*np.tan(gamma_h)
+    surf_tot_tail = np.sqrt(surf_vert_tail**2+surf_hor_tail**2)
+    c_root_tail = 3.5 #choice
+    span_hor = 2*surf_hor_tail/(taper_ratio*c_root_tail+c_root_tail)
+    AR_h = span_hor**2/surf_hor_tail
+    return  c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail
+
+c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+
+print("The root chord of the tail is",c_root_tail,"m or",c_root_tail*3.28084,"ft")
+print("The span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
+print("The aspect ratio of the horizontal tail is",AR_h)
+print("The vertical surface of the tail",surf_vert_tail,"m^2 or",surf_vert_tail*10.7639,"ft^2")
+print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface.")
+
+def getMACTail():
+    
+    c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+    sweep_quarter_tail = np.arctan(np.tan(sweep_leading_tail) + (4/AR_h) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
+    sweep_trailing_tail = np.arctan(np.tan(sweep_quarter_tail) + (4/AR_h) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
+    sweep_beta_tail = np.arctan2(np.tan(sweep_quarter_tail), beta)
+
+    return sweep_beta_tail, sweep_quarter_tail
+
+def LiftCurveSlope():
+
+    c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+    cl_alpha=(0.5413-0.6572)/(5-6)/np.pi*180
+    sweep_beta_tail,sweep_quarter_tail=getMACTail()
+    k = (beta * cl_alpha)/(2*np.pi)
+    a = ((2*np.pi)/((2/(beta*AR_h)) + np.sqrt((1/((k * np.cos(sweep_beta_tail))))**2 + ((2/(beta * AR_h))**2) )))/beta
+
+    return a
+
+a=LiftCurveSlope()
+
+print("The lift curve slope of the tail is", a)
+
+def need_CL(force):
+    Need_CL=-force/(1/2*rho*speed**2*surf_hor_tail)
+    return Need_CL
+
+def setting_angle(force):
+    a = LiftCurveSlope()
+    CL = need_CL(force)
+    alpha_root =CL/a
+    return alpha_root
+force = 138278.7874
+print("The needed setting angle of the tail is", setting_angle(force)*180/np.pi)
+
+
+
+
