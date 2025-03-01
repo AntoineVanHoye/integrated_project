@@ -252,9 +252,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
 
 def downwash(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
     a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
-    #Cl_tot = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing)[2]
     deps = 2*a/(np.pi*AR)
-    #eps = 2*Cl_tot/(np.pi*AR_tot)
     eps = 0
     deps = 0
     return eps, deps
@@ -312,14 +310,18 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, AR, sweep_LE_fus, sweep_LE_w
     q = 1/2*rho*speed**2
     hn = (a * x_AC_tot/MAC_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
     #x_CG = x_AC_tot/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps)) + x_AC_tail*a1_over_a*(1-deps)*hor_tail_surf/((1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*surf_tot)- Kn/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*MAC_tot
-    x_CG = (hn*MAC_tot) - (Kn*MAC_tot)
+
+    #x_CG = (hn*MAC_tot) - (Kn*MAC_tot)
+    x_CG1 = (hn*MAC_tot) - (0.05*MAC_tot)
+    x_CG2 = (hn*MAC_tot) - (0.15*MAC_tot)
+
     """
     if Kn == 0.05:
         print("The center of gravity is positioned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the maximal value of the range.")
     if Kn == 0.15:
         print("The center of gravity is positioned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the minimal value of the range.")
     """
-    return 
+    return x_CG1, x_CG2
 
 
 
@@ -365,8 +367,8 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     print("----------------------------------------------------------------------")
 
     print("--------------------------ACCEPTABLE POSITIONS FOR THE CENTER OF GRAVITY--------------------------------------------")
-    get_CG(config,fuel,Cm0_fus,Cm0_wing,0.05, AR, sweep_LE_fus, sweep_LE_wing)
-    get_CG(config,fuel,Cm0_fus,Cm0_wing,0.15, AR, sweep_LE_fus, sweep_LE_wing)
+    print("The center of gravity is positioned at",get_CG(config,fuel,Cm0_fus,Cm0_wing,0.05, AR, sweep_LE_fus, sweep_LE_wing)[0],"m from the nose when the static margin is equal to",0.05*100,"%. It is the maximal value of the range.")
+    print("The center of gravity is positioned at",get_CG(config,fuel,Cm0_fus,Cm0_wing,0.05, AR, sweep_LE_fus, sweep_LE_wing)[1],"m from the nose when the static margin is equal to",0.15*100,"%. It is the minimal value of the range.")
     print("----------------------------------------------------------------------")
     return
 

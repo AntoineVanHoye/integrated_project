@@ -345,5 +345,50 @@ force = 138278.7874
 print("The needed setting angle of the tail is", setting_angle(force)*180/np.pi)
 
 
+def interpolation(x1, y1, x2, y2, x3):
+
+    # Calcul des coordonnées du point interpolé
+    t=(x3-x1)/(x2-x1) 
+    y3 = y1 + t * (y2 - y1)
+    
+    return y3
+
+    
+def dir_stat_stab_cruise(CG_position):  
+    surf_fus = 122.28   
+    length_fus = 16.8  
+    surf_wings = 61.75
+    span_wings = 20 
+    hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*16.8  # forward fuselage height
+    hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*16.8 # rear fuselage height
+    bf1 = 5.881743321 # forward fuselage width
+    bf2 = 9  # rear fuselage width
+    hf_max = 0.179*16.8  # maximum fuselage height
+    x_CG = CG_position 
+    L_f=4.8756645333766  # distance between center of gravity and aerodynamic center of the tail
+     
+    K_beta = 0.3 * (x_CG / length_fus) + 0.75 * (hf_max / length_fus) - 0.105
+    CN_beta_fuselage = -K_beta * (surf_fus*length_fus/(surf_wings*span_wings))*((hf1/hf2)**0.5)*((bf2/bf1)**(1/3))
+
+    CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
+
+    a = LiftCurveSlope()
+    c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+    
+    CN_beta_fin=a*surf_vert_tail*L_f/(surf_wing*span_wings)
+    
+    CN_beta_tot=CN_beta_fin+CN_beta_w+CN_beta_fuselage
+    
+    print("--------------------------DIRECTIONAL STABILITY--------------------------------------------")
+    if (CN_beta_tot>0):
+        print ("The aircraft is not directionally stable because CN_beta_tot is positive and equals",CN_beta_tot)
+    else:
+        print ("The aircraft is directionally stable because CN_beta_tot is negative and equals",CN_beta_tot)
+    print("----------------------------------------------------------------------")
+
+    return 
+
+CG_pos = 8.761817299689595
+dir_stat_stab_cruise(CG_pos)
 
 
