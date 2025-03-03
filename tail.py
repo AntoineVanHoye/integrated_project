@@ -272,12 +272,17 @@ import matplotlib.pyplot as plt
 from wings import detSurfac
 from wings import air_density
 from wings import true_airspeed_at_altitude
-from wings import getReynold
+
 
 M=0.9 
 beta=np.sqrt(1-M**2)
 R=287
 M_C=0.9
+
+###############PLOT OF THE HORIZONTAL TAIL#####################
+tail_plot = False
+####################################
+
 
 speed = true_airspeed_at_altitude(12500)
 rho = air_density(12500)[0]
@@ -285,6 +290,7 @@ rho = air_density(12500)[0]
 sweep_leading_tail=3*np.pi/180 #choice
 incidence_angle=0 #choice
 taper_ratio=0.6 #choice
+tail_pos = 12#choice
 
 AR_tot = 4.5
 sweep_LE_fus = 55
@@ -298,20 +304,71 @@ def geomtail():
     surf_tot_tail = np.sqrt(surf_vert_tail**2+surf_hor_tail**2)
     c_root_tail = 3.5 #choice
     span_hor = 2*surf_hor_tail/(taper_ratio*c_root_tail+c_root_tail)
+    span_vert = 2*surf_vert_tail/(taper_ratio*c_root_tail+c_root_tail)
+    span_tot = np.sqrt(span_hor**2+span_vert**2)
     AR_h = span_hor**2/surf_hor_tail
-    return  c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail
+    AR = span_tot**2/surf_tot_tail
 
-c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+    c_tip_tail = taper_ratio*c_root_tail
+    
+    y = np.linspace(0,span_hor/2,100)
+    c = np.linspace(c_root_tail, c_tip_tail, len(y))
+    quarter_line_tail = np.zeros(len(y))
+    leading_edge_tail = np.zeros(len(y))
+    trailing_edge_tail = np.zeros(len(y))
+    sweep_quarter_tail = np.arctan(np.tan(sweep_leading_tail) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
+    sweep_trailing_tail = np.arctan(np.tan(sweep_quarter_tail) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
+    for i in range(len(y)):
+        quarter_line_tail[i] = (np.tan(sweep_quarter_tail))*y[i] + (0.25*c_root_tail)
+        leading_edge_tail[i] = (np.tan(sweep_leading_tail))*y[i]
+        trailing_edge_tail[i] = (np.tan(sweep_trailing_tail))*y[i] + c_root_tail
+    
+    MAC_tail = 2/surf_tot_tail*trapz(c**2, y)
+    cy = c*y
+    yac_wing = (2/surf_tot_tail) *trapz(cy,y)
+    xac_wing = MAC_tail*0.2
+    return  c_root_tail, span_hor, span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing
+
+c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
 
 print("The root chord of the tail is",c_root_tail,"m or",c_root_tail*3.28084,"ft")
-print("The span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
+print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
+print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
 print("The aspect ratio of the horizontal tail is",AR_h)
 print("The vertical surface of the tail",surf_vert_tail,"m^2 or",surf_vert_tail*10.7639,"ft^2")
-print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface.")
+print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
+print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
+print("The total aspect ratio of the tail is",AR)
+print("The MAC of the tail is",MAC_tail,"m or",MAC_tail*3.28084,"ft")
+print("The y position of the aerodynamic center of the wing is",yac_wing,"m or",yac_wing*3.28084,"ft in the local axis and",tail_pos+yac_wing,"m and",tail_pos+yac_wing*3.28084,"ft with respect to the nose of the aircraft")
+print("The x position of the aerodynamic center of the wing is",xac_wing,"m or",xac_wing*3.28084,"ft")
+
+def plotTail():
+    if tail_plot == False:
+        return
+    
+    y = np.linspace(0,span_hor/2,100)
+
+    quarter_line_tail = np.zeros(len(y))
+    leading_edge_tail = np.zeros(len(y))
+    trailing_edge_tail = np.zeros(len(y))
+    sweep_quarter_tail = np.arctan(np.tan(sweep_leading_tail) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
+    sweep_trailing_tail = np.arctan(np.tan(sweep_quarter_tail) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
+    for i in range(len(y)):
+        quarter_line_tail[i] = (np.tan(sweep_quarter_tail))*y[i] + (0.25*c_root_tail)
+        leading_edge_tail[i] = (np.tan(sweep_leading_tail))*y[i]
+        trailing_edge_tail[i] = (np.tan(sweep_trailing_tail))*y[i] + c_root_tail
+    plt.plot(y, leading_edge_tail)
+    plt.plot(y, trailing_edge_tail)
+    plt.show()
+
+    return
+plotTail()
+
 
 def getMACTail():
     
-    c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
     sweep_quarter_tail = np.arctan(np.tan(sweep_leading_tail) + (4/AR_h) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
     sweep_trailing_tail = np.arctan(np.tan(sweep_quarter_tail) + (4/AR_h) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
     sweep_beta_tail = np.arctan2(np.tan(sweep_quarter_tail), beta)
@@ -320,7 +377,7 @@ def getMACTail():
 
 def LiftCurveSlope():
 
-    c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
     cl_alpha=(0.5413-0.6572)/(5-6)/np.pi*180
     sweep_beta_tail,sweep_quarter_tail=getMACTail()
     k = (beta * cl_alpha)/(2*np.pi)
@@ -345,6 +402,10 @@ force = 138278.7874
 print("The needed setting angle of the tail is", setting_angle(force)*180/np.pi)
 
 
+
+
+
+
 def interpolation(x1, y1, x2, y2, x3):
 
     # Calcul des coordonnées du point interpolé
@@ -353,19 +414,18 @@ def interpolation(x1, y1, x2, y2, x3):
     
     return y3
 
-    
 def dir_stat_stab_cruise(CG_position):  
+    length_fus = 16.8
     surf_fus = 122.28   
-    length_fus = 16.8  
     surf_wings = 61.75
     span_wings = 20 
-    hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*16.8  # forward fuselage height
-    hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*16.8 # rear fuselage height
+    hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*length_fus  # forward fuselage height
+    hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*length_fus # rear fuselage height
     bf1 = 5.881743321 # forward fuselage width
     bf2 = 9  # rear fuselage width
     hf_max = 0.179*16.8  # maximum fuselage height
     x_CG = CG_position 
-    L_f=4.8756645333766  # distance between center of gravity and aerodynamic center of the tail
+    L_f=6  # distance between center of gravity and aerodynamic center of the tail
      
     K_beta = 0.3 * (x_CG / length_fus) + 0.75 * (hf_max / length_fus) - 0.105
     CN_beta_fuselage = -K_beta * (surf_fus*length_fus/(surf_wings*span_wings))*((hf1/hf2)**0.5)*((bf2/bf1)**(1/3))
@@ -373,9 +433,10 @@ def dir_stat_stab_cruise(CG_position):
     CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
 
     a = LiftCurveSlope()
-    c_root_tail, span_hor, AR_h, surf_vert_tail, surf_tot_tail=geomtail()
+    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
     
     CN_beta_fin=a*surf_vert_tail*L_f/(surf_wing*span_wings)
+    print(CN_beta_fin)
     
     CN_beta_tot=CN_beta_fin+CN_beta_w+CN_beta_fuselage
     

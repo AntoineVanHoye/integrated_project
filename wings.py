@@ -40,7 +40,7 @@ plt.rcParams.update({
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 cl_plot = False
 lift_and_drag_plots = False
 plot_airfoil = False
