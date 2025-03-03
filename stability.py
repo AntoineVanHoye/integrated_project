@@ -24,7 +24,7 @@ speed = true_airspeed_at_altitude(12500)
 
 delta = 0.005
 b = 28.95
-l_fus = 17.8
+l_fus = 16.8
 l_cabin = 10.1
 l_cockpit = 2.01
 l_aft = l_fus - l_cabin - l_cockpit
@@ -372,4 +372,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     print("----------------------------------------------------------------------")
     return
 
-printFunction(4.7368421052631575, 53.793103448275865, 25.0)
+printFunction(3.8, 42.0, 25.0)
