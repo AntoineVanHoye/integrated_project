@@ -416,8 +416,8 @@ def interpolation(x1, y1, x2, y2, x3):
 
 def dir_stat_stab_cruise(CG_position):  
     length_fus = 16.8
-    surf_fus = 122.28   
-    surf_wings = 61.75
+    surf_fus = 132.97   
+    surf_wings = 87.59
     span_wings = 20 
     hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*length_fus  # forward fuselage height
     hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*length_fus # rear fuselage height
@@ -429,22 +429,27 @@ def dir_stat_stab_cruise(CG_position):
      
     K_beta = 0.3 * (x_CG / length_fus) + 0.75 * (hf_max / length_fus) - 0.105
     CN_beta_fuselage = -K_beta * (surf_fus*length_fus/(surf_wings*span_wings))*((hf1/hf2)**0.5)*((bf2/bf1)**(1/3))
-
+    
     CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
-
+    
     a = LiftCurveSlope()
     c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
-    
     CN_beta_fin=a*surf_vert_tail*L_f/(surf_wing*span_wings)
-    print(CN_beta_fin)
+    
     
     CN_beta_tot=CN_beta_fin+CN_beta_w+CN_beta_fuselage
     
     print("--------------------------DIRECTIONAL STABILITY--------------------------------------------")
-    if (CN_beta_tot>0):
-        print ("The aircraft is not directionally stable because CN_beta_tot is positive and equals",CN_beta_tot)
+    if (CN_beta_tot<0):
+        print ("The aircraft is not directionally stable because CN_beta_tot is negative and equals",CN_beta_tot)
+        print("The contribution of the fuselage is",CN_beta_fuselage)
+        print("The contribution of the wings is",CN_beta_w)
+        print("The contribution of the fin is",CN_beta_fin)
     else:
-        print ("The aircraft is directionally stable because CN_beta_tot is negative and equals",CN_beta_tot)
+        print ("The aircraft is directionally stable because CN_beta_tot is positive and equals",CN_beta_tot)
+        print("The contribution of the fuselage is",CN_beta_fuselage)
+        print("The contribution of the wings is",CN_beta_w)
+        print("The contribution of the fin is",CN_beta_fin)
     print("----------------------------------------------------------------------")
 
     return 
