@@ -12,10 +12,10 @@ Cm0_wing = w.getAirfoilWing()[4]
 Cm0_fus = w.getAirfoilFus()[4]
 # ---------------------------------------- #
 
-AR = np.linspace(2, 6, 41)
+AR = np.linspace(3, 5, 21)
 AR = np.flip(AR)
-sweep_fus = np.linspace(10, 60, 51)
-sweep_wing = np.linspace(25, 45, 21)
+sweep_fus = np.linspace(5, 50, 46)
+sweep_wing = np.linspace(25, 35, 11)
 
 results = np.array([0, 0, 0, 0, 0, 0])
 for i in range(len(AR)):
@@ -28,7 +28,10 @@ for i in range(len(AR)):
                 force = s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0]
                 cl = w.getCl(AR[i], sweep_fus[j], force)
                 setting_angle = w.getCalageAngle(cl, AR[i], sweep_fus[j], sweep_wing[k])[0]
-                
+
+                #if (setting_angle*180/np.pi) <= 8:
+                #    print("Bad  ", [AR[i], sweep_fus[j], sweep_wing[k], stability*100, setting_angle*180/np.pi])
+
                 if (setting_angle*180/np.pi) <= 4:
                     tmp = [AR[i], sweep_fus[j], sweep_wing[k], stability*100, s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0], s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[1]]
                     results = np.vstack([results, tmp])

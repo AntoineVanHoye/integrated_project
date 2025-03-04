@@ -6,7 +6,7 @@ import pandas as pd
 #---Guesses---#
 span_max = 28.95           #[m] Span  max span for airport
 cabin_width = 9         #[m] 
-cabin_lenght = 17.8     #[m] 
+cabin_lenght = 16.8     #[m] 
 #AR = 4           #Aspect ratio (guess)
 #weight =   655202.751944230  #526898.7380202 #[n]          471511.49122 #  #[N] = 106000lb (guess from weight code)
 weight_empty = 526898.7380202 #60452.314059821154 * 9.81 #[N]S 
@@ -40,7 +40,7 @@ plt.rcParams.update({
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 cl_plot = False
 lift_and_drag_plots = False
 plot_airfoil = False
@@ -523,6 +523,7 @@ def getMAC(AR, sweep_LE_fus, sweep_LE_wing):
 
     x_tmp = leading[np.argmin(abs(y - yac))]
     xac = x_tmp+xac 
+    xac = ((xac_fus*surface_fuselage) + (xac_wing*surface_wing))/surface_total
 
     return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
 
@@ -584,6 +585,7 @@ def plotAllWing(wing_plot, sweep_LE_fus, sweep_LE_wing, AR):
 
     plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(sweep_LE_fus*(np.pi/180))), color='red')
     plt.scatter(yac_wing,  xac_wing, color='orange')
+    plt.scatter(yac, xac, color='blue')
     leading_edge_fus_x = np.interp(yac_fus, y_fus, leading_edge_fus)
     leading_edge_wing_x = np.interp(yac_wing , y_wing + cabin_width/2, leading_edge_wing)
     plt.plot((yac_fus, yac_fus), (leading_edge_fus_x, leading_edge_fus_x + MAC_fus), color='red')
@@ -845,4 +847,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, weight):
     plotAllWing(wing_plot, sweep_LE_fus, sweep_LE_wing, AR)
     return
 
-#printFunction(4, 53.793103448275865, 25.0, 694123.11242362)
+printFunction(3.8, 42.0, 25.0, 695404.413480392)
