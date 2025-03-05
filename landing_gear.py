@@ -130,8 +130,8 @@ print(f'Coordinates of forward landing gear (m): {x_w,y_w}')
 #plot fuselage lines
 plt.rcParams.update({
     "text.usetex": True,              # Use LaTeX for all text rendering
-    "font.family": "serif",           # Use LaTeX's default font family
-    "font.serif": ["Times"],# Use Computer Modern for a LaTeX-like font
+    "font.family": "sans-serif",           # Use LaTeX's default font family
+    "font.serif": ["Helvetica"],# Use Computer Modern for a LaTeX-like font
     "font.size": 22,                  # Global font size to match LaTeX
     "axes.titlesize": 22,             # Font size for title
     "axes.labelsize": 20,             # Font size for axis labels
@@ -188,11 +188,11 @@ plt.text((0)/2*3.28084, (x_w)*3.28084, '$D_{lg}$', fontsize=18, ha='right', va='
 
 plt.legend()
 #plt.title(f"Latteral disposition of the landing gear")
-plt.xlabel("y-[ft]")
-plt.ylabel("x-[ft]")
+plt.xlabel("[ft]")
+plt.ylabel("[ft]")
 plt.axis("equal")  # Ensure equal scaling on both axes
 plt.grid(False)
-plt.savefig(r'Plots/Latteral_disposition_landing_gear.pdf',format='pdf')
+plt.savefig('Plots\Latteral_disposition_landing_gear.pdf',format='pdf')
 
 # Weight determination (statistical)
 
@@ -336,14 +336,14 @@ ax.annotate('', xy=(x_w*3.28084, y_w*3.28084), xytext=(x_n*3.28084, y_n*3.28084)
 plt.text((x_w+x_n)/2*3.28084, (y_w+y_n)/2*3.28084, 't', fontsize=18, ha='center', va='bottom', color='black')
 
 ax.annotate('', xy=(x_cg*3.28084, y_cg*3.28084), xytext=(x_cg*3.28084, y_w*3.28084),arrowprops=dict(arrowstyle='<|-|>', color='gray', linewidth=2))
-plt.text((x_cg+x_cg)/2*3.28084, (y_cg+y_w)/2*3.28084, 'Zcg', fontsize=18, ha='right', va='bottom', color='black')
+plt.text((x_cg+x_cg)/2*3.28084, (y_cg+y_w)/2*3.28084, '$Z_{cg}$', fontsize=18, ha='right', va='bottom', color='black')
 
 plt.text((x_w + 2.5)*3.28084, (y_w +0.3)*3.28084, '$\Theta$', fontsize=18, verticalalignment='center')
 plt.text((x_w -0.5)*3.28084, (y_w +3)*3.28084, f"$\gamma$", fontsize=18, verticalalignment='center')
 plt.legend()
-#plt.title(f"Longitudinal disposition of the landing gear")
-plt.xlabel("x-[ft]")
-plt.ylabel("z-[ft]")
+# plt.title(f"Longitudinal disposition of the landing gear")
+plt.xlabel("[ft]")
+plt.ylabel("[ft]")
 plt.axis("equal")  # Ensure equal scaling on both axes
 plt.grid(False)
 plt.savefig('Plots/Longitudinal_disposition_landing_gear.pdf',format='pdf')
