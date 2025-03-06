@@ -372,4 +372,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     print("----------------------------------------------------------------------")
     return
 
-printFunction(3.8, 42.0, 25.0)
+#printFunction(3.8, 42.0, 25.0)
