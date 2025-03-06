@@ -281,9 +281,7 @@ def fusPlot(wing_plot, AR, sweep_LE_fus):
 def fuselageCL(AR, sweep_LE_fus):
     # --- airfoil --- #
     cl_alpha, cl_max, alpha_L0, CD_fuselage, cm = getAirfoilFus()
-    
     b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = fusGeometry(AR, sweep_LE_fus)
-    #print("AR fuselage is",AR_fuselage)
 
     # --- Lift --- #
     AoA = np.linspace(-10, 10, 51) * ((np.pi)/180)
@@ -294,9 +292,8 @@ def fuselageCL(AR, sweep_LE_fus):
 
     for i in range(len(AoA)):    
         CL_w[i] = a*(AoA[i] - alpha_L0)
-        if AoA[i] <= 0:
-            if AoA[i+1] >= 0:
-                CL_w0 = (CL_w[i] + a*(AoA[i+1] - alpha_L0))/2
+        CL_w0 = a*(0 - alpha_L0)
+
     CL_w0 = a*(2*(np.pi/180) - alpha_L0)
 
     if cl_plot:
@@ -329,7 +326,7 @@ def wingGeometry(AR,sweep_LE_fus, sweep_LE_wing):
 
     #h = [0.2, 0.4, 0.6, 0.8, (b*0.5) - 1.4] #[0.5, 1.0, 1.5, 2.0, 2.5 , (b*0.5) - 3.5] #[m]
     #h = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, (b*0.5) - 1.6]
-    h = [0.2,(b*0.5) - 0.2]
+    h = [0.01,(b*0.5) - 0.2]
     Yposition = [0, h[0], h[0]+h[1], b/2]
     #c = [c_tip_fus, 7.51864968, 6.78573899, 6.18381709, 5.65259713, 0] #[c_tip_fus, 7, 6.3, 5.8, 4.8, 4.2, 3.8, 3.5 , 0]
     #c = [c_tip_fus, 7.500065654471188, 6.6515342770866, 5.919295847694265, 5.250786658155237, 4.625425101990652, 4.03259169538853, 3.4659748031966577, 2.9214890949003856, 0]
@@ -352,7 +349,7 @@ def wingGeometry(AR,sweep_LE_fus, sweep_LE_wing):
     for i in range(len(c)-1):
         sweep_quarter[i] = np.arctan2(h[i], ((c[i]*0.25) - ((h[i]*np.tan(sweep_leading)) + (c[i+1]*0.25)))) - (np.pi/2)#np.arctan(np.tan(sweep_leading) + (4/AR_tmp) * (((1-taper_tmp)/(1+taper_tmp)) * (0 - 0.25)))
         sweep_trailing[i] = np.arctan2(h[i], (c[i] - ((h[i]*np.tan(sweep_leading)) + c[i+1]))) - (np.pi/2) #np.arctan(np.tan(sweep_quarter[i]) + (4/AR_tmp) * (((1-taper_tmp)/(1+taper_tmp)) * (0.25 - 1)))
-        sweep_beta[i] = np.arctan(np.tan(sweep_quarter[i])/beta)#np.arctan2(np.tan(sweep_quarter[i]), beta)
+        sweep_beta[i] = np.arctan(np.tan(sweep_quarter[i])/beta) #np.arctan2(np.tan(sweep_quarter[i]), beta)
 
     y = np.array([])
     quarter_line = np.array([])
@@ -403,6 +400,7 @@ def getCalageAngle(CL, AR, sweep_LE_fus, sweep_LE_wing):
     b_wing, AR_wing, _, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, _, _, _, _, _, _= wingGeometry(AR,sweep_LE_fus, sweep_LE_wing)
     _, Cl_fuselage, Cd_fuselage, Cl_max_fus, _ = fuselageCL(AR, sweep_LE_fus)
     surface_total, surface_fuselage, surface_wing = detSurfac(AR, sweep_LE_fus)
+
     # --- cl_alpha wing --- #
     cl_alpha_wing, cl_max, alpha_L0_wing, CD_wing, cm = getAirfoilWing()
 
@@ -410,13 +408,18 @@ def getCalageAngle(CL, AR, sweep_LE_fus, sweep_LE_wing):
     alpha_01 = -0.17
     eta_a_tip = twist_angle 
     alpha_L0_wing = alpha_L0_wing + (alpha_01 * twist_angle* (np.pi/180))
+    
+    # --- Cl of wing --- #
+    Cl_wing = ((CL*surface_total) - (Cl_fuselage*surface_fuselage))/surface_wing
 
+    # --- Rest --- #
     k = (beta * cl_alpha_wing)/(2*np.pi)
     a = ((2*np.pi)/((2/(beta*AR_wing)) + np.sqrt((1/((k * np.cos(sweep_beta_wing))))**2 + ((2/(beta * AR_wing))**2) )))/beta
 
     #alpha_L0root = ((surface_fuselage*alpha_L0_fus) + (surface_wing*alpha_L0_wing))/surface_total
     #CL/a + alpha_L0_wing
-    alpha_root = ((CL*surface_total - Cl_fuselage*surface_fuselage)/(surface_wing*a)) + alpha_L0_wing
+    alpha_root = (Cl_wing/a) - alpha_L0_wing
+    #((CL*surface_total - Cl_fuselage*surface_fuselage)/(surface_wing*a)) + alpha_L0_wing
 
     return alpha_root, a
 
@@ -438,7 +441,7 @@ def wingPlot(wing_plot, AR,sweep_LE_fus, sweep_LE_wing):
 #wingPlot(wing_plot)
 
 def wingCL(AR,sweep_LE_fus, sweep_LE_wing, weight):
-    # ----- Airfoil ----- # /!\ change in getCalageAngle
+    # ----- Airfoil ----- # 
     cl_alpha, cl_max, alpha_l0, CD_wing, cm = getAirfoilWing()
     Cl = getCl(AR, sweep_LE_fus, weight)
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _, _, _ = wingGeometry(AR,sweep_LE_fus, sweep_LE_wing)
@@ -527,7 +530,7 @@ def getMAC(AR, sweep_LE_fus, sweep_LE_wing):
 
     return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
 
-def getMAC2(AR, sweep_LE_fus, sweep_LE_wing):
+def equivalentWing(AR, sweep_LE_fus, sweep_LE_wing):
     b_wing, AR_wing, sweep_beta_wing, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing, c, h = wingGeometry(AR,sweep_LE_fus, sweep_LE_wing)
     b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(AR, sweep_LE_fus)
     surface_total, surface_fuselage, surface_wing = detSurfac(AR, sweep_LE_fus)
@@ -537,22 +540,31 @@ def getMAC2(AR, sweep_LE_fus, sweep_LE_wing):
     for i in range(len(c)-1):
         s[i] = h[i]*(c[i]+c[i+1])/2
     
-    b = (b_fus+b_wing)
+    b = span_max#(b_fus+b_wing)
     Sw = 0
     for i in range(len(s)):
         Sw += (b/surface_total)*((s[i]*c[i]) + (s[i]*c[i+1]))
     
-    Cwre = 0
+    Cre = 0
     for i in range(len(s)):
-        Cwre += (2/Sw)*(c[i]*s[i])
+        Cre += (2/Sw)*(c[i]*s[i])
+
+    Cte = 0
+    for i in range(len(s)):
+        Cte += (2/Sw)*(c[i+1]*s[i])
     
-    lambda_tot = c[-1]/c[0]
-    Mgc = (2*c[0]/3)*(1+lambda_tot+lambda_tot**2)/(1+lambda_tot)
+    lambda_E = Cte/Cre
 
-    y_mgc = (b/6)*(1+2*lambda_tot)/(1+lambda_tot) 
+    sweep_LE = (2/surface_total)*(sweep_LE_fus*surface_fuselage + sweep_LE_wing*surface_wing)
+    sweep_quarter = np.arctan(np.tan(sweep_LE) + ((Cre/(2*span_max) * lambda_E -1)))
 
-    addx =( c_root_fus/2) - (Cwre/2) #/!\
-    return Mgc, y_mgc, Cwre
+
+    Mgc = (2*Cre/3)*(1+lambda_E+lambda_E**2)/(1+lambda_E)
+
+    y_mgc = (b/6)*(1+2*lambda_E)/(1+lambda_E) 
+    x_mgc = y_mgc * np.tan(sweep_LE) + ((c[0]/2) - (Cre/2))
+    #addx =( c_root_fus/2) - (Cre/2) #/!\
+    return Cre, Cte, lambda_E, sweep_LE, sweep_quarter, Mgc, y_mgc, x_mgc
 
 
 def plotAllWing(wing_plot, sweep_LE_fus, sweep_LE_wing, AR):
@@ -605,16 +617,15 @@ def get_Lift_and_drag(AR, delta, sweep_LE_fus, sweep_LE_wing, weight):
     AoA = np.linspace(-10, 10, 51) * ((np.pi)/180)
     #_, a_wing = getCalageAngle(Cl_max)
     Cl_wing, Cl_wing_0, Cd_wing, Cl_max_wing, _, a_wing = wingCL(AR,sweep_LE_fus, sweep_LE_wing, weight)
-    Cl_fuselage, CL_fus_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(AR, sweep_LE_fus)
+    Cl_fuselage, Cl_fus_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(AR, sweep_LE_fus)
     
 
     # --- total lift computation --- #
     Cl_tot = np.zeros(len(AoA))
     Cl_tot = ((Cl_wing*surface_wing) + (Cl_fuselage*surface_fuselage))/surface_total 
     
-    #Cl_tot0 = float(Cl_tot[np.where(abs(AoA) <= 1e-12)])
-    #AoA_L0 = float(AoA[np.where(abs(Cl_tot) <= 6.04e-3)])*(180/np.pi)
-    Cl_tot0 = np.interp(0, AoA, Cl_tot)
+    
+    Cl_tot0 = ((Cl_wing_0*surface_wing) + (Cl_fus_0*surface_fuselage))/surface_total #np.interp(0, AoA, Cl_tot)
     AoA_L0 = np.interp(0, Cl_tot, AoA) * (180 / np.pi)
 
     cl_max = ((Cl_max_wing*surface_wing) + (Cl_max_fus*surface_fuselage))/surface_total 
@@ -626,12 +637,14 @@ def get_Lift_and_drag(AR, delta, sweep_LE_fus, sweep_LE_wing, weight):
 
     #print(f"delta Cd = {(((Cl_tot[np.where(abs(AoA) <= 1e-12)]**2)/(np.pi* (AR-winglet()))) * (1+delta))-Cd_induce[np.where(abs(AoA) <= 1e-12)]}")
     Cd_tot = np.zeros(len(AoA))
-    cd0 = 0.007#0.018 # Snorri's book page 755
+    cd0 = 0.02#0.018 # Snorri's book page 755
     Cd_tot = Cd_induce + cd0 #(((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total)
     #print("cd0: ", (((Cd_wing*surface_wing) + (Cd_fuselage*surface_fuselage))/surface_total))
     
     #Cd_tot0 = float(Cd_tot[np.where(abs(AoA) <= 1e-12)])
     Cd_tot0 = np.interp(0, AoA, Cd_tot)
+    
+    print("Wing percentage,", (Cl_wing_0*(surface_wing/surface_total))/Cl_tot0)
     
     CL_alfa = (Cl_tot[-1] - Cl_tot[0])/(AoA[-1] - AoA[0])
     
@@ -805,12 +818,12 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, weight):
     print(f"cl alpha fuselage airfoil: {cl_alpha_fus:.3f} [rad^-1]\n")
     
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
-    Mgc, y_mgc, Cwre = getMAC2(AR, sweep_LE_fus, sweep_LE_wing)
+    #Mgc, y_mgc, Cwre = getMAC2(AR, sweep_LE_fus, sweep_LE_wing)
     print("\n-------------- MAC values --------------\n")
     print(f"MAC fus: {MAC_fus:.3f} [m]\nYac fus: {yac_fus:.3f} [m]\nXac fus: {xac_fus:.3f} [m]\n")
     print(f"MAC wing: {MAC_wing:.3f} [m]\nYac wing: {yac_wing:.3f} [m]\nXac wing: {xac_wing:.3f} [m]\n")
     print(f"MAC: {MAC:.3f} [m]\nYac: {yac:.3f} [m]\nXac: {xac:.3f} [m]\n")
-    print(f"MGC: {Mgc:.3f} [m]\nY_MGC: {y_mgc:.3f} [m]\nCwre: {Cwre:.3f} [m]\n")
+    #print(f"MGC: {Mgc:.3f} [m]\nY_MGC: {y_mgc:.3f} [m]\nCwre: {Cwre:.3f} [m]\n")
     
 
     delta = 0.005 #graph slide 61 lecture 6 aerodinimics
