@@ -17,6 +17,11 @@ from wings import get_Lift_and_drag
 from wings import getAirfoilFus
 from wings import getAirfoilWing
 from wings import getClAlfa
+from tail import LiftCurveSlope
+from tail import geomtail
+from tail import surf_hor_tail
+from tail import LiftCurveSlope
+
 
 #values to calculate the coefficients 
 rho = air_density(12500)[0]
@@ -26,8 +31,9 @@ delta = 0.005
 b = 28.95
 l_fus = 16.8
 l_cabin = 10.1
-l_cockpit = 2.01
+l_cockpit = 2.01 
 l_aft = l_fus - l_cabin - l_cockpit
+surf_tot,surf_fus,surf_wing=detSurfac(AR_tot,sweep_LE_fus)
 
 Cm0_wing = getAirfoilWing()[4]
 Cm0_fus = getAirfoilFus()[4]
@@ -42,10 +48,7 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing):
     c_fus = trailing_fus - leading_fus
     c_wing = trailing_wing - leading_wing
     Cm0_wing = (2/(surf_wing*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
-    #Cm0_wing = 2*trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
     Cm0_fus = (2/(surf_fus*MAC_fus)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    #Cm0_fus = 2 * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    #Cm0_tot = (Cm0_wing + Cm0_fus)/(MAC_tot*surf_tot)
     Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
     return Cm0_tot,Cm0_fus,Cm0_wing
 
@@ -55,15 +58,15 @@ z_AC_tot = 0
 z_CG_tot = 0
 z_CG_motors = 2
 
-MAC_tail = 3.5766928376055023
-hor_tail_surf = 40
-a1 = 4.436666682557715
-x_AC_tail_local = MAC_tail*0.2
+c_root_tail,span_hor_tail,span_vert_tail,AR_h_tail, AR_tail,surf_vert_tail, surf_tot_tail, MAC_tail,y_AC_tail,x_AC_tail_local = geomtail()
+
+hor_tail_surf = surf_hor_tail()
+a1 = LiftCurveSlope()
 x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +0.5
 l_tail = MAC_tail
 
 z_AC_tail = 1.51
-#a1_over_a = a1/a
+
 
 config = 3
 fuel = 2
@@ -126,24 +129,7 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
     enginst_pos = motors_pos
 
     elec_syst_pos = 0.75*l_fus/2 + 0.25*motors_pos
-    """
-    print("Wings",wing_pos*3.28084)
-    print("Fuselage",fus_pos*3.28084)
-    print("Aft",aft_pos*3.28084)
-    print("APU",APU_pos*3.28084)
-    print("Hydr",hydr_pos*3.28084)
-    print("Payload",payload_pos*3.28084)
-    print("Ops",ops_pos*3.28084)
-    print("Land gear",land_gear_pos*3.28084)
-    print("Surf cont",surf_cont_pos*3.28084)
-    print("Instr",instr_pos*3.28084)
-    print("Furn",furn_pos*3.28084)
-    print("Air cond",air_cond_pos*3.28084)
-    print("Motors",motors_pos*3.28084)
-    print("Nacelle",nacelle_pos*3.28084)
-    print("Enginst",enginst_pos*3.28084)
-    print("Elec syst",elec_syst_pos*3.28084)
-"""
+  
     available_fuel_vol = 5 * 1000 #wingFuelvolume(AR, sweep_LE_fus, sweep_LE_wing, force)*1000 
     if d == 1 : #no fuel
         fuel_weight = 0
@@ -158,26 +144,26 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
     passengers_weight = passengers(i)[0]
     passengers_pos = passengers(i)[1] 
 
-    """
-    print("fuel:",fuel_pos,"->",fuel_pos/l_fus*100)
-    print("wing:",wing_pos, "->", wing_pos/l_fus *100)
-    print("fus:",fus_pos, "->", fus_pos/l_fus *100)
-    print("aft:",aft_pos, "->", aft_pos/l_fus *100)
-    print("APU:",APU_pos, "->", APU_pos/l_fus *100)
-    print("hydr:",hydr_pos, "->", hydr_pos/l_fus *100)
-    print("payload:",payload_pos, "->", payload_pos/l_fus *100) 
-    print("ops:",ops_pos, "->", ops_pos/l_fus *100)
-    print("land_gear:",land_gear_pos, "->", land_gear_pos/l_fus *100)
-    print("surf_cont:",surf_cont_pos, "->", surf_cont_pos/l_fus *100)
-    print("instr:",instr_pos, "->", instr_pos/l_fus *100)
-    print("furn:",furn_pos, "->", furn_pos/l_fus *100)
-    print("air_cond:",air_cond_pos, "->", air_cond_pos/l_fus *100)
-    print("motors:",motors_pos, "->", motors_pos/l_fus *100)
-    print("nacelle:",nacelle_pos, "->", nacelle_pos/l_fus *100)
-    print("enginst:",enginst_pos, "->", enginst_pos/l_fus *100)
-    print("elec_syst:",elec_syst_pos, "->", elec_syst_pos/l_fus *100)
-    """
-    #total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst + payload_weight + ops_weight 
+    
+    print("fuel:",fuel_pos,"m and",fuel_pos*3.28084,"ft ->",fuel_pos/l_fus*100)
+    print("wing:",wing_pos, "m and",wing_pos*3.28084,"ft ->", wing_pos/l_fus *100)
+    print("fus:",fus_pos, "m and",fus_pos*3.28084,"ft ->", fus_pos/l_fus *100)
+    print("aft:",aft_pos, "m and",aft_pos*3.28084,"ft ->", aft_pos/l_fus *100)
+    print("APU:",APU_pos, "m and", APU_pos*3.28084,"ft ->", APU_pos/l_fus *100)
+    print("hydr:",hydr_pos, "m and", hydr_pos*3.28084,"ft ->", hydr_pos/l_fus *100)
+    print("payload:",payload_pos, "m and",payload_pos*3.28084,"ft ->", payload_pos/l_fus *100) 
+    print("ops:",ops_pos, "m and",ops_pos*3.28084,"ft ->", ops_pos/l_fus *100)
+    print("land_gear:",land_gear_pos, "m and", land_gear_pos*3.28084,"ft ->", land_gear_pos/l_fus *100)
+    print("surf_cont:",surf_cont_pos, "m and", surf_cont_pos*3.28084,"ft ->", surf_cont_pos/l_fus *100)
+    print("instr:",instr_pos, "m and", instr_pos*3.28084,"ft ->", instr_pos/l_fus *100)
+    print("furn:",furn_pos, "m and",furn_pos*3.28084,"ft ->", furn_pos/l_fus *100)
+    print("air_cond:",air_cond_pos, "m and",air_cond_pos*3.28084,"ft ->", air_cond_pos/l_fus *100)
+    print("motors:",motors_pos, "m and",motors_pos*3.28084,"ft ->", motors_pos/l_fus *100)
+    print("nacelle:",nacelle_pos, "m and", nacelle_pos*3.28084,"ft ->", nacelle_pos/l_fus *100)
+    print("enginst:",enginst_pos, "m and",enginst_pos*3.28084,"ft ->", enginst_pos/l_fus *100)
+    print("elec_syst:",elec_syst_pos, "m and",elec_syst_pos*3.28084,"ft ->", elec_syst_pos/l_fus *100)
+    
+    
     total_mom = (wing_weight*wing_pos) + (fus_weight*fus_pos) + (land_gear_weight*land_gear_pos) + (surf_cont_weight*surf_cont_pos) + (instr_weight*instr_pos) + (elec_syst_weight*elec_syst_pos) + (furn_weight*furn_pos) + (air_cond_weight*air_cond_pos) + (passengers_weight*passengers_pos) + (motors_weight*motors_pos) + (fuel_pos*fuel_weight) + (aft_pos*aft_weight) + (nacelle_pos*nacelle_weight) + (APU_pos*APU_weight) + (enginst_pos*enginst_weight) + (hydr_pos*hydr_syst_weight) + (payload_pos*payload_weight) + (ops_pos*ops_weight) + (pilots_weight*pilots_pos)
     total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst_weight + payload_weight + ops_weight + pilots_weight
     position = total_mom/total_weight
@@ -227,7 +213,6 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
     V_T = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
     #T = 49734.78
     T = 153500
-    #drag_tail = 
     x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[0]
     weight = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0]
@@ -235,28 +220,17 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
     x_CG_motors = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[2]
     Fp = prop_force()
 
-    #Cm_tot = Cm0_tot + Cl_tot* (x_CG_tot - x_AC_tot)/MAC_tot - Cm_T
     #translation equilibrium 
     eq1 = Eq(L_tot + L_T - weight + Fp,0)
     
     #rotation equilibrium 
-    #eq2 = Eq(Cm0_tot + L_tot*(x_CG_tot-x_AC_tot)/(1/2*rho*speed**2 * MAC_tot*surf_tot)-L_T*(x_AC_tail - x_CG_tot)/(1/2*rho*speed**2 * MAC_tail*hor_tail_surf)*V_T+T*(z_CG_motors - z_CG_tot),0)
-    eq2 = Eq(M0 + L_tot*(x_CG_tot-x_AC_tot)-L_T*(x_AC_tail - x_CG_tot)-T*(z_CG_motors - z_CG_tot) + Fp*(x_CG_tot-x_CG_motors),0) #+ drag_tail*(z_AC_tail-z_CG_tot)
+    eq2 = Eq(M0 + L_tot*(x_CG_tot-x_AC_tot)-L_T*(x_AC_tail - x_CG_tot)-T*(z_CG_motors - z_CG_tot) + Fp*(x_CG_tot-x_CG_motors),0) 
 
     solution = solve((eq1,eq2),(L_tot,L_T))
     L_tot = solution[L_tot]
     L_T = solution[L_T]
 
     return L_tot,L_T
-
-
-def downwash(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
-    a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
-    deps = 2*a/(np.pi*AR)
-    eps = 0
-    deps = 0
-    return eps, deps
-
 
 ##################################################################
 ######LONGITUDINAL STATIC STABILITY
@@ -282,14 +256,6 @@ def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus
     hn = (a * x_AC_tot/MAC_tot +eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
 
     Kn = hn - x_CG_tot/MAC_tot 
-
-    """
-    if Kn >= 0.05 and Kn < 0.3 : 
-        print("The static margin has a correct value and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
-
-    else : 
-        print("The static margin has to be changed and is equal to : ", (Kn*100), "% and the neutral point is positioned at",hn*MAC_tot,"m from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
-    """
     return Kn, hn
 
 
@@ -302,28 +268,18 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, AR, sweep_LE_fus, sweep_LE_w
     a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
     engines_pos = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[2]
-    deps = downwash(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing)[1]
+    deps = 0
     V_T = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
     dalpha_prop = 1 - deps
     Fp = prop_force()
     eta = 0.9
     q = 1/2*rho*speed**2
     hn = (a * x_AC_tot/MAC_tot + eta*a1*hor_tail_surf/surf_tot*(1-deps)*x_AC_tail/MAC_tot+Fp/(q*surf_tot)*(1-deps)*engines_pos)/(a + eta*hor_tail_surf/surf_tot*a1*(1-deps)+Fp/(q*surf_tot))
-    #x_CG = x_AC_tot/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps)) + x_AC_tail*a1_over_a*(1-deps)*hor_tail_surf/((1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*surf_tot)- Kn/(1 + hor_tail_surf/surf_tot*a1_over_a*(1 - deps))*MAC_tot
 
     #x_CG = (hn*MAC_tot) - (Kn*MAC_tot)
     x_CG1 = (hn*MAC_tot) - (0.05*MAC_tot)
     x_CG2 = (hn*MAC_tot) - (0.15*MAC_tot)
-
-    """
-    if Kn == 0.05:
-        print("The center of gravity is positioned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the maximal value of the range.")
-    if Kn == 0.15:
-        print("The center of gravity is positioned at",x_CG,"m from the nose when the static margin is equal to",Kn*100,"%. It is the minimal value of the range.")
-    """
     return x_CG1, x_CG2
-
-
 
 def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
@@ -354,10 +310,6 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     print("The new lift force generated by the tail is",CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[1],"[N]")
     print("----------------------------------------------------------------------")
 
-    print("--------------------------DOWNWASH--------------------------------------------")
-    print("The downwash effect eps equals", downwash(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0]," and deps/dalpha is equal to", downwash(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[1])
-    print("----------------------------------------------------------------------")
-
     print("--------------------------STATIC MARGIN AND NEUTRAL POINT--------------------------------------------")
     Kn, hn = long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)
     if Kn >= 0.05 and Kn < 0.3 : 
@@ -373,3 +325,52 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     return
 
 printFunction(3.8, 42.0, 25.0)
+
+def interpolation(x1, y1, x2, y2, x3):
+    t=(x3-x1)/(x2-x1) 
+    y3 = y1 + t * (y2 - y1)
+    
+    return y3
+
+def dir_stat_stab_cruise(CG_position):  
+    length_fus = 16.8
+    surf_fus = 132.97   
+    surf_wings = 87.59
+    span_wings = 20 
+    hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*length_fus  # forward fuselage height
+    hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*length_fus # rear fuselage height
+    bf1 = 5.881743321 # forward fuselage width
+    bf2 = 9  # rear fuselage width
+    hf_max = 0.179*16.8  # maximum fuselage height
+    x_CG = CG_position 
+    L_f=6  # distance between center of gravity and aerodynamic center of the tail
+     
+    K_beta = 0.3 * (x_CG / length_fus) + 0.75 * (hf_max / length_fus) - 0.105
+    CN_beta_fuselage = -K_beta * (surf_fus*length_fus/(surf_wings*span_wings))*((hf1/hf2)**0.5)*((bf2/bf1)**(1/3))
+    
+    CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
+    
+    a = LiftCurveSlope()
+    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
+    CN_beta_fin=a*surf_vert_tail*L_f/(surf_wing*span_wings)
+    
+    
+    CN_beta_tot=CN_beta_fin+CN_beta_w+CN_beta_fuselage
+    
+    print("--------------------------DIRECTIONAL STABILITY--------------------------------------------")
+    if (CN_beta_tot<0):
+        print ("The aircraft is not directionally stable because CN_beta_tot is negative and equals",CN_beta_tot)
+        print("The contribution of the fuselage is",CN_beta_fuselage)
+        print("The contribution of the wings is",CN_beta_w)
+        print("The contribution of the fin is",CN_beta_fin)
+    else:
+        print ("The aircraft is directionally stable because CN_beta_tot is positive and equals",CN_beta_tot)
+        print("The contribution of the fuselage is",CN_beta_fuselage)
+        print("The contribution of the wings is",CN_beta_w)
+        print("The contribution of the fin is",CN_beta_fin)
+    print("----------------------------------------------------------------------")
+
+    return 
+
+CG_pos = 8.761817299689595
+dir_stat_stab_cruise(CG_pos)
