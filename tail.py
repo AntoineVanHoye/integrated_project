@@ -296,11 +296,11 @@ AR_tot = 4.5
 sweep_LE_fus = 55
 surf_tot,surf_fus,surf_wing=detSurfac(AR_tot,sweep_LE_fus)
 
-def surf_hor_tail():
+def surfhor_tail():
     return 40
 
 def geomtail():
-    surf_hor_tail = surf_hor_tail()
+    surf_hor_tail = surfhor_tail()
     gamma_h=30*np.pi/180 #choice
     surf_vert_tail = surf_hor_tail*np.tan(gamma_h)
     surf_tot_tail = np.sqrt(surf_vert_tail**2+surf_hor_tail**2)
@@ -392,6 +392,7 @@ a=LiftCurveSlope()
 print("The lift curve slope of the tail is", a)
 
 def need_CL(force):
+    surf_hor_tail = surfhor_tail()
     Need_CL=-force/(1/2*rho*speed**2*surf_hor_tail)
     return Need_CL
 
@@ -401,7 +402,7 @@ def setting_angle(force):
     alpha_root =CL/a
     return alpha_root
 force = 138278.7874
-print("The needed setting angle of the tail is", setting_angle(force)*180/np.pi)
+print("The needed setting angle of the tail is", setting_angle(force)*180/np.pi,"degrees.")
 
 
 

@@ -59,7 +59,7 @@ def winglet(AR):
 #    return sweep_LE_fus, sweep_LE_wing
 
 def getAirfoilFus():
-    airfoil = 2
+    airfoil = 1
     if airfoil == 1:
         cl_alpha = ((1.0498+0.2062)/(5+5)) * (180/np.pi) # SC(2) 0518 M0 Re12M C_m = -0.1158
         cl_max = 1.87

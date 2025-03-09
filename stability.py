@@ -13,17 +13,21 @@ from wings import fusGeometry
 from wings import detSurfac
 from wings import wingCL
 from wings import fuselageCL
-from wings import get_Lift_and_drag
 from wings import getAirfoilFus
 from wings import getAirfoilWing
 from wings import getClAlfa
+from wings import wingCL
+from wings import wingGeometry
 from tail import LiftCurveSlope
 from tail import geomtail
-from tail import surf_hor_tail
+from tail import surfhor_tail
 from tail import LiftCurveSlope
 
 
-#values to calculate the coefficients 
+##################################################################
+######GENERAL QUANTTITES
+##################################################################
+
 rho = air_density(12500)[0]
 speed = true_airspeed_at_altitude(12500)
 
@@ -32,12 +36,17 @@ b = 28.95
 l_fus = 16.8
 l_cabin = 10.1
 l_cockpit = 2.01 
+span_wings = 20 
 l_aft = l_fus - l_cabin - l_cockpit
+wings_taper_ratio = 0.4
+
+##################################################################
+######COMPUTATION OF THE CM0_TOT
+##################################################################
 
 Cm0_wing = getAirfoilWing()[4]
 Cm0_fus = getAirfoilFus()[4]
 
-#Calculation of the Cm0_tot ==> separate the integral in to parts
 def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing):
     _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing,_,_ = winggeom(AR,sweep_LE_fus, sweep_LE_wing) 
     _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom(AR,sweep_LE_fus) 
@@ -52,23 +61,34 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing):
     return Cm0_tot,Cm0_fus,Cm0_wing
 
 
-#Position of the important points
+##################################################################
+######GEOMETRICAL POSITIONS OF IMPORTANT POINTS
+##################################################################
+
 z_AC_tot = 0
 z_CG_tot = 0
 z_CG_motors = 2
 
+##################################################################
+######TAIL QUANTITIES
+##################################################################
+
 c_root_tail,span_hor_tail,span_vert_tail,AR_h_tail, AR_tail,surf_vert_tail, surf_tot_tail, MAC_tail,y_AC_tail,x_AC_tail_local = geomtail()
 
-hor_tail_surf = surf_hor_tail()
+hor_tail_surf = surfhor_tail()
 a1 = LiftCurveSlope()
 x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +0.5
 l_tail = MAC_tail
 
 z_AC_tail = 1.51
 
+##################################################################
+######CONFIGURATION SETTING
+##################################################################
 
 config = 3
 fuel = 2
+
 ##################################################################
 ######CG POSITION
 ##################################################################
@@ -170,6 +190,11 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
     return position, pourc_wings, motors_pos/MAC_tot, total_weight 
 
 
+##################################################################
+######EQUILIBRIUM IN PITCH
+##################################################################
+
+
 #tail volume ratio effectivness 
 def tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing):
     surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
@@ -200,9 +225,6 @@ def fus_lift(AR ,sweep_LE_fus, sweep_LE_wing):
     L_f = CL_f0*(1/2)*rho*surf_fus*speed**2
     return L_f
 
-##################################################################
-######EQUILIBRIUM IN PITCH
-##################################################################
 
 #i : configuration numerotation
 def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing): 
@@ -210,8 +232,8 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
-    #T = 49734.78
-    T = 153500
+    T = 49734.78
+    #T = 153500
     x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[0]
     weight = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0]
@@ -231,9 +253,11 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
 
     return L_tot,L_T
 
+
 ##################################################################
-######LONGITUDINAL STATIC STABILITY
+######LONGITUDINAL STABILITY
 ##################################################################
+
 
 def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing): #in the pitching plane
     surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
@@ -260,6 +284,7 @@ def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus
 ######CG POSITIONS RANGE
 ##################################################################
 
+
 def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, AR, sweep_LE_fus, sweep_LE_wing): 
     surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
     a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
@@ -278,6 +303,12 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, AR, sweep_LE_fus, sweep_LE_w
     x_CG2 = (hn*MAC_tot) - (0.15*MAC_tot)
     return x_CG1, x_CG2
 
+
+##################################################################
+######DIRECTIONAL STABILITY
+##################################################################
+
+
 def interpolation(x1, y1, x2, y2, x3):
     t=(x3-x1)/(x2-x1) 
     y3 = y1 + t * (y2 - y1)
@@ -286,20 +317,16 @@ def interpolation(x1, y1, x2, y2, x3):
 
 def dir_stat_stab_cruise(CG_position,AR, sweep_LE_fus):  
     surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    length_fus = 16.8
-    surf_fus = 132.97   
-    surf_wings = 87.59
-    span_wings = 20 
-    hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*length_fus  # forward fuselage height
-    hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*length_fus # rear fuselage height
+    hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*l_fus  # forward fuselage height
+    hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*l_fus # rear fuselage height
     bf1 = 5.881743321 # forward fuselage width
     bf2 = 9  # rear fuselage width
     hf_max = 0.179*16.8  # maximum fuselage height
     x_CG = CG_position 
     L_f=6  # distance between center of gravity and aerodynamic center of the tail
      
-    K_beta = 0.3 * (x_CG / length_fus) + 0.75 * (hf_max / length_fus) - 0.105
-    CN_beta_fuselage = -K_beta * (surf_fus*length_fus/(surf_wings*span_wings))*((hf1/hf2)**0.5)*((bf2/bf1)**(1/3))
+    K_beta = 0.3 * (x_CG / l_fus) + 0.75 * (hf_max / l_fus) - 0.105
+    CN_beta_fuselage = -K_beta * (surf_fus*l_fus/(surf_wing*span_wings))*((hf1/hf2)**0.5)*((bf2/bf1)**(1/3))
     
     CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
     
@@ -311,9 +338,40 @@ def dir_stat_stab_cruise(CG_position,AR, sweep_LE_fus):
     
     return CN_beta_fin, CN_beta_fuselage, CN_beta_w, CN_beta_tot
 
-def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
+
+##################################################################
+######LATERAL STABILITY
+##################################################################
+
+def lat_stat_stab_cruise(dihedral_angle,AR,sweep_LE_fus, sweep_LE_wing): 
+
+    gamma = dihedral_angle*np.pi/180
+    weight = CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0]
+    CL_wings, CL_w0, CD_wing, CL_max, alpha_L0, CL_alpha_wings = wingCL(AR,sweep_LE_fus, sweep_LE_wing, weight)
+
+    CL_beta_dihedral = -0.25 *CL_alpha_wings * gamma* (2 * (1 + 2*wings_taper_ratio)/(3*(1+wings_taper_ratio)))
+
+    graph_value = 0.35 #value from Nicolai's book page 590
+    CL_beta_wing_sweep = graph_value * CL_wings
+    CL_beta_wings = CL_beta_wing_sweep + CL_beta_dihedral
+
+    CL_beta_wings_fus = 0 #because middle mounted wing
+
+    CL_beta_tot = CL_beta_wings_fus + CL_beta_wings
+
+    return CL_beta_tot, CL_beta_wings, CL_beta_wings_fus
+
+##################################################################
+######PRINT OF STABILITY
+##################################################################
+
+
+def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
+
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
     CN_beta_fin, CN_beta_fuselage, CN_beta_w, CN_beta_tot = dir_stat_stab_cruise(CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0],AR, sweep_LE_fus)
+    CL_beta_tot, CL_beta_wings, CL_beta_wings_fus = lat_stat_stab_cruise(dihedral_angle,AR,sweep_LE_fus, sweep_LE_wing)
+
     print("--------------------------AERODYNAMIC CENTER--------------------------------------------")
     print("The aerodynamic center is positioned at",x_AC_tot,"from the nose of the airplane, which represents",x_AC_tot*100/l_fus,"% of the total length.")
     print("----------------------------------------------------------------------")
@@ -355,7 +413,7 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     print("----------------------------------------------------------------------")
 
     print("--------------------------DIRECTIONAL STABILITY--------------------------------------------")
-    if (CN_beta_tot<0):
+    if (CN_beta_tot<0.1):
         print ("The aircraft is not directionally stable because CN_beta_tot is negative and equals",CN_beta_tot)
         print("The contribution of the fuselage is",CN_beta_fuselage)
         print("The contribution of the wings is",CN_beta_w)
@@ -367,13 +425,10 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
         print("The contribution of the fin is",CN_beta_fin)
     print("----------------------------------------------------------------------")
 
+    print("--------------------------LATERAL STABILITY--------------------------------------------")
+    print("The CL_beta coefficient is equal to",CL_beta_tot)
+    print("The contribution of the wings is",CL_beta_wings)
+    print("----------------------------------------------------------------------")
     return
 
-printFunction(3.8, 42.0, 25.0)
-
-CG_pos = 8.761817299689595
-dir_stat_stab_cruise(CG_pos)
-
-
-def lat_stat_stab_cruise(): 
-    return
+printFunction(3.8, 42, 25,3)
