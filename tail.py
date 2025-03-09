@@ -333,17 +333,6 @@ def geomtail():
 
 c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
 
-print("The root chord of the tail is",c_root_tail,"m or",c_root_tail*3.28084,"ft")
-print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
-print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
-print("The aspect ratio of the horizontal tail is",AR_h)
-print("The vertical surface of the tail",surf_vert_tail,"m^2 or",surf_vert_tail*10.7639,"ft^2")
-print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
-print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
-print("The total aspect ratio of the tail is",AR)
-print("The MAC of the tail is",MAC_tail,"m or",MAC_tail*3.28084,"ft")
-print("The y position of the aerodynamic center of the wing is",yac,"m or",yac*3.28084,"ft in the local axis and",tail_pos+yac,"m and",tail_pos+yac*3.28084,"ft with respect to the nose of the aircraft")
-print("The x position of the aerodynamic center of the wing is",xac,"m or",xac*3.28084,"ft")
 
 def plotTail():
     if tail_plot == False:
@@ -389,7 +378,6 @@ def LiftCurveSlope():
 
 a=LiftCurveSlope()
 
-print("The lift curve slope of the tail is", a)
 
 def need_CL(force):
     surf_hor_tail = surfhor_tail()
@@ -402,10 +390,28 @@ def setting_angle(force):
     alpha_root =CL/a
     return alpha_root
 force = 138278.7874
-print("The needed setting angle of the tail is", setting_angle(force)*180/np.pi,"degrees.")
 
 
 
+def printTail():
+    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
+    sweep_beta_tail,sweep_quarter_tail=getSweepTail()
+    a = LiftCurveSlope()
+    alpha_root = setting_angle(force)
+    print("The root chord of the tail is",c_root_tail,"m or",c_root_tail*3.28084,"ft")
+    print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
+    print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
+    print("The aspect ratio of the horizontal tail is",AR_h)
+    print("The vertical surface of the tail",surf_vert_tail,"m^2 or",surf_vert_tail*10.7639,"ft^2")
+    print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
+    print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
+    print("The total aspect ratio of the tail is",AR)
+    print("The MAC of the tail is",MAC_tail,"m or",MAC_tail*3.28084,"ft")
+    print("The y position of the aerodynamic center of the wing is",yac,"m or",yac*3.28084,"ft in the local axis and",tail_pos+yac,"m and",tail_pos+yac*3.28084,"ft with respect to the nose of the aircraft")
+    print("The x position of the aerodynamic center of the wing is",xac,"m or",xac*3.28084,"ft")
+    print("The lift curve slope of the tail is", a)
+    print("The needed setting angle of the tail is", alpha_root*180/np.pi,"degrees.")
+    return
 
 
 

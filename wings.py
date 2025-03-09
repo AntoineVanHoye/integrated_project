@@ -59,7 +59,7 @@ def winglet(AR):
 #    return sweep_LE_fus, sweep_LE_wing
 
 def getAirfoilFus():
-    airfoil = 1
+    airfoil = 2
     if airfoil == 1:
         cl_alpha = ((1.0498+0.2062)/(5+5)) * (180/np.pi) # SC(2) 0518 M0 Re12M C_m = -0.1158
         cl_max = 1.87
@@ -650,6 +650,12 @@ def get_Lift_and_drag(AR, delta, sweep_LE_fus, sweep_LE_wing, weight):
     print(CL_max)
     print(CL_CD_max)
     """
+    
+    AoA = AoA * (180 / np.pi)  
+    with open("data_lift.txt", "w") as file:
+        for angle, cl in zip(AoA, Cl_tot):  # Boucle sur les valeurs des arrays
+            file.write(f"{angle} {cl}\n")  # Formatage propre"
+    
     return Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, cd0, CL_alfa
 
 def getClAlfa(AR, sweep_LE_fus, sweep_LE_wing):
@@ -864,4 +870,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, weight):
     plotLiftDrag(lift_and_drag_plots, AR, sweep_LE_fus, sweep_LE_wing, weight)
     return
 
-#printFunction(3.4, 36.0, 25.0, 699053.333061620)
+printFunction(3.4, 43.0, 25.0, 750944.997043479)

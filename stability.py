@@ -34,9 +34,10 @@ speed = true_airspeed_at_altitude(12500)
 delta = 0.005
 b = 28.95
 l_fus = 16.8
+width_cabin = 9
 l_cabin = 10.1
 l_cockpit = 2.01 
-span_wings = 20 
+span_wings = b-width_cabin 
 l_aft = l_fus - l_cabin - l_cockpit
 wings_taper_ratio = 0.4
 
@@ -431,4 +432,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
     return
 
-printFunction(3.8, 42, 25,3)
+#printFunction(3.8, 42, 25,3)

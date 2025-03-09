@@ -24,7 +24,7 @@ for i in range(len(AR)):
             stability, _ = s.long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k]) 
 
             if 5 < (stability*100) < 15:
-
+                
                 force = s.CL(config,fuel,Cm0_fus,Cm0_wing, AR[i], sweep_fus[j], sweep_wing[k])[0]
                 cl = w.getCl(AR[i], sweep_fus[j], force)
                 setting_angle = w.getCalageAngle(cl, AR[i], sweep_fus[j], sweep_wing[k])[0]
