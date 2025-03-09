@@ -149,7 +149,7 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
 
     elec_syst_pos = 0.75*l_fus/2 + 0.25*motors_pos
   
-    available_fuel_vol = 5 * 1000 #wingFuelvolume(AR, sweep_LE_fus, sweep_LE_wing, force)*1000 
+    available_fuel_vol = 15 * 1000 #wingFuelvolume(AR, sweep_LE_fus, sweep_LE_wing, force)*1000 
     if d == 1 : #no fuel
         fuel_weight = 0
         fuel_pos = 1
