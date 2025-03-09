@@ -401,7 +401,7 @@ def setting_angle(force):
     CL = need_CL(force)
     alpha_root =CL/a
     return alpha_root
-force = 138278.7874
+force = -214353.244471557
 print("The needed setting angle of the tail is", setting_angle(force)*180/np.pi,"degrees.")
 
 

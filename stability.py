@@ -77,7 +77,7 @@ c_root_tail,span_hor_tail,span_vert_tail,AR_h_tail, AR_tail,surf_vert_tail, surf
 
 hor_tail_surf = surfhor_tail()
 a1 = LiftCurveSlope()
-x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +0.5
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +2
 l_tail = MAC_tail
 
 z_AC_tail = 1.51
@@ -87,7 +87,7 @@ z_AC_tail = 1.51
 ##################################################################
 
 config = 3
-fuel = 2
+fuel = 1
 
 ##################################################################
 ######CG POSITION
@@ -232,7 +232,6 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
     T = 49734.78
-    #T = 153500
     x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[0]
     weight = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0]
@@ -430,4 +429,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
     return
 
-printFunction(4.5, 42, 25,3)
+printFunction(3.4, 42, 25,3)
