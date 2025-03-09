@@ -143,7 +143,6 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
     
     motors_pos = l_cockpit + l_cabin + 0.6
 
-
     nacelle_pos = motors_pos
 
     enginst_pos = motors_pos
@@ -238,7 +237,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
     weight = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0]
     M0 = Cm0_tot*((1/2)*rho*(speed**2)*MAC_tot*surf_tot)
-    x_CG_motors = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[2]
+    x_CG_motors = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[2]*MAC_tot
     Fp = prop_force()
 
     #translation equilibrium 
