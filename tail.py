@@ -389,10 +389,7 @@ def setting_angle(force):
     CL = need_CL(force)
     alpha_root =CL/a
     return alpha_root
-force = 138278.7874
-
-
-
+force = -214353.244471557
 def printTail():
     c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     sweep_beta_tail,sweep_quarter_tail=getSweepTail()
@@ -412,6 +409,8 @@ def printTail():
     print("The lift curve slope of the tail is", a)
     print("The needed setting angle of the tail is", alpha_root*180/np.pi,"degrees.")
     return
+
+
 
 
 

@@ -870,4 +870,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, weight):
     plotLiftDrag(lift_and_drag_plots, AR, sweep_LE_fus, sweep_LE_wing, weight)
     return
 
-printFunction(3.4, 43.0, 25.0, 750944.997043479)
+#printFunction(3.4, 36.0, 25.0, 699053.333061620)
