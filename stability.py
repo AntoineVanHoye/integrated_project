@@ -324,6 +324,7 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing):
     print("----------------------------------------------------------------------")
     return
 
+<<<<<<< HEAD
 printFunction(3.8, 42.0, 25.0)
 
 def interpolation(x1, y1, x2, y2, x3):
@@ -374,3 +375,6 @@ def dir_stat_stab_cruise(CG_position):
 
 CG_pos = 8.761817299689595
 dir_stat_stab_cruise(CG_pos)
+=======
+#printFunction(3.8, 42.0, 25.0)
+>>>>>>> ba1cb40861552830a07452a1e0f8d42a2ed2e780
