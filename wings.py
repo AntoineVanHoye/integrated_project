@@ -184,12 +184,12 @@ def air_density(altitude):
 rho, T = air_density(alti)
 
 # Function to calculate the true airspeed at a given altitude
-def true_airspeed_at_altitude(altitude):
+def true_airspeed_at_altitude(altitude, M):
     T = air_density(altitude)[1]
     a = np.sqrt(gamma * R * T)  # [m/s] Speed of sound
     v = M * a  # [m/s] Aircraft velocity
     return v
-v = true_airspeed_at_altitude(alti)
+v = true_airspeed_at_altitude(alti, M)
 #print(f"True airspeed at {alti} m: {v:.2f} m/s")
 
 
@@ -650,6 +650,20 @@ def get_Lift_and_drag(AR, delta, sweep_LE_fus, sweep_LE_wing, weight):
     print(CL_max)
     print(CL_CD_max)
     """
+    
+    AoA = AoA * (180 / np.pi)  
+    with open("data_lift_cruise.txt", "w") as file:
+        for angle, cl, cd in zip(AoA, Cl_tot, Cd_tot):  # Boucle sur les valeurs des arrays
+            file.write(f"{angle:.2f} {cl:.4f} {cd:.4f}\n")  # Formatage propre"
+            
+    #print(((air_density(alti)[0] * (true_airspeed_at_altitude(alti, M)**2))/(air_density(0)[0] * true_airspeed_at_altitude(0, 0.45)**2)))
+    
+    Cl_tot_climb = Cl_tot * ((air_density(alti)[0] * (true_airspeed_at_altitude(alti, M)**2))/(air_density(0)[0] * true_airspeed_at_altitude(0, 0.45)**2))
+    Cd_tot_climb = 0.02521 + ((Cl_tot_climb**2)/(np.pi* AR_cd)) * (1+delta)
+    with open("data_lift_climb.txt", "w") as file:
+        for angle, cl, cd in zip(AoA, Cl_tot_climb, Cd_tot_climb):  # Boucle sur les valeurs des arrays
+            file.write(f"{angle:.2} {cl:.4f} {cd:.4f}\n")  # Formatage propre"
+            
     return Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, cd0, CL_alfa
 
 def getClAlfa(AR, sweep_LE_fus, sweep_LE_wing):
@@ -751,7 +765,7 @@ def stallVelocity(AR, sweep_LE_fus, sweep_LE_wing, weight):
 
 def getReynold(altitude, c):
     rho, T = air_density(altitude)
-    U_inf = true_airspeed_at_altitude(altitude)
+    U_inf = true_airspeed_at_altitude(altitude, M)
     
     p_atmo = 99333      #[Pa]
     T = 12.0 + 273.15   #[k]
@@ -864,4 +878,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, weight):
     plotLiftDrag(lift_and_drag_plots, AR, sweep_LE_fus, sweep_LE_wing, weight)
     return
 
-#printFunction(3.4, 36.0, 25.0, 699053.333061620)
+#printFunction(3.3, 46.0, 25.0, 720875.361771919)
