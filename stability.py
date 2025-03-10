@@ -29,7 +29,7 @@ from tail import LiftCurveSlope
 ##################################################################
 
 rho = air_density(12500)[0]
-speed = true_airspeed_at_altitude(12500)
+speed = true_airspeed_at_altitude(12500,0.9)
 
 delta = 0.005
 b = 28.95
