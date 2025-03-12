@@ -280,20 +280,20 @@ R=287
 M_C=0.9
 
 ###############PLOT OF THE HORIZONTAL TAIL#####################
-tail_plot = False
+tail_plot = False 
 ####################################
 
 
-speed = true_airspeed_at_altitude(12500)
+speed = true_airspeed_at_altitude(12500,0.9)
 rho = air_density(12500)[0]
 
-sweep_leading_tail=3*np.pi/180 #choice
+sweep_leading_tail=35*np.pi/180 #choice
 incidence_angle=0 #choice
 taper_ratio=0.6 #choice
 tail_pos = 12#choice
 
 AR_tot = 4.5
-sweep_LE_fus = 55
+sweep_LE_fus = 46
 surf_tot,surf_fus,surf_wing=detSurfac(AR_tot,sweep_LE_fus)
 
 def surfhor_tail():
@@ -328,7 +328,7 @@ def geomtail():
     MAC_tail = 2/surf_tot_tail*trapz(c**2, y)
     cy = c*y
     yac = (2/surf_tot_tail) *trapz(cy,y)
-    xac = MAC_tail*0.2
+    xac = MAC_tail*0.2 + yac * np.tan(sweep_leading_tail)
     return  c_root_tail, span_hor, span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac
 
 c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
@@ -354,6 +354,7 @@ def plotTail():
     plt.show()
 
     return
+
 plotTail()
 
 
@@ -395,6 +396,7 @@ def printTail():
     sweep_beta_tail,sweep_quarter_tail=getSweepTail()
     a = LiftCurveSlope()
     alpha_root = setting_angle(force)
+
     print("The root chord of the tail is",c_root_tail,"m or",c_root_tail*3.28084,"ft")
     print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
@@ -404,13 +406,13 @@ def printTail():
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The total aspect ratio of the tail is",AR)
     print("The MAC of the tail is",MAC_tail,"m or",MAC_tail*3.28084,"ft")
-    print("The y position of the aerodynamic center of the wing is",yac,"m or",yac*3.28084,"ft in the local axis and",tail_pos+yac,"m and",tail_pos+yac*3.28084,"ft with respect to the nose of the aircraft")
-    print("The x position of the aerodynamic center of the wing is",xac,"m or",xac*3.28084,"ft")
+    print("The y position of the aerodynamic center of the tail is",yac,"m or",yac*3.28084,"ft.")
+    print("The x position of the aerodynamic center of the tail is",xac,"m or",xac*3.28084,"ft in the local axis and",tail_pos+xac,"m and",(tail_pos+xac)*3.28084,"ft with respect to the nose of the aircraft.")
     print("The lift curve slope of the tail is", a)
     print("The needed setting angle of the tail is", alpha_root*180/np.pi,"degrees.")
     return
 
-
+printTail()
 
 
 
