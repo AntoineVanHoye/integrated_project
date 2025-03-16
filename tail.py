@@ -287,22 +287,27 @@ tail_plot = False
 speed = true_airspeed_at_altitude(12500,0.9)
 rho = air_density(12500)[0]
 
+l_cabin = 10.1
+l_cockpit = 2.01
+
 sweep_leading_tail=35*np.pi/180 #choice
 incidence_angle=0 #choice
 taper_ratio=0.6 #choice
-tail_pos = 12#choice
+tail_pos = l_cabin + l_cockpit + 1 #choice
 
 AR_tot = 4.5
 sweep_LE_fus = 46
 surf_tot,surf_fus,surf_wing=detSurfac(AR_tot,sweep_LE_fus)
 
-def surfhor_tail():
-    return 40
+def surf_tail():
+    surf_hor_tail = 40
+    surf_vert_tail = 50
+    return surf_hor_tail, surf_vert_tail
 
 def geomtail():
-    surf_hor_tail = surfhor_tail()
-    gamma_h=30*np.pi/180 #choice
-    surf_vert_tail = surf_hor_tail*np.tan(gamma_h)
+    surf_hor_tail = surf_tail()[0]
+    surf_vert_tail = surf_tail()[1]
+    gamma_h = np.arctan(surf_vert_tail/surf_hor_tail)
     surf_tot_tail = np.sqrt(surf_vert_tail**2+surf_hor_tail**2)
     c_root_tail = 3.5 #choice
     span_hor = 2*surf_hor_tail/(taper_ratio*c_root_tail+c_root_tail)
@@ -329,9 +334,9 @@ def geomtail():
     cy = c*y
     yac = (2/surf_tot_tail) *trapz(cy,y)
     xac = MAC_tail*0.2 + yac * np.tan(sweep_leading_tail)
-    return  c_root_tail, span_hor, span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac
+    return  c_root_tail, span_hor, span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac
 
-c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
+c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
 
 
 def plotTail():
@@ -360,7 +365,7 @@ plotTail()
 
 def getSweepTail():
     
-    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
+    c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     sweep_quarter_tail = np.arctan(np.tan(sweep_leading_tail) + (4/AR_h) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.25)))
     sweep_trailing_tail = np.arctan(np.tan(sweep_quarter_tail) + (4/AR_h) * (((1-taper_ratio)/(1+taper_ratio)) * (0.25 - 1)))
     sweep_beta_tail = np.arctan2(np.tan(sweep_quarter_tail), beta)
@@ -369,7 +374,7 @@ def getSweepTail():
 
 def LiftCurveSlope():
 
-    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
+    c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     cl_alpha=(0.5413-0.6572)/(5-6)/np.pi*180
     sweep_beta_tail,sweep_quarter_tail=getSweepTail()
     k = (beta * cl_alpha)/(2*np.pi)
@@ -381,7 +386,7 @@ a=LiftCurveSlope()
 
 
 def need_CL(force):
-    surf_hor_tail = surfhor_tail()
+    surf_hor_tail = surf_tail()[0]
     Need_CL=-force/(1/2*rho*speed**2*surf_hor_tail)
     return Need_CL
 
@@ -390,9 +395,11 @@ def setting_angle(force):
     CL = need_CL(force)
     alpha_root =CL/a
     return alpha_root
-force = -214353.244471557
+
+force = -125314.035459484
+
 def printTail():
-    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac,xac = geomtail()
+    c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     sweep_beta_tail,sweep_quarter_tail=getSweepTail()
     a = LiftCurveSlope()
     alpha_root = setting_angle(force)
@@ -401,7 +408,7 @@ def printTail():
     print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The aspect ratio of the horizontal tail is",AR_h)
-    print("The vertical surface of the tail",surf_vert_tail,"m^2 or",surf_vert_tail*10.7639,"ft^2")
+    print("The dihedral angle gamma of the tail is",gamma_h*180/np.pi,"degrees")
     print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The total aspect ratio of the tail is",AR)

@@ -20,7 +20,7 @@ from wings import wingCL
 from wings import wingGeometry
 from tail import LiftCurveSlope
 from tail import geomtail
-from tail import surfhor_tail
+from tail import surf_tail
 from tail import LiftCurveSlope
 
 
@@ -76,9 +76,9 @@ z_CG_motors = 2
 
 c_root_tail,span_hor_tail,span_vert_tail,AR_h_tail, AR_tail,surf_vert_tail, surf_tot_tail, MAC_tail,y_AC_tail,x_AC_tail_local = geomtail()
 
-hor_tail_surf = surfhor_tail()
+hor_tail_surf = surf_tail()[0]
 a1 = LiftCurveSlope()
-x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +2
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +1
 l_tail = MAC_tail
 
 z_AC_tail = 1.51
@@ -88,7 +88,7 @@ z_AC_tail = 1.51
 ##################################################################
 
 config = 3
-fuel = 1
+fuel = 2
 
 ##################################################################
 ######CG POSITION
@@ -330,7 +330,8 @@ def dir_stat_stab_cruise(CG_position,AR, sweep_LE_fus):
     CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
     
     a = LiftCurveSlope()
-    c_root_tail,span_hor,span_vert,AR_h, AR,surf_vert_tail, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
+    c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac_wing,xac_wing = geomtail()
+    surf_vert_tail = surf_tail()[1]
     CN_beta_fin=a*surf_vert_tail*L_f/(surf_wing*span_wings)
     
     CN_beta_tot=CN_beta_fin+CN_beta_w+CN_beta_fuselage
@@ -382,7 +383,7 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
 
     print("--------------------------TAIL--------------------------------------------")
-    print("The position of the aerodynamic center of the tail is at",x_AC_tail," m and the end of the tail is at",x_AC_tail- x_AC_tail_local + l_tail,"m from the nose and the distance between x_AC_tail and x_CG_tot is",x_AC_tail - CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0],"m.")
+    print("The position of the aerodynamic center of the tail is at",x_AC_tail," m and the end of the tail is at",x_AC_tail- x_AC_tail_local + c_root_tail,"m from the nose and the distance between x_AC_tail and x_CG_tot is",x_AC_tail - CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0],"m.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------FUEL STORAGE--------------------------------------------")
@@ -412,7 +413,7 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
 
     print("--------------------------DIRECTIONAL STABILITY--------------------------------------------")
-    if (CN_beta_tot<0.1):
+    if (CN_beta_tot<0): #better to be < 0.1
         print ("The aircraft is not directionally stable because CN_beta_tot is negative and equals",CN_beta_tot)
         print("The contribution of the fuselage is",CN_beta_fuselage)
         print("The contribution of the wings is",CN_beta_w)
@@ -430,4 +431,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
     return
 
-#printFunction(3.8, 42, 25,3)
+printFunction(3.8, 42, 25,3)
