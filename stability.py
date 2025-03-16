@@ -348,11 +348,10 @@ def lat_stat_stab_cruise(dihedral_angle,AR,sweep_LE_fus, sweep_LE_wing):
     gamma = dihedral_angle*np.pi/180
     weight = CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0]
     CL_wings, CL_w0, CD_wing, CL_max, alpha_L0, CL_alpha_wings = wingCL(AR,sweep_LE_fus, sweep_LE_wing, weight)
-
     CL_beta_dihedral = -0.25 *CL_alpha_wings * gamma* (2 * (1 + 2*wings_taper_ratio)/(3*(1+wings_taper_ratio)))
 
-    graph_value = 0.35 #value from Nicolai's book page 590
-    CL_beta_wing_sweep = graph_value * CL_wings
+    graph_value = -0.35 #value from Nicolai's book page 590
+    CL_beta_wing_sweep = graph_value * CL_w0
     CL_beta_wings = CL_beta_wing_sweep + CL_beta_dihedral
 
     CL_beta_wings_fus = 0 #because middle mounted wing
@@ -431,4 +430,4 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
     return
 
-printFunction(3.8, 42, 25,3)
+printFunction(3.8, 42, 25,0)
