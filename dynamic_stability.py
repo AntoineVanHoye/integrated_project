@@ -6,6 +6,8 @@ from wings import get_Lift_and_drag
 from tail import LiftCurveSlope
 from tail import setting_angle
 from static_stability import tail_eff
+from tail import geomtail
+from static_stability import CG_position
 
 
 ##################################################################
@@ -73,13 +75,22 @@ def q_der(i,d):
     CL_alpha_tail = LiftCurveSlope()
     eta_tail = setting_angle(force)
     V_tail = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
+    c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
+    tail_pos = 1
+    x_AC_tail = tail_pos+xac
+    x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)
+    l_T = x_AC_tail - x_CG_tot
 
     CL_q_wing_M0 = (1/2 + 2*X_W/mean_chord)*CL_alpha
     B = np.sqrt(1 - M**2 * np.cos(sweep_quarter)**2)
     CL_q_wing = (AR + 2*np.cos(sweep_quarter))/(AR*B + 2*np.cos(sweep_quarter))*CL_q_wing_M0
     CL_q_tail = 2*CL_alpha_tail*eta_tail * V_tail
 
-    CM_q_wing_M0 = -K * 
+    K = 0.7
+    CM_q_wing_M0 = -K * cl_alpha_wing * np.cos(sweep_quarter) * ((AR*(2 * (X_W/MAC_wing)**2 + 1/2 *(X_W/MAC_wing)))(A + 2*np.cos(sweep_quarter)) + 1/24 * (AR**3 * np.tan(sweep_quarter)**2)/(AR + 26*np.cos(sweep_quarter) + 1/8))
+    CM_q_wing = (((AR**3 * np.tan(sweep_quarter)**2)/(AR*B + 6*np.cos(sweep_quarter)) + 3/B)/(((AR**3 * np.tan(sweep_quarter)**2)/(AR*B + 6*np.cos(sweep_quarter)) + 3/B) + 3)) * CM_q_wing_M0
+    CM_q_tail = -2*CL_alpha_tail*eta_tail*V_tail*l_T/MAC_tail
+
     CD_q = 0 #approximation
     CL_q = CL_q_wing + CL_q_tail #only horizontal tail
     CM_q = CM_q_wing + CM_q_tail

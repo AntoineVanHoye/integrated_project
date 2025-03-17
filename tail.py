@@ -408,6 +408,7 @@ def printTail():
     print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The aspect ratio of the horizontal tail is",AR_h)
+    print("The sweep quarter chord of the tail is",sweep_quarter_tail*180/np.pi,"degrees")
     print("The dihedral angle gamma of the tail is",gamma_h*180/np.pi,"degrees")
     print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
