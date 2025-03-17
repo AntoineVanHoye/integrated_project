@@ -258,7 +258,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing):
 ##################################################################
 
 
-def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing): #in the pitching plane
+def long_stat_stab_cruise(i,d, AR, sweep_LE_fus, sweep_LE_wing): #in the pitching plane
     surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
     a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
@@ -399,7 +399,7 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
 
     print("--------------------------STATIC MARGIN AND NEUTRAL POINT--------------------------------------------")
-    Kn, hn = long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)
+    Kn, hn = long_stat_stab_cruise(config,fuel,AR, sweep_LE_fus, sweep_LE_wing)
     if Kn >= 0.05 and Kn < 0.3 : 
         print("The static margin has a correct value and is equal to : ", (Kn*100), "%  and the neutral point is positioned at",hn*MAC_tot,"from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
     else : 
