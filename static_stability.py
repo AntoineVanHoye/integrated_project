@@ -50,7 +50,7 @@ Cm0_fus = getAirfoilFus()[4]
 
 def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force):
     _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing,_,_ = winggeom(Cl,sweep_LE_fus, sweep_quarter_wing, force) 
-    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom(sweep_LE_fus) 
+    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom(Cl,sweep_LE_fus, sweep_quarter_wing, force) 
     surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     
@@ -111,7 +111,7 @@ def passengers(i):
 def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): 
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst_weight,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,_,_,_= get_weight()
-    _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry(sweep_LE_fus)
+    _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, force, sweep_quarter_wing)
 
     #force = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0] ## Boucle infinie en utilisant ceci
