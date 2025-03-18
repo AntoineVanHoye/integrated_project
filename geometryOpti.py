@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import wings as w
-import stability as s
+import static_stability as s
 
 # ---------------------------------------- #
 # Constants

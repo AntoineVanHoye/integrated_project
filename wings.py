@@ -235,6 +235,7 @@ def detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2)/np.tan((90-sweep_LE_fus)*np.pi/180))))/2 * (cabin_width) #(cabin_width * cabin_lenght)
     surface_wing = (chord_middle + ctip) * (span_max - cabin_width)*0.5
     surface_total = surface_wing + surface_fuselage
+    surface_fuselage = surface_total - surface_wing_ideal
     return surface_wing_ideal, surface_fuselage, surface_wing, surface_total
 
 """
@@ -245,6 +246,7 @@ def getCl(AR, sweep_LE_fus, weight):
 """
 def getSurfaceFuselage(sweep_LE_fus):
     surface_fuselage = (cabin_lenght +(cabin_lenght - ((cabin_width/2)/np.tan((90-sweep_LE_fus)*np.pi/180))))/2 * (cabin_width) #(cabin_width * cabin_lenght)
+    
     return surface_fuselage 
 
 
@@ -256,8 +258,9 @@ def getSurface_And_AR(Cl, weight):
     return surface_total, AR
 
 
-def fusGeometry(sweep_LE_fus):
-    surface_fuselage = getSurfaceFuselage(sweep_LE_fus)
+def fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
+    #surface_fuselage = getSurfaceFuselage(sweep_LE_fus)
+    surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     b = cabin_width 
     AR_fuselage = (b**2)/surface_fuselage
     sweep_leading =  sweep_LE_fus #[°]
@@ -279,10 +282,10 @@ def fusGeometry(sweep_LE_fus):
         trailing_edge[i] = (np.tan(sweep_trailing))*y[i] + c_root
     return b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line
 
-def fusPlot(wing_plot, sweep_LE_fus):
+def fusPlot(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     if wing_plot == False:
         return
-    _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = fusGeometry(sweep_LE_fus) 
+    _, _, _, _, _, _, _, y, leading_edge, trailing_edge, quarter_line = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight) 
     plt.plot(y, leading_edge)
     plt.plot(y, trailing_edge, color='green')
     plt.plot(y, quarter_line, color='red',)
@@ -295,10 +298,10 @@ def fusPlot(wing_plot, sweep_LE_fus):
     return
 
 
-def fuselageCL(sweep_LE_fus):
+def fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     # --- airfoil --- #
     cl_alpha, cl_max, alpha_L0, CD_fuselage, cm = getAirfoilFus()
-    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = fusGeometry(sweep_LE_fus)
+    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
 
     # --- Lift --- #
     AoA = np.linspace(-10, 10, 21) * ((np.pi)/180)
@@ -320,7 +323,7 @@ def fuselageCL(sweep_LE_fus):
 
 
 def wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight):
-    b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(sweep_LE_fus)
+    b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     b = span_max - cabin_width 
@@ -417,7 +420,7 @@ def wingGeometryIDEAL(lift_coef, weight, sweep_quarter_wing):
     # ---- Complex wing ---- #
     taper_wing = 0.4
 
-    h = b*0.5
+    h = [b*0.5]
     
     croot = surface_wing/(b*0.5*(1+taper_wing))
     ctip = taper_wing*croot
@@ -425,52 +428,47 @@ def wingGeometryIDEAL(lift_coef, weight, sweep_quarter_wing):
     c = [croot, ctip]
     
     sweep_quarter = sweep_quarter_wing*(np.pi/180)
-
+    
     #sweep_quarter[i] = np.arctan2(h[i], ((c[i]*0.25) - ((h[i]*np.tan(sweep_leading)) + (c[i+1]*0.25)))) - (np.pi/2)
+
     sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR) * (((1-taper_wing)/(1+taper_wing)) * (0.25 - 0)))
-    sweep_trailing = np.arctan2(h, (c[0] - ((h*np.tan(sweep_leading)) + c[1]))) - (np.pi/2) 
+    sweep_trailing = np.arctan2(h[0], (c[0] - ((h[0]*np.tan(sweep_leading)) + c[1]))) - (np.pi/2) 
     sweep_beta = np.arctan(np.tan(sweep_quarter)/beta) 
 
     """
-    y = np.array([])
-    quarter_line = np.array([])
-    leading_edge = np.array([])
-    trailing_edge = np.array([])
-
-    quarter_base = 0
-    leading_base = 0
-    trailing_base = 0
-    y_base = 0
-    for j in range(len(c)-1):
-        y_tmp = np.linspace(0, h[j], 10)
-        quarter_line_tmp = np.zeros(len(y_tmp))
-        leading_edge_tmp = np.zeros(len(y_tmp))
-        trailing_edge_tmp = np.zeros(len(y_tmp))
+    y = [cabin_width/2, 0]
+    leading = y*(chord_middle - ctip)/(span_max*0.5) + 
+    
+    y_tmp = np.linspace(0, h[0], 10)
+    quarter_line_tmp = np.zeros(len(y_tmp))
+    leading_edge_tmp = np.zeros(len(y_tmp))
+    trailing_edge_tmp = np.zeros(len(y_tmp))
         
-        for i in range(len(y_tmp)):
-            leading_edge_tmp[i] =  (np.tan(sweep_leading))*y_tmp[i] + leading_base
-            quarter_line_tmp[i] = (np.tan(sweep_quarter))*y_tmp[i] + (0.25*c[j]) + leading_base#+ quarter_base
-            trailing_edge_tmp[i] = (np.tan(sweep_trailing[j]))*y_tmp[i] + c[j] + leading_base#+ trailing_base
-        y_tmp = y_tmp + y_base
-        quarter_base = quarter_line_tmp[-1]
+    for i in range(len(y_tmp)):
+        leading_edge_tmp[i] =  (np.tan(sweep_leading))*y_tmp[i] + leading_base
+        quarter_line_tmp[i] = (np.tan(sweep_quarter))*y_tmp[i] + (0.25*c[j]) + leading_base#+ quarter_base
+        trailing_edge_tmp[i] = (np.tan(sweep_trailing[j]))*y_tmp[i] + c[j] + leading_base#+ trailing_base
+    y_tmp = y_tmp + y_base
+    quarter_base = quarter_line_tmp[-1]
         
-        leading_base = leading_edge_tmp[-1]
-        trailing_base = trailing_edge_tmp[-1]
-        y_base = y_tmp[-1]
+    leading_base = leading_edge_tmp[-1]
+    trailing_base = trailing_edge_tmp[-1]
+    y_base = y_tmp[-1]
         
-        y = np.concatenate((y, y_tmp))
-        quarter_line = np.concatenate((quarter_line, quarter_line_tmp))
-        leading_edge = np.concatenate((leading_edge, leading_edge_tmp))
-        trailing_edge = np.concatenate((trailing_edge, trailing_edge_tmp))
+    y = np.concatenate((y, y_tmp))
+    quarter_line = np.concatenate((quarter_line, quarter_line_tmp))
+    leading_edge = np.concatenate((leading_edge, leading_edge_tmp))
+    trailing_edge = np.concatenate((trailing_edge, trailing_edge_tmp))
+    print(leading_edge)
     """
-    chord_middle = np.interp(cabin_width/2, [0, span_max/2], c)
-    return surface_wing, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta
+    chord_middle = np.interp(cabin_width/2, [0.0, span_max/2], c)
+    return surface_wing, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta#, leading_edge, trailing_edge, quarter_line
 
 
 def getCalageAngle(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
     #b_wing, AR_wing, _, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, _, _, _, _, _, _= wingGeometry(AR,sweep_LE_fus, sweep_LE_wing)
-    _, Cl_fuselage, Cd_fuselage, Cl_max_fus, _ = fuselageCL(sweep_LE_fus)
+    _, Cl_fuselage, Cd_fuselage, Cl_max_fus, _ = fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
 
     # --- cl_alpha wing --- #
@@ -543,7 +541,7 @@ def wingCL(Cl,sweep_LE_fus, sweep_quarter_wing, weight):
 def totalGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
     _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight) 
-    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry(sweep_LE_fus) 
+    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight) 
 
     y = np.concatenate((y_fus, y_wing + y_fus[-1]))
     leading_edge = np.concatenate((leading_fus, leading_wing + leading_fus[-1]))
@@ -555,10 +553,12 @@ def totalGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
 def getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
     _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight) 
-    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry(sweep_LE_fus) 
+    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight) 
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     # -- fuselage -- #
     c_fus = trailing_fus - leading_fus
+    c_fus = np.array([ c_fus[0] - croot, c_fus[-1] - ctip])
+    y_fus = np.array([y_fus[0], y_fus[-1]])
     MAC_fus = (2/surface_fuselage) * trapz(c_fus**2, y_fus) #numerical integration via method of trapez
     cy_fus = c_fus*y_fus
     yac_fus = (2/surface_fuselage) * trapz(cy_fus, y_fus)
@@ -568,14 +568,15 @@ def getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     xac_fus = x_tmp+xac_fus 
 
     # -- wing -- #
-    c_wing = trailing_wing - leading_wing
-    MAC_wing = (2/surface_wing) * trapz(c_wing**2, y_wing) #numerical integration via method of trapez
+    c_wing = np.array([croot, ctip])#trailing_wing - leading_wing
+    y_wing = np.array([0, span_max/2])
+    MAC_wing = (2/surface_wing_ideal) * trapz(c_wing**2, y_wing) #numerical integration via method of trapez
     cy_wing = c_wing*y_wing
-    yac_wing = (2/surface_wing) * trapz(cy_wing, y_wing)
+    yac_wing = (2/surface_wing_ideal) * trapz(cy_wing, y_wing)
     xac_wing = MAC_wing*0.29
     
-    
-    x_tmp =  np.interp(yac_wing , y_wing, leading_wing)
+    tmp_leading_wing = [leading_wing[0], leading_wing[-1]]
+    x_tmp =  np.interp(yac_wing , y_wing, tmp_leading_wing)
     xac_wing = x_tmp+xac_wing + (cabin_lenght - c_fus[-1]) 
 
     y_wing = y_wing + y_fus[-1]
@@ -588,19 +589,19 @@ def getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     cy = c*y
     yac = (2/surface_total) * trapz(cy, y)
 
-    MAC = ((MAC_wing*surface_wing) + (MAC_fus*surface_fuselage))/surface_total
+    #MAC = ((MAC_wing*surface_wing) + (MAC_fus*surface_fuselage))/surface_total
     xac = 0.275*MAC # keep attention that it is an estimation the table don't give the value for this very low AR
 
     x_tmp = leading[np.argmin(abs(y - yac))]
     xac = x_tmp+xac 
-    xac = ((xac_fus*surface_fuselage) + (xac_wing*surface_wing))/surface_total
+    #xac = ((xac_fus*surface_fuselage) + (xac_wing*surface_wing))/surface_total
 
     return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
 
 def equivalentWing(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     b_wing, AR_wing, sweep_beta_wing, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
-    b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(sweep_LE_fus)
+    b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     c = np.concatenate(([c_root_fus], c))
     h = np.concatenate(([b_fus/2], h))
@@ -639,7 +640,7 @@ def plotAllWing(wing_plot, sweep_LE_fus, sweep_quarter_wing, Cl, weight):
     if wing_plot == False:
         return
     Cre, Cte, lambda_E, sweep_LE, sweep_quarter, Mgc, y_mgc, x_mgc = equivalentWing(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    _, _, _, _, _, _, _, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(sweep_LE_fus) 
+    _, _, _, _, _, _, _, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight) 
     plt.plot(y_fus, leading_edge_fus, color='blue')
     plt.plot(y_fus, trailing_edge_fus, color='green')
     #plt.plot(y_fus, quarter_line_fus, color='red')
@@ -700,7 +701,7 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
     AoA = np.linspace(-10, 10, 21) * (np.pi/180)
     #_, a_wing = getCalageAngle(Cl_max)
     Cl_wing, Cl_wing_0, Cd_wing, Cl_max_wing, _, a_wing = wingCL(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
-    Cl_fuselage, Cl_fus_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(sweep_LE_fus)
+    Cl_fuselage, Cl_fus_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
 
     # --- total lift computation --- #
     Cl_tot = np.zeros(len(AoA))
@@ -762,7 +763,7 @@ def getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     cl_alpha = (cl_alpha_wing*surface_wing + cl_alpha_fus*surface_fuselage)/surface_total
     
     b_wing, AR_wing, sweep_beta_wing, sweep_beta_tot_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing, c_wing, h_wing = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
-    b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(sweep_LE_fus)
+    b_fus, AR_fuselage, sweep_beta_fus, c_root_fus, taper_ratio_fus, sweep_quarter_fus, c_tip_fus, y_fus, leading_edge_fus, trailing_edge_fus, quarter_line_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     taper_ratio_tot = (taper_ratio_wing*surface_wing + taper_ratio_fus*surface_fuselage)/surface_total
 
     sweep_quarter = np.arctan(np.tan(sweep_LE_tot) + (4/AR) * (((1-taper_ratio_tot)/(1+taper_ratio_tot)) * (0 - 0.25)))
@@ -830,7 +831,7 @@ def wingSurfaceWetted(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     t_root, t_tip, t_bar_over_c = wingMaxthickness(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     S_wet_wing = 2*surface_wing*(1+ (1/4) * ((t_bar_over_c + (t_bar_over_c*taper_ratio))/(1+taper_ratio)))
 
-    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(sweep_LE_fus)
+    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     S_wet_fus = 2*surface_fuselage*(1+ (1/4) * ((0.18 + (0.18*taper_ratio))/(1+taper_ratio)))
 
     S_wet_tot = S_wet_wing + S_wet_fus
@@ -863,7 +864,7 @@ def getReynold(altitude, c):
 def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
-    _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(sweep_LE_fus)
+    _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     taper_ratio = c_tip_wing/c_root_fus
     CL_max_tot = get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight)[2]
     sweep_LE_tot = ((sweep_LE_wing*surface_wing + sweep_LE_fus*surface_fuselage)/surface_total)*(np.pi/180)
@@ -874,12 +875,12 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     return delta_cl_max
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.5, 46.0, 28.5, 720875.361771919
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.5, 46.0, 29.0, 591100.4701923154
 
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, AR = getSurface_And_AR(Cl, weight)
-    _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(sweep_LE_fus)
+    _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     delta_cl_max = getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     print("\n-------------- Total values --------------\n")
     print(f"New AR = {AR:.3f} [-]")
@@ -909,8 +910,8 @@ def main():
     
     
 
-    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(sweep_LE_fus)
-    Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(sweep_LE_fus)
+    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+    Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     cl_alpha_fus, cl_max_fus, alpha_l0_fus, CD_fus, cm_fus = getAirfoilFus()
     print("\n-------------- fuselage values --------------\n")
     print(f"\nAR fuselage: {AR_fuselage:.3f} [-]\nCL_w0 fuselage = {Cl_fuselage_0*surface_fuselage/surface_wing_ideal:.3f} [-]\n")

@@ -17,7 +17,7 @@ from wings import getAirfoilFus
 from wings import getAirfoilWing
 from wings import getClAlfa
 from wings import wingCL
-from wings import wingGeometry
+from wings import wingGeometryIDEAL
 from tail import LiftCurveSlope
 from tail import geomtail
 from tail import surf_tail
@@ -48,17 +48,18 @@ wings_taper_ratio = 0.4
 Cm0_wing = getAirfoilWing()[4]
 Cm0_fus = getAirfoilFus()[4]
 
-def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing):
-    _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing,_,_ = winggeom(AR,sweep_LE_fus, sweep_LE_wing) 
-    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom(AR,sweep_LE_fus) 
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
-
+def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force):
+    _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing,_,_ = winggeom(Cl,sweep_LE_fus, sweep_quarter_wing, force) 
+    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom(Cl,sweep_LE_fus, sweep_quarter_wing, force) 
+    surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    
     c_fus = trailing_fus - leading_fus
     c_wing = trailing_wing - leading_wing
-    Cm0_wing = (2/(surf_wing*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+    Cm0_wing = (2/(surface_wing_ideal*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
     Cm0_fus = (2/(surf_fus*MAC_fus)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
+    Cm0_tot = (Cm0_wing*surface_wing_ideal + Cm0_fus*surf_fus)/surface_wing_ideal
+
     return Cm0_tot,Cm0_fus,Cm0_wing
 
 
@@ -107,11 +108,13 @@ def passengers(i):
     
     return passengers_weight, passengers_pos
 
-def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing): 
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
+def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): 
+    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     fus_weight, aft_weight, wing_weight, land_gear_weight,motors_weight,nacelle_weight,APU_weight,enginst_weight,instr_weight,hydr_syst_weight,furn_weight,air_cond_weight,payload_weight, ops_weight,elec_syst_weight,surf_cont_weight,_,_,_= get_weight()
-    _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry(AR, sweep_LE_fus)
-    #force = CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0] ## Boucle infinie en utilisant ceci
+    _,_,_,_,_,_,chord_tip_fus,_,_,_,_ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, force, sweep_quarter_wing)
+
+    #force = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0] ## Boucle infinie en utilisant ceci
 
     sweep_angle_wing = sweep_LE_wing*np.pi/180
     sweep_angle_fus = sweep_LE_fus*np.pi/180
@@ -196,11 +199,11 @@ def CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing):
 
 
 #tail volume ratio effectivness 
-def tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing):
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
+def tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force):
+    surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
 
-    x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[0]
+    x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     V_T = hor_tail_surf * (x_AC_tail - x_CG_tot)/(surf_tot* MAC_tot)
     return V_T
 
@@ -210,62 +213,58 @@ def prop_force():
     Fp = m_dot*speed
     return Fp
 
-def wings_lift(AR ,sweep_LE_fus, sweep_LE_wing):
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    force = CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0]
-    _,CL_w0,_,_,_,_ = wingCL(AR ,sweep_LE_fus, sweep_LE_wing, force)
-
-    L_w = CL_w0 * (1/2)*rho*surf_wing*speed**2
-    return L_w
-
-def fus_lift(AR ,sweep_LE_fus, sweep_LE_wing):
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus) 
-    _,CL_f0,_,_,_ = fuselageCL(AR, sweep_LE_fus)
-
-    L_f = CL_f0*(1/2)*rho*surf_fus*speed**2
-    return L_f
 
 
 #i : configuration numerotation
-def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing): 
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
+def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, force): 
+
+    surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     L_tot, L_T = symbols('L_tot L_T')
-    V_T = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
+    V_T = tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
     T = 49734.78
-    x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[0]
-    weight = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
-    Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0]
-    M0 = Cm0_tot*((1/2)*rho*(speed**2)*MAC_tot*surf_tot)
-    x_CG_motors = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[2]*MAC_tot
+    x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
+    weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
+    
+    Cm0_tot = Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[0]
+    M0 = Cm0_tot*((1/2)*rho*(speed**2)*MAC_tot*surface_wing_ideal)
+    x_CG_motors = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]*MAC_tot
     Fp = prop_force()
 
     #translation equilibrium 
-    eq1 = Eq(L_tot + L_T - weight + Fp,0)
+    eq1 = Eq(L_tot + L_T - weight + Fp, 0)
     
     #rotation equilibrium 
     eq2 = Eq(M0 + L_tot*(x_CG_tot-x_AC_tot)-L_T*(x_AC_tail - x_CG_tot)-T*(z_CG_motors - z_CG_tot) + Fp*(x_CG_tot-x_CG_motors),0) 
 
-    solution = solve((eq1,eq2),(L_tot,L_T))
-    L_tot = solution[L_tot]
-    L_T = solution[L_T]
-
+    solution = solve((eq1, eq2),(L_tot, L_T))
+    L_tot = float(solution[L_tot])
+    L_T = float(solution[L_T])
+    
+    #if abs(L_tot/force) > 0.1 or abs(force/L_tot) > 0.1:
+    #    L_tot, L_T = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, float(L_tot))
     return L_tot,L_T
 
-
+def boucleForce(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing):
+    force = 200000.0
+    L_tot = 1.0
+    while abs(L_tot - force)/L_tot > 0.05:
+        L_tot, L_T = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, force)
+        force = L_tot
+    return L_tot, L_T
 ##################################################################
 ######LONGITUDINAL STABILITY
 ##################################################################
 
 
-def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus, sweep_LE_wing): #in the pitching plane
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
+def long_stat_stab_cruise(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): #in the pitching plane
+    surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    a = getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     #check the stability
     #neutral point : position of the cg in order to have the derivative equals 0
-    x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[0]
-    engines_pos = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[2]
+    x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
+    engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]
     deps = 0
     Fp = prop_force()
     eta = 0.9
@@ -284,13 +283,13 @@ def long_stat_stab_cruise(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, AR, sweep_LE_fus
 ##################################################################
 
 
-def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, AR, sweep_LE_fus, sweep_LE_wing): 
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
-    a = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
-    engines_pos = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)[2]
+def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, Cl, sweep_LE_fus, sweep_quarter_wing, force): 
+    surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    a = getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]
     deps = 0
-    V_T = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
+    V_T = tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
     dalpha_prop = 1 - deps
     Fp = prop_force()
     eta = 0.9
@@ -314,8 +313,8 @@ def interpolation(x1, y1, x2, y2, x3):
     
     return y3
 
-def dir_stat_stab_cruise(CG_position,AR, sweep_LE_fus):  
-    surf_tot,surf_fus,surf_wing = detSurfac(AR, sweep_LE_fus)
+def dir_stat_stab_cruise(CG_position, Cl, sweep_LE_fus, sweep_quarter_wing, force):  
+    surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*l_fus  # forward fuselage height
     hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*l_fus # rear fuselage height
     bf1 = 5.881743321 # forward fuselage width
@@ -343,11 +342,11 @@ def dir_stat_stab_cruise(CG_position,AR, sweep_LE_fus):
 ######LATERAL STABILITY
 ##################################################################
 
-def lat_stat_stab_cruise(dihedral_angle,AR,sweep_LE_fus, sweep_LE_wing): 
+def lat_stat_stab_cruise(dihedral_angle, Cl,sweep_LE_fus, sweep_quarter_wing, force): 
 
     gamma = dihedral_angle*np.pi/180
-    weight = CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0]
-    CL_wings, CL_w0, CD_wing, CL_max, alpha_L0, CL_alpha_wings = wingCL(AR,sweep_LE_fus, sweep_LE_wing, weight)
+    #weight = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
+    CL_wings, CL_w0, CD_wing, CL_max, alpha_L0, CL_alpha_wings = wingCL(Cl,sweep_LE_fus, sweep_quarter_wing, force)
     CL_beta_dihedral = -0.25 *CL_alpha_wings * gamma* (2 * (1 + 2*wings_taper_ratio)/(3*(1+wings_taper_ratio)))
 
     graph_value = -0.35 #value from Nicolai's book page 590
@@ -365,41 +364,44 @@ def lat_stat_stab_cruise(dihedral_angle,AR,sweep_LE_fus, sweep_LE_wing):
 ##################################################################
 
 
-def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
+def main():
+    Cl, sweep_LE_fus, sweep_quarter_wing, dihedral_angle = 0.5, 46.0, 29.0, 0
 
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(AR, sweep_LE_fus, sweep_LE_wing)
-    CN_beta_fin, CN_beta_fuselage, CN_beta_w, CN_beta_tot = dir_stat_stab_cruise(CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0],AR, sweep_LE_fus)
-    CL_beta_tot, CL_beta_wings, CL_beta_wings_fus = lat_stat_stab_cruise(dihedral_angle,AR,sweep_LE_fus, sweep_LE_wing)
+    force, force_tail = boucleForce(config, fuel,Cm0_fus,Cm0_wing, Cl, sweep_LE_fus, sweep_quarter_wing) #CL(config, fuel,Cm0_fus,Cm0_wing, Cl, sweep_LE_fus, sweep_quarter_wing)
+
+    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    CN_beta_fin, CN_beta_fuselage, CN_beta_w, CN_beta_tot = dir_stat_stab_cruise(CG_position(config,fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0], Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    CL_beta_tot, CL_beta_wings, CL_beta_wings_fus = lat_stat_stab_cruise(dihedral_angle, Cl,sweep_LE_fus, sweep_quarter_wing, force)
 
     print("--------------------------AERODYNAMIC CENTER--------------------------------------------")
     print("The aerodynamic center is positioned at",x_AC_tot,"from the nose of the airplane, which represents",x_AC_tot*100/l_fus,"% of the total length.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------CM0--------------------------------------------")
-    print("The blended wing body has a Cm0_tot of",Cm0(Cm0_fus,Cm0_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0])
-    print("The wings have a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing, AR ,sweep_LE_fus, sweep_LE_wing)[2],". It represents",Cm0(Cm0_fus,Cm0_wing, AR ,sweep_LE_fus, sweep_LE_wing)[2]/Cm0(Cm0_fus,Cm0_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0]*100,"% of the pitching moment of the airplane.")
-    print("The fuselage has a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing, AR ,sweep_LE_fus, sweep_LE_wing)[1],". It represents",Cm0(Cm0_fus,Cm0_wing, AR ,sweep_LE_fus, sweep_LE_wing)[1]/Cm0(Cm0_fus,Cm0_wing, AR ,sweep_LE_fus, sweep_LE_wing)[0]*100,"% of the pitching moment of the airplane.")
+    print("The blended wing body has a Cm0_tot of",Cm0(Cm0_fus,Cm0_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[0])
+    print("The wings have a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[2],". It represents",Cm0(Cm0_fus,Cm0_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[2]/Cm0(Cm0_fus,Cm0_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[0]*100,"% of the pitching moment of the airplane.")
+    print("The fuselage has a pitching moment (up) of",Cm0(Cm0_fus,Cm0_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[1],". It represents",Cm0(Cm0_fus,Cm0_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[1]/Cm0(Cm0_fus,Cm0_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force)[0]*100,"% of the pitching moment of the airplane.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------TAIL--------------------------------------------")
-    print("The position of the aerodynamic center of the tail is at",x_AC_tail," m and the end of the tail is at",x_AC_tail- x_AC_tail_local + c_root_tail,"m from the nose and the distance between x_AC_tail and x_CG_tot is",x_AC_tail - CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0],"m.")
+    print("The position of the aerodynamic center of the tail is at",x_AC_tail," m and the end of the tail is at",x_AC_tail- x_AC_tail_local + c_root_tail,"m from the nose and the distance between x_AC_tail and x_CG_tot is",x_AC_tail - CG_position(config, fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0],"m.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------FUEL STORAGE--------------------------------------------")
-    print(CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[1]*100,"% of the total fuel volume is stored in the wings and we need",(1-CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[1])*26854.56/1000,"m³ in the fuselage.")
+    print(CG_position(config, fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)[1]*100,"% of the total fuel volume is stored in the wings and we need",(1-CG_position(config, fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)[1])*26854.56/1000,"m³ in the fuselage.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------CENTER OF GRAVITY--------------------------------------------")
-    print("The center of gravity is positioned at",CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0],"m (in feet :",CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0]*3.28," (",CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)[0]*100/l_fus,"%) from the nose of the airplane.")
+    print("The center of gravity is positioned at",CG_position(config, fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0],"m (in feet :",CG_position(config, fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]*3.28," (",CG_position(config, fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]*100/l_fus,"%) from the nose of the airplane.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------CRUISE--------------------------------------------")
-    print("The new lift force generated by the body is",CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[0],"[N]")
-    print("The new lift force generated by the tail is",CL(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)[1],"[N]")
+    print("The new lift force generated by the body is",force,"[N]")
+    print("The new lift force generated by the tail is",force_tail,"[N]")
     print("----------------------------------------------------------------------")
 
     print("--------------------------STATIC MARGIN AND NEUTRAL POINT--------------------------------------------")
-    Kn, hn = long_stat_stab_cruise(config,fuel,Cm0_fus,Cm0_wing, AR, sweep_LE_fus, sweep_LE_wing)
+    Kn, hn = long_stat_stab_cruise(config, fuel, Cl, sweep_LE_fus, sweep_quarter_wing, force)
     if Kn >= 0.05 and Kn < 0.3 : 
         print("The static margin has a correct value and is equal to : ", (Kn*100), "%  and the neutral point is positioned at",hn*MAC_tot,"from the nose, which represents",hn*MAC_tot*100/l_fus,"% of the total length.")
     else : 
@@ -407,8 +409,8 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
 
     print("--------------------------ACCEPTABLE POSITIONS FOR THE CENTER OF GRAVITY--------------------------------------------")
-    print("The center of gravity is positioned at",get_CG(config,fuel,Cm0_fus,Cm0_wing,0.05, AR, sweep_LE_fus, sweep_LE_wing)[0],"m from the nose when the static margin is equal to",0.05*100,"%. It is the maximal value of the range.")
-    print("The center of gravity is positioned at",get_CG(config,fuel,Cm0_fus,Cm0_wing,0.05, AR, sweep_LE_fus, sweep_LE_wing)[1],"m from the nose when the static margin is equal to",0.15*100,"%. It is the minimal value of the range.")
+    print("The center of gravity is positioned at",get_CG(config, fuel,Cm0_fus,Cm0_wing,Kn, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0],"m from the nose when the static margin is equal to",0.05*100,"%. It is the maximal value of the range.")
+    print("The center of gravity is positioned at",get_CG(config, fuel,Cm0_fus,Cm0_wing,Kn, Cl, sweep_LE_fus, sweep_quarter_wing, force)[1],"m from the nose when the static margin is equal to",0.15*100,"%. It is the minimal value of the range.")
     print("----------------------------------------------------------------------")
 
     print("--------------------------DIRECTIONAL STABILITY--------------------------------------------")
@@ -430,4 +432,5 @@ def printFunction(AR, sweep_LE_fus, sweep_LE_wing, dihedral_angle):
     print("----------------------------------------------------------------------")
     return
 
-printFunction(3.8, 42, 25,0)
+if __name__ == "__main__":
+    main()

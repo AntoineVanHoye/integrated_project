@@ -295,13 +295,10 @@ incidence_angle=0 #choice
 taper_ratio=0.6 #choice
 tail_pos = l_cabin + l_cockpit + 1 #choice
 
-AR_tot = 4.5
-sweep_LE_fus = 46
-surf_tot,surf_fus,surf_wing=detSurfac(AR_tot,sweep_LE_fus)
 
 def surf_tail():
     surf_hor_tail = 40
-    surf_vert_tail = 50
+    surf_vert_tail = 40
     return surf_hor_tail, surf_vert_tail
 
 def geomtail():
@@ -396,9 +393,9 @@ def setting_angle(force):
     alpha_root =CL/a
     return alpha_root
 
-force = -125314.035459484
+force = -98387.22675495062
 
-def printTail():
+def main():
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     sweep_beta_tail,sweep_quarter_tail=getSweepTail()
     a = LiftCurveSlope()
@@ -408,8 +405,9 @@ def printTail():
     print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The aspect ratio of the horizontal tail is",AR_h)
+    print("The sweep quarter chord of the tail is",sweep_quarter_tail*180/np.pi,"degrees")
     print("The dihedral angle gamma of the tail is",gamma_h*180/np.pi,"degrees")
-    print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2) and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
+    print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2")# and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The total aspect ratio of the tail is",AR)
     print("The MAC of the tail is",MAC_tail,"m or",MAC_tail*3.28084,"ft")
@@ -419,7 +417,8 @@ def printTail():
     print("The needed setting angle of the tail is", alpha_root*180/np.pi,"degrees.")
     return
 
-printTail()
+if __name__ == "__main__":
+    main()
 
 
 
