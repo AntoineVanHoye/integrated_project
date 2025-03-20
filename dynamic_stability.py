@@ -8,6 +8,7 @@ from tail import setting_angle
 from static_stability import tail_eff
 from tail import geomtail
 from static_stability import CG_position
+from static_stability import CG_position
 
 
 ##################################################################
@@ -29,6 +30,7 @@ CL = getCl(AR, sweep_LE_fus, force)
 e = 0.85 # Oswald efficiency factor
 alpha_e = 
 M = 
+Cl_tot = 
 delta = 0.005
 Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, CD, AoA, cd0, CL_alfa = get_Lift_and_drag(AR, delta, sweep_LE_fus, sweep_LE_wing, force)
 
@@ -96,3 +98,96 @@ def q_der(i,d):
     CM_q = CM_q_wing + CM_q_tail
 
     return CL_q, CD_q, CM_q
+
+##################################################################
+######W DOT DERIVATIVES 
+##################################################################
+
+def w_dot_der(i,d): 
+
+    CL_alpha_dot = alpha_dot_der(i,d)[0]
+    CD_alpha_dot = alpha_dot_der(i,d)[1]
+    CM_alpha_dot = alpha_dot_der(i,d)[2]
+
+    X_w_dot = 1/(2*np.cos(alpha_e)) * (CL_alpha_dot*np.sin(alpha_e) - CD_alpha_dot*np.cos(alpha_e))
+    Z_w_dot = 1/(2*np.cos(alpha_e)) * (-CL_alpha_dot*np.cos(alpha_e) - CD_alpha_dot*np.sin(alpha_e))
+    M_w_dot = 1/(2*np.cos(alpha_e)) * CM_alpha_dot
+
+    return X_w_dot, Z_w_dot, M_w_dot
+
+##################################################################
+######CONSTRUCTION OF THE A MATRIX FOR THE LONGITUDINAL MOTION
+##################################################################
+
+def long_dyn_stab(i,d,Cl): 
+
+    position, pourc_wings, motors_pos, total_weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    m = 
+    X_w_dot = w_dot_der(i,d)[0]
+    Z_w_dot = w_dot_der(i,d)[1]
+    M_w_dot = w_dot_der(i,d)[2]
+    
+    M_matrix = np.array([
+        [m, -X_w_dot, 0, 0],
+        [0, (m - Z_w_dot), 0, 0],
+        [0, -M_w_dot, I_y, 0],
+        [0, 0, 0, 1]
+    ])
+
+    B_matrix = np.array([
+        [-X_u, -X_w, -(X_q - m * W_e), m * g * np.cos(theta_e)],
+        [-Z_u, -Z_w, -(Z_q + m * U_e), m * g * np.sin(theta_e)],
+        [-M_u, -M_w, -M_q, 0],
+        [0, 0, -1, 0]
+    ])
+
+    A_matrix = -np.linalg.inv(M_matrix) @ B_matrix
+    eigenvalues = np.linalg.eigvals(A_matrix)
+    real_parts = np.real(eigenvalues)
+
+    
+    if np.all(real_parts < 0):
+        print("Le système est stable.")
+    elif np.any(real_parts > 0):
+        print("Le système est instable.")
+    elif np.any(real_parts == 0):
+        print("Le système est neutrement stable.")
+
+    conjugates = np.conj(eigenvalues)  
+
+
+    all_conjugates_exist = np.all(np.isin(conjugates, eigenvalues))
+
+    if all_conjugates_exist:
+        test = 1
+    else:
+        test = 0
+    
+    return real_parts, test
+
+##################################################################
+######DEFINITION OF THE PRINT FUNCTION
+##################################################################
+
+def main(): 
+
+    real_parts, test = long_dyn_stab(config,fuel,Cl_tot)
+
+    print("--------------------------CHECK OF THE SYSTEM--------------------------------------------")
+    if test == 1:
+        print("The complex conjugate of all the eigenvalues are also eigenvalues. Thus, the system is well defined.")
+    else:
+        print("There is a problem with the definition of the system. There exists at least one complex conjugate of an eigenvalue which is not an eigenvalue.")
+    print("----------------------------------------------------------------------")
+
+    print("--------------------------STABILITY--------------------------------------------")
+    if np.all(real_parts < 0):
+        print("The aircraft is dynamically stable.")
+    elif np.any(real_parts > 0):
+        print("The system is dynamiccaly unstable.")
+    elif np.any(real_parts == 0):
+        print("The system is dynamically neutrally stable.")
+    print("----------------------------------------------------------------------")
+
+if __name__ == "__main__":
+    main()
