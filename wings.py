@@ -712,7 +712,7 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
     Cd_induce = ((Cl_tot**2)/(np.pi* AR_cd)) * (1+delta)
 
     Cd_tot = np.zeros(len(AoA))
-    cd0 = 0.02613 # in cruise
+    cd0 = 0.012 # in cruise
     Cd_tot = Cd_induce + cd0 
     Cd_tot0 = np.interp(0, AoA, Cd_tot)
     
@@ -863,12 +863,12 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     sweep_LE_tot = ((sweep_LE_wing*surface_wing + sweep_LE_fus*surface_fuselage)/surface_total)*(np.pi/180)
     sweep_HL = np.arctan(np.tan(sweep_LE_tot) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.70)))
     #print(sweep_HL*(180/np.pi))
-    delta_CL_max = 2.1 - CL_max_tot  #2.1 Amos' value
+    delta_CL_max = 2.1 - CL_max_tot  #2.1 Amos' value And 1.9 for landing configuration
     delta_cl_max = delta_CL_max* (1/(0.8* np.cos(sweep_HL)))
     return delta_cl_max
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.5, 50.0, 29.0,  621053.2710728177
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.5, 50.0, 29.0,  608853.0956403415
     
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
