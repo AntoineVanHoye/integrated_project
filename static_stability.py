@@ -365,7 +365,7 @@ def lat_stat_stab_cruise(dihedral_angle, Cl,sweep_LE_fus, sweep_quarter_wing, fo
 
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, dihedral_angle = 0.5, 46.0, 29.0, 0
+    Cl, sweep_LE_fus, sweep_quarter_wing, dihedral_angle = 0.5, 50.0, 29.0, 0
 
     force, force_tail = boucleForce(config, fuel,Cm0_fus,Cm0_wing, Cl, sweep_LE_fus, sweep_quarter_wing) #CL(config, fuel,Cm0_fus,Cm0_wing, Cl, sweep_LE_fus, sweep_quarter_wing)
 

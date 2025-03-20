@@ -311,10 +311,10 @@ def fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     a = ((2*np.pi)/((2/(beta*AR_fuselage)) + np.sqrt( ((1/(k * np.cos(sweep_beta)))**2) + ((2/(beta * AR_fuselage))**2) )))/beta
 
     for i in range(len(AoA)):    
-        CL_w[i] = a*((AoA[i]+ (2*(np.pi/180))) - alpha_L0)
+        CL_w[i] = a*((AoA[i]+ (0*(np.pi/180))) - alpha_L0)
         CL_w0 = a*(0 - alpha_L0)
     
-    CL_w0 = a*(2*(np.pi/180) - alpha_L0)
+    CL_w0 = a*(0*(np.pi/180) - alpha_L0)
     
     CL_max = np.cos(sweep_quarter) * 0.95 * ((cl_max + cl_max)/2)
     
@@ -868,8 +868,8 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     return delta_cl_max
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.5, 46.0, 29.0, 591100.4701923154
-
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.5, 50.0, 29.0,  621053.2710728177
+    
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, AR = getSurface_And_AR(Cl, weight)
