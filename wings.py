@@ -253,9 +253,9 @@ def getSurfaceFuselage(sweep_LE_fus):
 def getSurface_And_AR(Cl, weight):
     rho, T = air_density(alti)
     v = true_airspeed_at_altitude(alti, M)
-    surface_total = weight/(0.5*rho*(v**2)*Cl)
-    AR = span_max**2/surface_total
-    return surface_total, AR
+    surface_wing_ideal = weight/(0.5*rho*(v**2)*Cl)
+    AR = span_max**2/surface_wing_ideal
+    return surface_wing_ideal, AR
 
 
 def fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
@@ -435,34 +435,8 @@ def wingGeometryIDEAL(lift_coef, weight, sweep_quarter_wing):
     sweep_trailing = np.arctan2(h[0], (c[0] - ((h[0]*np.tan(sweep_leading)) + c[1]))) - (np.pi/2) 
     sweep_beta = np.arctan(np.tan(sweep_quarter)/beta) 
 
-    """
-    y = [cabin_width/2, 0]
-    leading = y*(chord_middle - ctip)/(span_max*0.5) + 
-    
-    y_tmp = np.linspace(0, h[0], 10)
-    quarter_line_tmp = np.zeros(len(y_tmp))
-    leading_edge_tmp = np.zeros(len(y_tmp))
-    trailing_edge_tmp = np.zeros(len(y_tmp))
-        
-    for i in range(len(y_tmp)):
-        leading_edge_tmp[i] =  (np.tan(sweep_leading))*y_tmp[i] + leading_base
-        quarter_line_tmp[i] = (np.tan(sweep_quarter))*y_tmp[i] + (0.25*c[j]) + leading_base#+ quarter_base
-        trailing_edge_tmp[i] = (np.tan(sweep_trailing[j]))*y_tmp[i] + c[j] + leading_base#+ trailing_base
-    y_tmp = y_tmp + y_base
-    quarter_base = quarter_line_tmp[-1]
-        
-    leading_base = leading_edge_tmp[-1]
-    trailing_base = trailing_edge_tmp[-1]
-    y_base = y_tmp[-1]
-        
-    y = np.concatenate((y, y_tmp))
-    quarter_line = np.concatenate((quarter_line, quarter_line_tmp))
-    leading_edge = np.concatenate((leading_edge, leading_edge_tmp))
-    trailing_edge = np.concatenate((trailing_edge, trailing_edge_tmp))
-    print(leading_edge)
-    """
     chord_middle = np.interp(cabin_width/2, [0.0, span_max/2], c)
-    return surface_wing, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta#, leading_edge, trailing_edge, quarter_line
+    return surface_wing, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta
 
 
 def getCalageAngle(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
@@ -555,32 +529,51 @@ def getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight) 
     _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight) 
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+    surface_fuselage = surface_total-surface_wing
+
+    x = leading_fus[-1] - (np.tan(sweep_leading)*cabin_width/2)
+    leading_wing_ideal = np.array([x, x + (np.tan(sweep_leading)*(span_max/2))]) # voir page 27 note pi ipad
+
     # -- fuselage -- #
     c_fus = trailing_fus - leading_fus
-    c_fus = np.array([ c_fus[0] - croot, c_fus[-1] - ctip])
-    y_fus = np.array([y_fus[0], y_fus[-1]])
+    #c_fus = np.array([ c_fus[0] - croot, c_fus[-1] - ctip])
+    #y_fus = np.array([y_fus[0], y_fus[-1]])
     MAC_fus = (2/surface_fuselage) * trapz(c_fus**2, y_fus) #numerical integration via method of trapez
     cy_fus = c_fus*y_fus
     yac_fus = (2/surface_fuselage) * trapz(cy_fus, y_fus)
-
     xac_fus = MAC_fus*0.4  # keep attention that it is an estimation the table don't give the value for this very low AR
-    x_tmp = leading_fus[np.argmin(abs(y_fus - yac_fus))]
+    
+    #tmp_leading_fus = [leading_fus[0], leading_fus[-1]]
+    x_tmp =  np.interp(yac_fus , y_fus, leading_fus)
     xac_fus = x_tmp+xac_fus 
 
     # -- wing -- #
-    c_wing = np.array([croot, ctip])#trailing_wing - leading_wing
-    y_wing = np.array([0, span_max/2])
-    MAC_wing = (2/surface_wing_ideal) * trapz(c_wing**2, y_wing) #numerical integration via method of trapez
+    y_wing = y_wing + y_fus[-1]
+
+    c_wing = trailing_wing - leading_wing
+    MAC_wing = (2/surface_wing) * trapz(c_wing**2, y_wing) #numerical integration via method of trapez
     cy_wing = c_wing*y_wing
-    yac_wing = (2/surface_wing_ideal) * trapz(cy_wing, y_wing)
+    yac_wing = (2/surface_wing) * trapz(cy_wing, y_wing)
     xac_wing = MAC_wing*0.29
+    
+    x_tmp = np.interp(yac_wing , y_wing, leading_wing)
+    xac_wing = x_tmp+xac_wing + (cabin_lenght - c_fus[-1]) 
+
+    
+    """# -- wing -- #
+    c_wing = np.array([chord_middle, ctip])#trailing_wing - leading_wing
+    y_wing = np.array([0, (span_max - cabin_width)/2])
+    MAC_wing = (2/surface_wing) * trapz(c_wing**2, y_wing) #numerical integration via method of trapez
+    cy_wing = c_wing*y_wing
+    yac_wing = (2/surface_wing) * trapz(cy_wing, y_wing)
+    xac_wing = MAC_wing*0.28
     
     tmp_leading_wing = [leading_wing[0], leading_wing[-1]]
     x_tmp =  np.interp(yac_wing , y_wing, tmp_leading_wing)
     xac_wing = x_tmp+xac_wing + (cabin_lenght - c_fus[-1]) 
 
     y_wing = y_wing + y_fus[-1]
-
+    """
     # -- total -- #
     c = np.concatenate((c_fus, c_wing[1:]))
     y = np.concatenate((y_fus, y_wing[1:]))
@@ -594,9 +587,9 @@ def getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
 
     x_tmp = leading[np.argmin(abs(y - yac))]
     xac = x_tmp+xac 
-    #xac = ((xac_fus*surface_fuselage) + (xac_wing*surface_wing))/surface_total
+    xac = ((xac_fus*surface_fuselage) + (xac_wing*surface_wing))/surface_total
 
-    return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing + cabin_width/2, xac_wing, MAC, yac, xac
+    return MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac
 
 def equivalentWing(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     b_wing, AR_wing, sweep_beta_wing, sweep_beta_wing, c_root_wing, taper_ratio_wing, sweep_quarter_wing, c_tip_wing, y_wing, leading_edge_wing, trailing_edge_wing, quarter_line_wing, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
@@ -665,7 +658,7 @@ def plotAllWing(wing_plot, sweep_LE_fus, sweep_quarter_wing, Cl, weight):
 
     MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
 
-    plt.scatter(yac_fus,  xac_fus+ (yac_fus*np.tan(sweep_LE_fus*(np.pi/180))), color='red')
+    plt.scatter(yac_fus,  xac_fus, color='red') #+ (yac_fus*np.tan(sweep_LE_fus*(np.pi/180)))
     plt.scatter(yac_wing,  xac_wing, color='orange')
     plt.scatter(yac, xac, color='blue')
     plt.scatter(y_mgc, x_mgc + Mgc*0.25, color='black')
@@ -676,15 +669,15 @@ def plotAllWing(wing_plot, sweep_LE_fus, sweep_quarter_wing, Cl, weight):
     plt.plot((yac_wing, yac_wing), (leading_edge_wing_x + leading_edge_fus[-1], leading_edge_wing_x+ leading_edge_fus[-1] + MAC_wing), color='orange')
     
     
-    plt.plot((span_max/2, span_max/2), ((span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2), (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
-    plt.plot((0, span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) , (span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
-    plt.plot((0, span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) + Cre, (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
+    #plt.plot((span_max/2, span_max/2), ((span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2), (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
+    #plt.plot((0, span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) , (span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
+    #plt.plot((0, span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) + Cre, (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
 
-    plt.plot((-span_max/2, -span_max/2), ((span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2), (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
-    plt.plot((0, -span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) , (span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
-    plt.plot((0, -span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) + Cre, (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
+    #plt.plot((-span_max/2, -span_max/2), ((span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2), (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
+    #plt.plot((0, -span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) , (span_max/2)*np.tan(sweep_LE)+ ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
+    #plt.plot((0, -span_max/2), (((trailing_edge_fus[0])/2) - (Cre/2) + Cre, (span_max/2)*np.tan(sweep_LE) + Cte + ((trailing_edge_fus[0])/2) - (Cre/2)), color='black')
 
-    plt.plot((y_mgc, y_mgc), (x_mgc, x_mgc+Mgc), color='black')
+    #plt.plot((y_mgc, y_mgc), (x_mgc, x_mgc+Mgc), color='black')
     
     plt.xlabel('$Y$')
     plt.ylabel('$X$')
