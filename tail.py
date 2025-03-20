@@ -297,7 +297,7 @@ tail_pos = l_cabin + l_cockpit + 1 #choice
 
 
 def surf_tail():
-    surf_hor_tail = 40
+    surf_hor_tail = 50
     surf_vert_tail = 40
     return surf_hor_tail, surf_vert_tail
 
@@ -393,7 +393,7 @@ def setting_angle(force):
     alpha_root =CL/a
     return alpha_root
 
-force = -98387.22675495062
+force = -126152.12702534253
 
 def main():
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
