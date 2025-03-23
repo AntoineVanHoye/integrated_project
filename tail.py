@@ -393,7 +393,7 @@ def setting_angle(force):
     alpha_root =CL/a
     return alpha_root
 
-force = -126152.12702534253
+force = -91754.77340171464
 
 def main():
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()

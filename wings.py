@@ -40,7 +40,7 @@ plt.rcParams.update({
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = True
+wing_plot = False
 lift_and_drag_plots = False
 plot_airfoil = False
 
@@ -868,7 +868,7 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     return delta_cl_max
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.5, 50.0, 29.0,  608853.0956403415
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,  513684.18874170363
     
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)

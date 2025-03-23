@@ -79,7 +79,7 @@ c_root_tail,span_hor_tail,span_vert_tail,AR_h_tail, AR_tail,surf_vert_tail, surf
 
 hor_tail_surf = surf_tail()[0]
 a1 = LiftCurveSlope()
-x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local +1
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1
 l_tail = MAC_tail
 
 z_AC_tail = 1.51
@@ -89,7 +89,7 @@ z_AC_tail = 1.51
 ##################################################################
 
 config = 3
-fuel = 1
+fuel = 2
 
 ##################################################################
 ######CG POSITION
@@ -156,7 +156,7 @@ def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force):
         fuel_pos = 1
         pourc_wings = 0
     if d == 2 : #full of fuel
-        vol_fuel = 27300
+        vol_fuel = 20835.51
         fuel_weight = vol_fuel*0.8*2.20462
         pourc_wings = available_fuel_vol/vol_fuel
         fuel_pos = wing_pos*pourc_wings + (1-pourc_wings)*l_fus*0.44
@@ -220,7 +220,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_win
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    T = 49734.78
+    T = 29317.5
     x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     
