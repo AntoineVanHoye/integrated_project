@@ -280,7 +280,7 @@ R=287
 M_C=0.9
 
 ###############PLOT OF THE HORIZONTAL TAIL#####################
-tail_plot = False 
+tail_plot = False
 ####################################
 
 
@@ -290,25 +290,25 @@ rho = air_density(12500)[0]
 l_cabin = 10.1
 l_cockpit = 2.01
 
-sweep_leading_tail=35*np.pi/180 #choice
+sweep_leading_tail=37*np.pi/180 #choice
 incidence_angle=0 #choice
 taper_ratio=0.6 #choice
 tail_pos = l_cabin + l_cockpit + 1 #choice
 
 
 def surf_tail():
-    surf_hor_tail = 50
-    surf_vert_tail = 35
+    surf_hor_tail = 40
+    surf_vert_tail = 45
     return surf_hor_tail, surf_vert_tail
 
 def geomtail():
     surf_hor_tail = surf_tail()[0]
     surf_vert_tail = surf_tail()[1]
-    gamma_h = np.arctan(surf_vert_tail/surf_hor_tail)
     surf_tot_tail = np.sqrt(surf_vert_tail**2+surf_hor_tail**2)
     c_root_tail = 3.5 #choice
     span_hor = 2*surf_hor_tail/(taper_ratio*c_root_tail+c_root_tail)
     span_vert = 2*surf_vert_tail/(taper_ratio*c_root_tail+c_root_tail)
+    gamma_h = np.arctan(span_vert/span_hor)
     span_tot = np.sqrt(span_hor**2+span_vert**2)
     AR_h = span_hor**2/surf_hor_tail
     AR = span_tot**2/surf_tot_tail
@@ -372,7 +372,8 @@ def getSweepTail():
 def LiftCurveSlope():
 
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
-    cl_alpha=(0.5413-0.6572)/(5-6)/np.pi*180
+    cl_alpha=(0.5413-0.6572)/(5-6)/np.pi*180 # NACA 0012
+    #cl_alpha = (-0.0799-1.0135)/(-5-5)/np.pi*180 # NACA 4412
     sweep_beta_tail,sweep_quarter_tail=getSweepTail()
     k = (beta * cl_alpha)/(2*np.pi)
     a = ((2*np.pi)/((2/(beta*AR_h)) + np.sqrt((1/((k * np.cos(sweep_beta_tail))))**2 + ((2/(beta * AR_h))**2) )))/beta
@@ -390,30 +391,43 @@ def need_CL(force):
 def setting_angle(force):
     a = LiftCurveSlope()
     CL = need_CL(force)
+    #alpha_L0 = -4.35*np.pi/180
+    #alpha_root =CL/a - alpha_L0/a
     alpha_root =CL/a
     return alpha_root
 
-force = -91754.77340171464
+force = -51966.57859749712 
 
 def main():
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     sweep_beta_tail,sweep_quarter_tail=getSweepTail()
     a = LiftCurveSlope()
     alpha_root = setting_angle(force)
-
+    print("--------------------------ROOT CHORD--------------------------------------------")
     print("The root chord of the tail is",c_root_tail,"m or",c_root_tail*3.28084,"ft")
+    print("--------------------------SPANS--------------------------------------------")
     print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
+    print("The total span of the tail is",np.sqrt(span_hor**2+span_vert**2),"m or",np.sqrt(span_hor**2+span_vert**2)*3.28084,"ft")
+    print("--------------------------AR--------------------------------------------")
     print("The aspect ratio of the horizontal tail is",AR_h)
-    print("The sweep quarter chord of the tail is",sweep_quarter_tail*180/np.pi,"degrees")
-    print("The dihedral angle gamma of the tail is",gamma_h*180/np.pi,"degrees")
-    print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2")# and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
-    print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The total aspect ratio of the tail is",AR)
+    print("--------------------------SWEEP QUARTER--------------------------------------------")
+    print("The sweep quarter chord of the tail is",sweep_quarter_tail*180/np.pi,"degrees")
+    print("--------------------------DIHEDRAL ANGLE--------------------------------------------")
+    print("The dihedral angle gamma of the tail is",gamma_h*180/np.pi,"degrees")
+    print("--------------------------AREAS--------------------------------------------")
+    print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2")# and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
+    print("The horizontal area of the tail is",surf_tail()[0],"m^2 (",surf_tail()[0]*3.28084,"ft^2")# and it represents",surf_tail()[0]/surf_tot*100,"% of the total lifting surface")
+    print("The vertical area of the tail is",surf_tail()[1],"m^2 (",surf_tail()[1]*3.28084,"ft^2")# and it represents",surf_tail()[1]/surf_tot*100,"% of the total lifting surface")
+    print("--------------------------MAC--------------------------------------------")
     print("The MAC of the tail is",MAC_tail,"m or",MAC_tail*3.28084,"ft")
+    print("--------------------------AC--------------------------------------------")
     print("The y position of the aerodynamic center of the tail is",yac,"m or",yac*3.28084,"ft.")
     print("The x position of the aerodynamic center of the tail is",xac,"m or",xac*3.28084,"ft in the local axis and",tail_pos+xac,"m and",(tail_pos+xac)*3.28084,"ft with respect to the nose of the aircraft.")
+    print("--------------------------LIFT CURVE SLOPE--------------------------------------------")
     print("The lift curve slope of the tail is", a)
+    print("--------------------------SETTING ANGLE--------------------------------------------")
     print("The needed setting angle of the tail is", alpha_root*180/np.pi,"degrees.")
     return
 
