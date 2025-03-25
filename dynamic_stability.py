@@ -8,7 +8,6 @@ from tail import setting_angle
 from static_stability import tail_eff
 from tail import geomtail
 from static_stability import CG_position
-from static_stability import CG_position
 from wings import air_density
 from wings import detSurfac
 from wings import true_airspeed_at_altitude
@@ -45,6 +44,10 @@ Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, CD, AoA, cd0, CL_alfa = get_Lift_and_d
 
 U_e = V0 * np.cos(alpha_e)
 W_e = V0 * np.sin(alpha_e)
+
+##################################################################
+######LONGITUDINAL DYNAMIC DERIVATIVES
+##################################################################
 
 ##################################################################
 ######ALPHA DERIVATIVES 
@@ -277,3 +280,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+##################################################################
+######LATERAL DYNAMIC DERIVATIVES
+##################################################################
+
+def lat_dyn_stab(): 
+
+    return 
