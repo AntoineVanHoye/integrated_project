@@ -11,6 +11,7 @@ from static_stability import CG_position
 from wings import air_density
 from wings import detSurfac
 from wings import true_airspeed_at_altitude
+from tail import surf_tail
 
 ##################################################################
 ######CONFIGURATION SETTING
@@ -208,6 +209,7 @@ def long_dyn_stab(i,d,Cl):
 
     position, pourc_wings, motors_pos, total_weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
     m = 
+    g = 9.81
 
     X_w_dot = w_dot_der(i,d)[0]
     Z_w_dot = w_dot_der(i,d)[1]
@@ -285,6 +287,69 @@ if __name__ == "__main__":
 ######LATERAL DYNAMIC DERIVATIVES
 ##################################################################
 
+def dsigma_dbeta(sweep_quarter,AR): 
+
+    surf_vert_tail = surf_tail()[1]
+    average_fus_sect = 
+    d = np.sqrt(average_fus_sect/0.7854)
+    Z_w = #vertical distance from the wing root quarter-chord to the fuselage centerline 
+    d_sigma = -0.276 + 3.06*surf_vert_tail/surf_tot /(1 + np.cos(sweep_quarter)) + 0.4*Z_w + 0.009*AR
+    return d_sigma
+
+##################################################################
+######V DERIVATIVES 
+##################################################################
+
+def v_der(sweep_quarter,AR):
+    d_sigma = dsigma_dbeta(sweep_quarter,AR)
+    c_1 = #fin lift curve slope
+    Y_v = 1/2*rho*speed**2 *surf_vert_tail * c_1 * (1-d_sigma)
+
+    return Y_v
+
+##################################################################
+######P DERIVATIVES 
+##################################################################
+
+def p_der(sweep_quarter,AR):
+    Y_v = v_der(sweep_quarter,AR)[0]
+    Y_p = 2*Y_v * (z_f * np.cos(alpha_e) - l_f * np.sin(alpha_e)/b)
+    return
+
+##################################################################
+######R DERIVATIVES 
+##################################################################
+
+def r_der(sweep_quarter,AR):
+    Y_v = v_der(sweep_quarter,AR)[0]
+    Y_r = -2*Y_v * (z_f * np.sin(alpha_e) - l_f * np.cos(alpha_e)/b)
+    return
+
+##################################################################
+######CONSTRUCTION OF THE A MATRIX FOR THE LATERAL MOTION
+##################################################################
+
+
 def lat_dyn_stab(): 
+
+    M_matrix = np.array([
+    [m, 0, 0, 0, 0],
+    [0, I_x, -I_xz, 0, 0],
+    [0, -I_xz, I_z, 0, 0],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1]
+    ])
+
+
+    B_matrix = np.array([
+        [-Y_v, -(Y_p + m * W_e), -(Y_r - m * U_e), -m * g * np.cos(theta_e), -m * g * np.sin(theta_e)],
+        [-L_v, -L_p, -L_r, 0, 0],
+        [-N_v, -N_p, -N_r, 0, 0],
+        [0, -1, 0, 0, 0],
+        [0, 0, -1, 0, 0]
+    ])
+
+    # Calcul de la matrice A
+    A_matrix = -np.linalg.inv(M_matrix) @ B_matrix
 
     return 
