@@ -12,6 +12,12 @@ from wings import air_density
 from wings import detSurfac
 from wings import true_airspeed_at_altitude
 from tail import surf_tail
+from wings import getSurface_And_AR
+from wings import wingGeometryIDEAL
+from wings import getMAC
+from wings import getAirfoilWing
+from wings import getAirfoilFus
+from static_stability import boucleForce
 
 ##################################################################
 ######CONFIGURATION SETTING
@@ -21,30 +27,47 @@ config = 3
 fuel = 2
 
 ##################################################################
+######INPUT PARAMETERS
+##################################################################
+
+sweep_LE_fus = 50.0
+sweep_quarter_wing = 29.0
+CL = 0.45
+Cm0_airfoil_wing = getAirfoilWing()[4]
+Cm0_airfoil_fus = getAirfoilFus()[4]
+force = boucleForce(config,fuel,Cm0_airfoil_fus,Cm0_airfoil_wing, CL, sweep_LE_fus, sweep_quarter_wing)
+e = 0.85 # Oswald efficiency factor
+alpha_e = 0*np.pi/180
+delta = 0.005
+z_f = 1.51 #distance between AC of the tail and AC of the aircraft
+l_cabin = 10.1
+l_cockpit = 2.01
+
+##################################################################
 ######GENERAL PARAMETERS
 ##################################################################
 
-AR = 
-sweep_LE_fus =
-sweep_LE_wing =
-force =
-CL = getCl(AR, sweep_LE_fus, force)
-e = 0.85 # Oswald efficiency factor
-alpha_e = 2*np.pi/180
-M = 
-Cl_tot = 
-delta = 0.005
+surface_wing_ideal, AR = getSurface_And_AR(CL, force)
+M = 0.9
 rho = air_density(12500)[0]
 V0 = true_airspeed_at_altitude(12500,0.9)
-surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+surface_wing_ideal, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(CL, force, sweep_quarter_wing)
+surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(CL, sweep_LE_fus, sweep_quarter_wing, force)
 Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, CD, AoA, cd0, CL_alfa = get_Lift_and_drag(AR, delta, sweep_LE_fus, sweep_LE_wing, force)
+MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(CL, sweep_LE_fus, sweep_quarter_wing, force)
+surf_vert_tail = surf_tail()[1]
+c_root_tail,span_hor_tail,span_vert_tail,AR_h_tail, AR_tail,surf_vert_tail, surf_tot_tail, MAC_tail,y_AC_tail,x_AC_tail_local = geomtail()
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1
+x_CG_tot = CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)
+l_f = x_AC_tail - x_CG_tot
 
 ##################################################################
-######COMPUTATION OF GENERAK PARAMETERS
+######COMPUTATION OF GENERAL PARAMETERS
 ##################################################################
 
 U_e = V0 * np.cos(alpha_e)
 W_e = V0 * np.sin(alpha_e)
+theta_e = 0
 
 ##################################################################
 ######LONGITUDINAL DYNAMIC DERIVATIVES
@@ -71,7 +94,7 @@ def u_der1(i,d):
 
     CL_alpha = alpha_der(i,d)[0]
     CM_alpha = alpha_der(i,d)[2]
-    CL_M = CM_alpha/CL_alpha
+    CL_M = 
     CD_alpha = alpha_der(i,d)[1]
     CD_M = 
     CM_alpha = alpha_der(i,d)[2]
@@ -90,8 +113,10 @@ def u_der2(i,d):
     CM_u = u_der1(i,d)[2]
 
     Z_u = -CL_u *np.cos(alpha_e) - CD_u *np.sin(alpha_e)
-    X_u = CL_u *np.sin(alpha_e) + CD_u* np.cos(alpha_e)
+    X_u = CL_u *np.sin(alpha_e) - CD_u* np.cos(alpha_e)
     M_u = CM_u
+
+    X_u = X_u * (1/2*rho*V0*surf_tot)
 
     return Z_u, X_u, M_u
 
@@ -103,22 +128,25 @@ def q_der1(i,d):
 
     CL_alpha = alpha_der(i,d)[0]
     CL_alpha_tail = LiftCurveSlope()
+    cl_alpha_wing = getAirfoilWing()[0]
     eta_tail = setting_angle(force)
     V_tail = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     tail_pos = 1
     x_AC_tail = tail_pos+xac
-    x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)
     l_T = x_AC_tail - x_CG_tot
+    X_W = np.abs(x_AC_tot - x_CG_tot)
+    b = 28.95*3.28084
+    mean_chord = AR/b
 
     CL_q_wing_M0 = (1/2 + 2*X_W/mean_chord)*CL_alpha
-    B = np.sqrt(1 - M**2 * np.cos(sweep_quarter)**2)
-    CL_q_wing = (AR + 2*np.cos(sweep_quarter))/(AR*B + 2*np.cos(sweep_quarter))*CL_q_wing_M0
+    B = np.sqrt(1 - M**2 * np.cos(sweep_quarter_wing)**2)
+    CL_q_wing = (AR + 2*np.cos(sweep_quarter_wing))/(AR*B + 2*np.cos(sweep_quarter_wing))*CL_q_wing_M0
     CL_q_tail = 2*CL_alpha_tail*eta_tail * V_tail
 
     K = 0.7
-    CM_q_wing_M0 = -K * cl_alpha_wing * np.cos(sweep_quarter) * ((AR*(2 * (X_W/MAC_wing)**2 + 1/2 *(X_W/MAC_wing)))(A + 2*np.cos(sweep_quarter)) + 1/24 * (AR**3 * np.tan(sweep_quarter)**2)/(AR + 26*np.cos(sweep_quarter) + 1/8))
-    CM_q_wing = (((AR**3 * np.tan(sweep_quarter)**2)/(AR*B + 6*np.cos(sweep_quarter)) + 3/B)/(((AR**3 * np.tan(sweep_quarter)**2)/(AR*B + 6*np.cos(sweep_quarter)) + 3/B) + 3)) * CM_q_wing_M0
+    CM_q_wing_M0 = -K * cl_alpha_wing * np.cos(sweep_quarter_wing) * ((AR*(2 * (X_W/MAC_wing)**2 + 1/2 *(X_W/MAC_wing)))(AR + 2*np.cos(sweep_quarter_wing)) + 1/24 * (AR**3 * np.tan(sweep_quarter_wing)**2)/(AR + 6*np.cos(sweep_quarter_wing) + 1/8))
+    CM_q_wing = (((AR**3 * np.tan(sweep_quarter_wing)**2)/(AR*B + 6*np.cos(sweep_quarter_wing)) + 3/B)/(((AR**3 * np.tan(sweep_quarter_wing)**2)/(AR*B + 6*np.cos(sweep_quarter_wing))) + 3)) * CM_q_wing_M0
     CM_q_tail = -2*CL_alpha_tail*eta_tail*V_tail*l_T/MAC_tail
 
     CD_q = 0 #approximation
@@ -180,6 +208,8 @@ def w_dot_der(i,d):
     Z_w_dot = 1/(2*np.cos(alpha_e)) * (-CL_alpha_dot*np.cos(alpha_e) - CD_alpha_dot*np.sin(alpha_e))
     M_w_dot = 1/(2*np.cos(alpha_e)) * CM_alpha_dot
 
+    M_w_dot = M_w_dot * (1/2*rho*surf_tot*MAC_tot**2)
+
     return X_w_dot, Z_w_dot, M_w_dot
 
 ##################################################################
@@ -191,6 +221,11 @@ def w_der(i,d):
     CL_alpha = alpha_der(i,d)[0]
     CD_alpha = alpha_der(i,d)[1]
     CM_alpha = alpha_der(i,d)[2]
+    Le = force
+    lift_coef, CD, CL_max, AoA_L0, cl, _, aoa, Cd_tot0, CL_alfa = get_Lift_and_drag(CL, delta, sweep_LE_fus, sweep_quarter_wing, force)
+    De = CD*1/2*rho*V0**2*surface_wing_ideal
+    Xe = Le*np.sin(alpha_e) - De*np.cos(alpha_e)
+    Ze = -Le*np.cos(alpha_e) - De*np.sin(alpha_e)
 
     C_Xe = Xe/(1/2*rho*V0**2*surf_tot)
     C_Ze = Ze/(1/2*rho*V0**2*surf_tot)
@@ -210,6 +245,7 @@ def long_dyn_stab(i,d,Cl):
     position, pourc_wings, motors_pos, total_weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
     m = 
     g = 9.81
+    I_y = 
 
     X_w_dot = w_dot_der(i,d)[0]
     Z_w_dot = w_dot_der(i,d)[1]
@@ -257,80 +293,86 @@ def long_dyn_stab(i,d,Cl):
     return real_parts, test
 
 ##################################################################
-######DEFINITION OF THE PRINT FUNCTION
-##################################################################
-
-def main(): 
-
-    real_parts, test = long_dyn_stab(config,fuel,Cl_tot)
-
-    print("--------------------------CHECK OF THE SYSTEM--------------------------------------------")
-    if test == 1:
-        print("The complex conjugate of all the eigenvalues are also eigenvalues. Thus, the system is well defined.")
-    else:
-        print("There is a problem with the definition of the system. There exists at least one complex conjugate of an eigenvalue which is not an eigenvalue.")
-    print("----------------------------------------------------------------------")
-
-    print("--------------------------STABILITY--------------------------------------------")
-    if np.all(real_parts < 0):
-        print("The aircraft is dynamically stable.")
-    elif np.any(real_parts > 0):
-        print("The system is dynamiccaly unstable.")
-    elif np.any(real_parts == 0):
-        print("The system is dynamically neutrally stable.")
-    print("----------------------------------------------------------------------")
-
-if __name__ == "__main__":
-    main()
-
-##################################################################
 ######LATERAL DYNAMIC DERIVATIVES
 ##################################################################
 
-def dsigma_dbeta(sweep_quarter,AR): 
+def dsigma_dbeta(sweep_quarter_wing,AR): 
 
     surf_vert_tail = surf_tail()[1]
     average_fus_sect = 
     d = np.sqrt(average_fus_sect/0.7854)
     Z_w = #vertical distance from the wing root quarter-chord to the fuselage centerline 
-    d_sigma = -0.276 + 3.06*surf_vert_tail/surf_tot /(1 + np.cos(sweep_quarter)) + 0.4*Z_w + 0.009*AR
+    d_sigma = -0.276 + 3.06*surf_vert_tail/surf_tot /(1 + np.cos(sweep_quarter_wing)) + 0.4*Z_w + 0.009*AR
     return d_sigma
 
 ##################################################################
 ######V DERIVATIVES 
 ##################################################################
 
-def v_der(sweep_quarter,AR):
-    d_sigma = dsigma_dbeta(sweep_quarter,AR)
+def v_der(sweep_quarter_wing,AR):
+
+    d_sigma = dsigma_dbeta(sweep_quarter_wing,AR)
     c_1 = #fin lift curve slope
-    Y_v = 1/2*rho*speed**2 *surf_vert_tail * c_1 * (1-d_sigma)
+    Y_v = 1/2*rho*V0**2 *surf_vert_tail * c_1 * (1-d_sigma)
+    L_v = -1/2 * rho*V0**2 * surf_vert_tail * z_f * c_1 * (1-d_sigma)
+    N_v = 1/2 * rho*V0*surf_vert_tail * l_f * c_1 * (1-d_sigma)
 
-    return Y_v
-
-##################################################################
-######P DERIVATIVES 
-##################################################################
-
-def p_der(sweep_quarter,AR):
-    Y_v = v_der(sweep_quarter,AR)[0]
-    Y_p = 2*Y_v * (z_f * np.cos(alpha_e) - l_f * np.sin(alpha_e)/b)
-    return
+    return Y_v, L_v, N_v
 
 ##################################################################
 ######R DERIVATIVES 
 ##################################################################
 
-def r_der(sweep_quarter,AR):
-    Y_v = v_der(sweep_quarter,AR)[0]
+def r_der(sweep_quarter_wing,AR):
+
+    b = 28.95*3.28084
+    Y_v = v_der(sweep_quarter_wing,AR)[0]
     Y_r = -2*Y_v * (z_f * np.sin(alpha_e) - l_f * np.cos(alpha_e)/b)
-    return
+    L_r = -2*Y_v*((z_f*np.sin(alpha_e) + l_f*np.cos(alpha_e)*(z_f*np.cos(alpha_e) - l_f*np.sin(alpha_e)))/b**2)
+    N_r = 2*Y_v * ((z_f*np.sin(alpha_e + l_f*np.cos(alpha_e))**2)/b**2)
+
+    return Y_r, L_r, N_r
+
+##################################################################
+######P DERIVATIVES 
+##################################################################
+
+def p_der(sweep_quarter_wing,AR):
+    
+    b = 28.95*3.28084
+    Y_v = v_der(sweep_quarter_wing,AR)[0]
+    L_r = r_der(sweep_quarter_wing,AR)[1]
+    Y_p = 2*Y_v * (z_f * np.cos(alpha_e) - l_f * np.sin(alpha_e)/b)
+    L_p = 2 * Y_v * (z_f/b)**2
+    N_p = L_r
+
+    return Y_p, L_p, N_p
+
 
 ##################################################################
 ######CONSTRUCTION OF THE A MATRIX FOR THE LATERAL MOTION
 ##################################################################
 
 
-def lat_dyn_stab(): 
+def lat_dyn_stab(sweep_quarter_wing, AR): 
+
+    m = 
+    g = 9.81
+    I_x = 
+    I_xz = 
+    I_z = 
+
+    Y_v = v_der(sweep_quarter_wing,AR)[0]
+    Y_p = p_der(sweep_quarter_wing,AR)[0]
+    Y_r = r_der(sweep_quarter_wing,AR)[0]
+
+    L_v = v_der(sweep_quarter_wing,AR)[1]
+    L_p = p_der(sweep_quarter_wing,AR)[1]
+    L_r = r_der(sweep_quarter_wing,AR)[1]
+
+    N_v = v_der(sweep_quarter_wing,AR)[2]
+    N_p = p_der(sweep_quarter_wing,AR)[2]
+    N_r = r_der(sweep_quarter_wing,AR)[2]
 
     M_matrix = np.array([
     [m, 0, 0, 0, 0],
@@ -351,5 +393,62 @@ def lat_dyn_stab():
 
     # Calcul de la matrice A
     A_matrix = -np.linalg.inv(M_matrix) @ B_matrix
+    eigenvalues = np.linalg.eigvals(A_matrix)
+    real_parts = np.real(eigenvalues)
 
-    return 
+    conjugates = np.conj(eigenvalues)  
+
+    all_conjugates_exist = np.all(np.isin(conjugates, eigenvalues))
+
+    if all_conjugates_exist:
+        test = 1
+    else:
+        test = 0
+    
+    return real_parts, test
+
+##################################################################
+######DEFINITION OF THE PRINT FUNCTION
+##################################################################
+
+def main(): 
+
+    real_parts_long, test_long = long_dyn_stab(config,fuel,Cl_tot)
+    real_parts_lat, test_lat = lat_dyn_stab(sweep_quarter_wing, AR)
+
+    print("--------------------------CHECK OF THE SYSTEM--------------------------------------------")
+    if test_long == 1:
+        print("The complex conjugate of all the eigenvalues are also eigenvalues for the longitudinal motion.")
+    else:
+        print("There exists at least one complex conjugate of an eigenvalue which is not an eigenvalue for the longitudinal motion.")
+    
+    if test_lat == 1:
+        print("The complex conjugate of all the eigenvalues are also eigenvalues for the lateral motion.")
+    else: 
+        print("There exists at least one complex conjugate of an eigenvalue which is not an eigenvalue for the lateral motion.")
+    
+    if test_lat == 0 or test_long == 0:
+        print("Thus, there is a problem with the definition of the system. The system is not well defined.")
+    else: 
+        print("Thus, the system is well defined.")
+
+    print("----------------------------------------------------------------------")
+
+    print("--------------------------STABILITY--------------------------------------------")
+    if np.all(real_parts_long < 0):
+        print("The aircraft is dynamically stable for the longitudinal motion.")
+    elif np.any(real_parts_long > 0):
+        print("The system is dynamiccaly unstable for the longitudinal motion.")
+    elif np.any(real_parts_long == 0):
+        print("The system is dynamically neutrally stable for the longitudinal motion.")
+    
+    if np.all(real_parts_long < 0):
+        print("The aircraft is dynamically stable for the lateral motion.")
+    elif np.any(real_parts_long > 0):
+        print("The system is dynamiccaly unstable for the lateral motion.")
+    elif np.any(real_parts_long == 0):
+        print("The system is dynamically neutrally stable for the lateral motion.")
+    print("----------------------------------------------------------------------")
+
+if __name__ == "__main__":
+    main()
