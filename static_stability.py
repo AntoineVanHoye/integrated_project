@@ -56,11 +56,18 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, 
     
     c_fus = trailing_fus - leading_fus
     c_wing = trailing_wing - leading_wing
-    Cm0_wing = (2/(surface_wing_ideal*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
+    Cm0_wing = (2/(surf_wing*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
     Cm0_fus = (2/(surf_fus*MAC_fus)) * trapz(Cm0_airfoil_fus*c_fus**2, y_fus)
-    
-    Cm0_tot = (Cm0_wing*surface_wing_ideal + Cm0_fus*surf_fus)/surface_wing_ideal
+    M0_wing = Cm0_wing*(1/2*rho*speed**2*MAC_wing*surf_wing)
+    M0_fus = Cm0_fus*(1/2*rho*speed**2*MAC_fus*surf_fus)
+    M0_tot = M0_wing + M0_fus
     Cm0_tot = M0_tot/(1/2*rho*speed**2*MAC_tot*surface_wing_ideal)
+    #Cm0_wing = trapz(Cm0_airfoil_wing*c_wing**2, y_wing)/(1/2*MAC_tot*surface_wing_ideal)
+    #Cm0_fus =trapz(Cm0_airfoil_fus*c_fus**2, y_fus)/(1/2*MAC_tot*surface_wing_ideal)
+    #Cm0_tot = Cm0_wing + Cm0_fus
+    #Cm0_tot = 2/(surface_wing_ideal*MAC_tot)*( trapz(Cm0_airfoil_wing*c_wing**2, y_wing) + trapz(Cm0_airfoil_fus*c_fus**2, y_fus))
+    #Cm0_tot = (Cm0_wing*surf_wing*MAC_wing + Cm0_fus*surf_fus*MAC_fus)/(surface_wing_ideal*MAC_tot)
+    #Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
 
     return Cm0_tot,Cm0_fus,Cm0_wing
 
@@ -91,7 +98,7 @@ z_AC_tail = 1.51
 ##################################################################
 
 config = 3
-fuel = 1
+fuel = 2
 
 ##################################################################
 ######CG POSITION
@@ -252,6 +259,8 @@ def boucleForce(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_qu
         L_tot, L_T = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, force)
         force = L_tot
     return L_tot, L_T
+
+
 ##################################################################
 ######LONGITUDINAL STABILITY
 ##################################################################
@@ -414,7 +423,7 @@ def main():
     print("----------------------------------------------------------------------")
 
     print("--------------------------DIRECTIONAL STABILITY--------------------------------------------")
-    if (CN_beta_tot<0): #better to be < 0.1
+    if (CN_beta_tot<0): #better to be > 0.1 and < 0.25
         print ("The aircraft is not directionally stable because CN_beta_tot is negative and equals",CN_beta_tot)
         print("The contribution of the fuselage is",CN_beta_fuselage)
         print("The contribution of the wings is",CN_beta_w)
