@@ -736,7 +736,9 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
     AoA_L0 = np.interp(0, Cl_tot, AoA) * (180 / np.pi)
 
     Cl_tot0 = np.interp(0, AoA*180/np.pi, Cl_tot)
-    cl_max =Cl_max_wing + Cl_max_fus
+    
+
+    cl_max = (Cl_max_wing + Cl_max_fus)/2
     
 
     # --- total drag computation --- #
