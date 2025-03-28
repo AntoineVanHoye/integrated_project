@@ -165,7 +165,7 @@ def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force):
         fuel_pos = 1
         pourc_wings = 0
     if d == 2 : #full of fuel
-        vol_fuel = 20835.51
+        vol_fuel = 20068.8
         fuel_weight = vol_fuel*0.8*2.20462
         pourc_wings = available_fuel_vol/vol_fuel
         fuel_pos = wing_pos*pourc_wings + (1-pourc_wings)*l_fus*0.44
@@ -229,7 +229,7 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_win
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    T = 29317.5
+    T = 29608.6
     x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     
