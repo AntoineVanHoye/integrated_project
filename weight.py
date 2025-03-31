@@ -1,5 +1,7 @@
 import numpy as np
 import math
+from wings import detSurfac
+from wings import wingGeometry
 
 # Function to calculate air density using the ISA model
 # Up to 11 km (Troposphere)
@@ -55,10 +57,14 @@ def get_weight():
         lamda_aft = 1  #0.536 ou 1 jsp trop  # Taper ratio of aft centre-body
     
         c_1 = 0.028  # for long range transport aircraft 
-        b = 29  # Wingspan in m
-        s = 61.75  # Wing area in m² #change
-        Angle_25 = 16.646  # Quarter-chord sweep angle in degrees #change
-        lamda = 0.144  # Wing taper ratio #change
+        b = 28.95  # Wingspan in m
+        Cl = 0.45
+        sweep_LE_fus = 50
+        sweep_quarter_wing = 29
+        force = 557174.8525469044
+        surface_wing_ideal, surf_fus, s, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+        Angle_25 = 29 # Quarter-chord sweep angle in degrees #change
+        _, AR_wing, sweep_beta, sweep_beta_tot, c_root, lamda, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, force)
         n = 2.5  #  Design normal acceleration factor
 
         altitude = 12500
@@ -163,7 +169,7 @@ def get_weight():
     
         # New values corrected 
         m_eng = 4354*2.20462 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value) 
-        m_fuel = 20068.8*0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
+        m_fuel = 26102.23125*0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
         
         # --- Compute new MTOW estimate --- 
         m_prediction = m_cab + m_aft + m_wing + m_LG + m_eng + m_nacgrp + m_APU + m_instr + m_hydr + m_furn + m_AC + m_payload + m_passenger + m_ops + m_elec + m_fltcon + m_fuel
@@ -185,7 +191,7 @@ def get_weight():
         percentage = (mass / m_prediction) * 100
         #print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
     
-    #print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
+    print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
     #print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
     #print("") # Vertical line space
     #print(f"The MOTW converged in {iteration} iterations.")
@@ -193,4 +199,4 @@ def get_weight():
     return (m_cab, m_aft, m_wing, m_LG, m_eng, m_nacgrp, m_APU, m_enginst, m_instr, m_hydr,
             m_furn, m_AC, m_payload, m_ops, m_elec, m_fltcon, m_fuel, m_prediction, m_passenger)
 
-#print(get_weight())
+print(get_weight())
