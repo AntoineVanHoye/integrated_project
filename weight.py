@@ -186,17 +186,27 @@ def get_weight():
         "AC": m_AC, "Payload": m_payload, "Operational Items": m_ops,
         "Electrical System": m_elec, "Flight Control System": m_fltcon, "Fuel": m_fuel
     }
-
+    print(components) #edit guillaume
     for component, mass in components.items():
         percentage = (mass / m_prediction) * 100
         #print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
     
     print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
+<<<<<<< HEAD
+    print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
+    print("") # Vertical line space
+    print(f"The MOTW converged in {iteration} iterations.")
+=======
     #print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
     #print("") # Vertical line space
     #print(f"The MOTW converged in {iteration} iterations.")
+>>>>>>> 076cc324344af14ee12d81dd3fe2827c2a282e29
 
     return (m_cab, m_aft, m_wing, m_LG, m_eng, m_nacgrp, m_APU, m_enginst, m_instr, m_hydr,
             m_furn, m_AC, m_payload, m_ops, m_elec, m_fltcon, m_fuel, m_prediction, m_passenger)
 
+<<<<<<< HEAD
+get_weight()
+=======
 print(get_weight())
+>>>>>>> 076cc324344af14ee12d81dd3fe2827c2a282e29
