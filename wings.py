@@ -922,7 +922,7 @@ def main():
     print(f"Wing lift percentage, {float((Cl_wing_0*(surface_wing/surface_total))/Cl):.3f} ")
     print(f"Chord at wing root: {croot:.3f} [m]\nChord at wing tip: {c_tip_wing:.3f} [m]\nChord at middle wing: {chord_middle:.3f} [m]")
     print(f"Taper ratio: {taper_ratio:.3f} [-]")
-    print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f} [°]")
+    print(f"sweep leading: {sweep_LE_wing*(180/np.pi):.3f} [°]")
     print(f"Wing lift coefficient derivative: {a_wing:.3f}")
     print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
     print(f"Cl max wing: {Cl_max_wing:.3f} [-]")
