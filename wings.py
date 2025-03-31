@@ -2,6 +2,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.integrate import trapz
 import pandas as pd
+import scipy.interpolate as interp
+import scipy.optimize as opt
 
 #---Guesses---#
 span_max = 28.95           #[m] Span  max span for airport
@@ -745,7 +747,7 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
     AR_cd = AR + winglet(AR)
     Cd_induce = ((Cl_tot**2)/(np.pi* AR_cd)) * (1+delta)
     Cd_tot = np.zeros(len(AoA))
-    cd0 = 0.012 # in cruise
+    cd0 = 0.01361 # in cruise
     Cd_tot = Cd_induce + cd0 
     Cd_tot0 = np.interp(0, AoA, Cd_tot)
 
@@ -796,31 +798,51 @@ def getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
 def plotLiftDrag(lift_and_drag_plots, Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     if lift_and_drag_plots == False:
         return
-    Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, Cd_tot0, CL_alfa =  get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight)
-    plt.figure(figsize=(8,5))
-    plt.plot(Cl_tot, Cl_tot/Cd_tot)
-    plt.xlabel('$CL$')
-    plt.ylabel('$CL/CD$')
-    plt.show()
+    Cl_tot0, Cd_tot0, Cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, cd0, CL_alfa =  get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight)
+    surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+    # plt.figure(figsize=(8,5))
+    # plt.plot(Cl_tot, Cl_tot/Cd_tot)
+    # plt.xlabel('$CL$')
+    # plt.ylabel('$CL/CD$')
+    # plt.show()
+    
+    dy_dx = np.gradient(Cl_tot, Cd_tot)
 
+    # Sélection d'un point (ex: index 50)
+    idx = 11
+    x0, y0 = Cd_tot[idx], Cl_tot[idx]
+    m = dy_dx[idx]  # Pente au point x0
+
+    # Tracé de la tangente
+    tangent_line = m * (Cd_tot - x0) + y0
+    print(m * (0 - x0) + y0)
     plt.figure(figsize=(10, 6),dpi=300)
     plt.plot(Cd_tot, Cl_tot)
+    
+    plt.plot(Cd_tot, tangent_line, '-.', label=f"Tangente in Cd={x0:.2f} and Cl ={y0:.2f}")
+    plt.scatter([x0], [y0], color='red', zorder=3)  
+    
     plt.xlabel('$C_D$ [-]')
     plt.ylabel('$C_L$ [-]')
+    plt.scatter(Cd_tot0, Cl_tot0, color='green',label="Cruise")
+    Cl_climb = weight/(0.5*  air_density(0)[0] * (true_airspeed_at_altitude(0, 0.45)**2)* surface_wing_ideal)
+    Cd_climb = np.interp(Cl_climb, Cl_tot, Cd_tot)
+    plt.scatter(Cd_climb, Cl_climb, color='blue',label="Climb")
+    plt.legend(loc="best")
     plt.savefig("/Users/antoinevanhoye/Documents/M1/PI/integrated_project/Airfoils/drag_polar.pdf", dpi=300)
-    plt.show()
+    #plt.show()
 
-    plt.figure(figsize=(8,5))
-    plt.plot(AoA, Cl_tot)
-    plt.xlabel('$AoA$ [rad]')
-    plt.ylabel('$CL$')
-    plt.show()
+    # plt.figure(figsize=(8,5))
+    # plt.plot(AoA, Cl_tot)
+    # plt.xlabel('$AoA$ [rad]')
+    # plt.ylabel('$CL$')
+    # plt.show()
 
-    plt.figure(figsize=(8,5))
-    plt.plot(AoA, Cd_tot)
-    plt.xlabel('$AoA$ [rad]')
-    plt.ylabel('$CD$')
-    plt.show()
+    # plt.figure(figsize=(8,5))
+    # plt.plot(AoA, Cd_tot)
+    # plt.xlabel('$AoA$ [rad]')
+    # plt.ylabel('$CD$')
+    # plt.show()
     return
 
 
@@ -894,7 +916,7 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     return delta_cl_max
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,  461937.6121686326
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,   566052.1267018337 
     
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
