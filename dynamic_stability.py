@@ -18,6 +18,8 @@ from wings import getMAC
 from wings import getAirfoilWing
 from wings import getAirfoilFus
 from static_stability import boucleForce
+from wings import fusGeometry
+from wings import wingGeometry
 
 ##################################################################
 ######CONFIGURATION SETTING
@@ -30,8 +32,9 @@ fuel = 2
 ######INPUT PARAMETERS
 ##################################################################
 
-sweep_LE_fus = 50.0
-sweep_quarter_wing = 29.0
+sweep_LE_fus = 50.0*np.pi/180
+sweep_quarter_wing = 29.0*np.pi/180
+b = 28.95*3.28084 # Wingspan in ft
 CL = 0.45
 Cm0_airfoil_wing = getAirfoilWing()[4]
 Cm0_airfoil_fus = getAirfoilFus()[4]
@@ -42,6 +45,8 @@ delta = 0.005
 z_f = 1.51 #distance between AC of the tail and AC of the aircraft
 l_cabin = 10.1
 l_cockpit = 2.01
+M = 0.9
+beta = np.sqrt(1-M**2)
 
 ##################################################################
 ######GENERAL PARAMETERS
@@ -51,7 +56,7 @@ surface_wing_ideal, AR = getSurface_And_AR(CL, force)
 M = 0.9
 rho = air_density(12500)[0]
 V0 = true_airspeed_at_altitude(12500,0.9)
-surface_wing_ideal, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(CL, force, sweep_quarter_wing)
+_, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(CL, force, sweep_quarter_wing)
 surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(CL, sweep_LE_fus, sweep_quarter_wing, force)
 Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, CD, AoA, cd0, CL_alfa = get_Lift_and_drag(AR, delta, sweep_LE_fus, sweep_LE_wing, force)
 MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(CL, sweep_LE_fus, sweep_quarter_wing, force)
@@ -60,6 +65,18 @@ c_root_tail,span_hor_tail,span_vert_tail,AR_h_tail, AR_tail,surf_vert_tail, surf
 x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1
 x_CG_tot = CG_position(config,fuel, AR, sweep_LE_fus, sweep_LE_wing)
 l_f = x_AC_tail - x_CG_tot
+cl_alpha_wing, _, _, _, _ = getAirfoilWing()
+cl_alpha_fus, _, _, _, _ = getAirfoilFus()
+b_fus = 9
+b_wing = b - b_fus
+cl_alpha = (cl_alpha_wing * b_wing + cl_alpha_fus * b_fus) / b
+kappa = cl_alpha/(2*np.pi)
+_,AR_fus, _, _, taper_ratio_fus, sweep_quarter_fus, _, _, _, _, _ = fusGeometry(CL, sweep_LE_fus, sweep_quarter_wing, force)
+sweep_half_chord_fus = np.arctan(np.tan(sweep_quarter_fus)+4/AR_fus*(1-taper_ratio_fus)/(1+taper_ratio_fus)*(0.25-0.5))
+_, AR_wing, _, _, _, taper_ratio_wing, _, _, y, _, _, _, _, _ = wingGeometry(Cl_tot, sweep_LE_fus, sweep_quarter_wing, force)
+sweep_half_chord_wing = np.arctan(np.tan(sweep_quarter_wing)+4/AR_fus*(1-taper_ratio_wing)/(1+taper_ratio_wing)*(0.25-0.5))
+sweep_half_chord = (sweep_half_chord_fus*surf_fus + sweep_half_chord_wing*surf_wing)/surf_tot
+
 
 ##################################################################
 ######COMPUTATION OF GENERAL PARAMETERS
@@ -81,10 +98,12 @@ def alpha_der(i,d):
 
     Kn = long_stat_stab_cruise(i,d,AR, sweep_LE_fus, sweep_LE_wing)[0]
     CL_alpha = getClAlfa(AR, sweep_LE_fus, sweep_LE_wing)
+    CL_alpha = 2*np.pi*AR/(2+np.sqrt(4+(AR**2 *beta**2 * kappa**2)*(1 + np.tan(sweep_half_chord)**2/beta**2)))
     CD_alpha = 2*CL*CL_alpha/(np.pi*AR*e)
     CM_alpha = -Kn * CL_alpha
 
     return CL_alpha, CD_alpha, CM_alpha
+
 
 ##################################################################
 ######U DERIVATIVES 
@@ -116,7 +135,9 @@ def u_der2(i,d):
     X_u = CL_u *np.sin(alpha_e) - CD_u* np.cos(alpha_e)
     M_u = CM_u
 
-    X_u = X_u * (1/2*rho*V0*surf_tot)
+    X_u = X_u * (1/2*rho*V0*surface_wing_ideal)
+    Z_u = Z_u * (1/2*rho*V0*surface_wing_ideal)
+    M_u = M_u * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
 
     return Z_u, X_u, M_u
 
@@ -165,6 +186,10 @@ def q_der2(i,d):
     X_q = 1/2*(CL_q*np.sin(alpha_e) - CD_q*np.cos(alpha_e))
     M_q = 1/2*CM_q
 
+    Z_q = Z_q * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
+    X_q = X_q * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
+    M_q = M_q * (1/2*rho*V0*surface_wing_ideal*MAC_tot**2)
+
     return Z_q, X_q, M_q
 
 ##################################################################
@@ -179,8 +204,8 @@ def alpha_dot_der(i,d):
     V_tail = tail_eff(i,d, AR, sweep_LE_fus, sweep_LE_wing)
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
     tail_pos = 1
-    x_AC_tail = tail_pos+xac
-    x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)
+    x_AC_tail = (tail_pos+xac)*3.28084
+    x_CG_tot = CG_position(i,d, AR, sweep_LE_fus, sweep_LE_wing)* 3.28084
     l_T = x_AC_tail - x_CG_tot
     CD_alpha_dot = 0
 
@@ -208,6 +233,8 @@ def w_dot_der(i,d):
     Z_w_dot = 1/(2*np.cos(alpha_e)) * (-CL_alpha_dot*np.cos(alpha_e) - CD_alpha_dot*np.sin(alpha_e))
     M_w_dot = 1/(2*np.cos(alpha_e)) * CM_alpha_dot
 
+    X_w_dot = X_w_dot * (1/2*rho*surf_tot*MAC_tot)
+    Z_w_dot = Z_w_dot * (1/2*rho*surf_tot*MAC_tot)
     M_w_dot = M_w_dot * (1/2*rho*surf_tot*MAC_tot**2)
 
     return X_w_dot, Z_w_dot, M_w_dot
@@ -233,6 +260,10 @@ def w_der(i,d):
     Z_w = 1/np.cos(alpha_e) * (C_Xe -CL_alpha*np.cos(alpha_e) - CD_alpha*np.sin(alpha_e))
     X_w = 1/np.cos(alpha_e) * (-C_Ze + CL_alpha*np.sin(alpha_e) - CD_alpha*np.cos(alpha_e))
     M_w = 1/np.cos(alpha_e) * CM_alpha
+
+    Z_w = Z_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
+    X_w = X_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
+    M_w = M_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot**2)
 
     return Z_w, X_w, M_w
 
@@ -298,7 +329,7 @@ def long_dyn_stab(i,d,Cl):
 
 def dsigma_dbeta(sweep_quarter_wing,AR): 
 
-    surf_vert_tail = surf_tail()[1]
+    surf_vert_tail = surf_tail()[1]*3.28084**2 #in ft²
     average_fus_sect = 
     d = np.sqrt(average_fus_sect/0.7854)
     Z_w = #vertical distance from the wing root quarter-chord to the fuselage centerline 
@@ -317,6 +348,10 @@ def v_der(sweep_quarter_wing,AR):
     L_v = -1/2 * rho*V0**2 * surf_vert_tail * z_f * c_1 * (1-d_sigma)
     N_v = 1/2 * rho*V0*surf_vert_tail * l_f * c_1 * (1-d_sigma)
 
+    Y_v = Y_v * (1/2*rho*V0*surface_wing_ideal)
+    L_v = L_v * (1/2*rho*V0*surface_wing_ideal*b)
+    N_v = N_v * (1/2*rho*V0*surface_wing_ideal*b)
+
     return Y_v, L_v, N_v
 
 ##################################################################
@@ -330,6 +365,10 @@ def r_der(sweep_quarter_wing,AR):
     Y_r = -2*Y_v * (z_f * np.sin(alpha_e) - l_f * np.cos(alpha_e)/b)
     L_r = -2*Y_v*((z_f*np.sin(alpha_e) + l_f*np.cos(alpha_e)*(z_f*np.cos(alpha_e) - l_f*np.sin(alpha_e)))/b**2)
     N_r = 2*Y_v * ((z_f*np.sin(alpha_e + l_f*np.cos(alpha_e))**2)/b**2)
+
+    Y_r = Y_r * (1/2*rho*V0*surface_wing_ideal*b)
+    L_r = L_r * (1/2*rho*V0*surface_wing_ideal*b**2)
+    N_r = N_r * (1/2*rho*V0*surface_wing_ideal*b**2)
 
     return Y_r, L_r, N_r
 
@@ -345,6 +384,10 @@ def p_der(sweep_quarter_wing,AR):
     Y_p = 2*Y_v * (z_f * np.cos(alpha_e) - l_f * np.sin(alpha_e)/b)
     L_p = 2 * Y_v * (z_f/b)**2
     N_p = L_r
+
+    Y_p = Y_p * (1/2*rho*V0*surface_wing_ideal*b)   
+    L_p = L_p * (1/2*rho*V0*surface_wing_ideal*b**2)
+    N_p = N_p * (1/2*rho*V0*surface_wing_ideal*b**2)
 
     return Y_p, L_p, N_p
 
