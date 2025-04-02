@@ -61,7 +61,7 @@ def get_weight():
         Cl = 0.45
         sweep_LE_fus = 50
         sweep_quarter_wing = 29
-        force = 557174.8525469044
+        force = 532619.4825886496
         surface_wing_ideal, surf_fus, s, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
         Angle_25 = 29 # Quarter-chord sweep angle in degrees #change
         _, AR_wing, sweep_beta, sweep_beta_tot, c_root, lamda, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, force)
@@ -169,7 +169,7 @@ def get_weight():
     
         # New values corrected 
         m_eng = 4354*2.20462 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value) 
-        m_fuel = 26102.23125*0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
+        m_fuel = 23533.2994 *0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
         
         # --- Compute new MTOW estimate --- 
         m_prediction = m_cab + m_aft + m_wing + m_LG + m_eng + m_nacgrp + m_APU + m_instr + m_hydr + m_furn + m_AC + m_payload + m_passenger + m_ops + m_elec + m_fltcon + m_fuel
@@ -186,27 +186,18 @@ def get_weight():
         "AC": m_AC, "Payload": m_payload, "Operational Items": m_ops,
         "Electrical System": m_elec, "Flight Control System": m_fltcon, "Fuel": m_fuel
     }
-    print(components) #edit guillaume
+    
     for component, mass in components.items():
         percentage = (mass / m_prediction) * 100
         #print(f"{component}: {mass:.2f} lbs, {percentage:.2f}%")
     
-    print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
-<<<<<<< HEAD
-    print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
-    print("") # Vertical line space
-    print(f"The MOTW converged in {iteration} iterations.")
-=======
+    #print(f"Total predicted mass without the fuel (MOTW): {m_prediction - m_fuel:.2f} lbs")
+    #print(f"Total predicted mass (MOTW): {m_prediction:.2f} lbs")
     #print(f"Total predicted mass (MOTM): {m_prediction_kg:.2f} kg")
     #print("") # Vertical line space
     #print(f"The MOTW converged in {iteration} iterations.")
->>>>>>> 076cc324344af14ee12d81dd3fe2827c2a282e29
 
     return (m_cab, m_aft, m_wing, m_LG, m_eng, m_nacgrp, m_APU, m_enginst, m_instr, m_hydr,
             m_furn, m_AC, m_payload, m_ops, m_elec, m_fltcon, m_fuel, m_prediction, m_passenger)
 
-<<<<<<< HEAD
-get_weight()
-=======
-print(get_weight())
->>>>>>> 076cc324344af14ee12d81dd3fe2827c2a282e29
+#print(get_weight())

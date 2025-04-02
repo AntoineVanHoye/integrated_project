@@ -297,8 +297,8 @@ tail_pos = l_cabin + l_cockpit + 1 #choice
 
 
 def surf_tail():
-    surf_hor_tail = 40
-    surf_vert_tail = 45
+    surf_hor_tail = 30
+    surf_vert_tail = 17
     return surf_hor_tail, surf_vert_tail
 
 def geomtail():
@@ -316,6 +316,7 @@ def geomtail():
     c_tip_tail = taper_ratio*c_root_tail
     
     y = np.linspace(0,span_hor/2,100)
+    y1 = np.linspace(0,span_vert/2,100)
     c = np.linspace(c_root_tail, c_tip_tail, len(y))
     quarter_line_tail = np.zeros(len(y))
     leading_edge_tail = np.zeros(len(y))
@@ -329,7 +330,7 @@ def geomtail():
     
     MAC_tail = 2/surf_tot_tail*trapz(c**2, y)
     cy = c*y
-    yac = (2/surf_tot_tail) *trapz(cy,y)
+    yac = (2/surf_vert_tail) *trapz(cy,y1)
     xac = MAC_tail*0.2 + yac * np.tan(sweep_leading_tail)
     return  c_root_tail, span_hor, span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac
 
@@ -396,7 +397,7 @@ def setting_angle(force):
     alpha_root =CL/a
     return alpha_root
 
-force = -80506.40280072569
+force = -58860.16592470415
 
 def main():
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()

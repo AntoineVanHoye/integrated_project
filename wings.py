@@ -16,7 +16,7 @@ alti = 12500            #[m]
 M = 0.9                #[-] Mach number
 R = 287                 #[m^2/s^2K]
 gamma = 1.4
-delta = 0.005           #graph slide 61 lecture 6 aerodinimics
+delta = 0.035           #graph slide 61 lecture 6 aerodinimics
 e = 1/(1+delta)            #Ostxald's efficiency factor
 #sweep_LE_fus = 40   #[°] sweep angle fuselage
 #sweep_LE_wing = 30 #[°] sweep angle wing
@@ -42,7 +42,7 @@ plt.rcParams.update({
 
 #---Commande---#
 polar_Cl_Cd = False
-wing_plot = False
+wing_plot = False 
 lift_and_drag_plots = False
 plot_airfoil = False
 
@@ -916,7 +916,7 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     return delta_cl_max
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,   566052.1267018337 
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,   532619.4943551689 
     
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
