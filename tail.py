@@ -298,7 +298,7 @@ tail_pos = l_cabin + l_cockpit + 1 #choice
 
 def surf_tail():
     surf_hor_tail = 30
-    surf_vert_tail = 17
+    surf_vert_tail = 19
     return surf_hor_tail, surf_vert_tail
 
 def geomtail():

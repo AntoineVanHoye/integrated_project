@@ -336,6 +336,7 @@ def dir_stat_stab_cruise(CG_position, Cl, sweep_LE_fus, sweep_quarter_wing, forc
     K_beta = 0.3 * (x_CG / l_fus) + 0.75 * (hf_max / l_fus) - 0.105
     CN_beta_fuselage = -K_beta * (surf_fus*l_fus/(surf_wing*span_wings))*((hf1/hf2)**0.5)*((bf2/bf1)**(1/3))
     CN_beta_fin=a*surf_vert_tail*L_f/(surf_wing*span_wings)
+    CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
     """
 
     hf_max = 0.179*16.8*3.28084  # maximum fuselage height
@@ -343,21 +344,21 @@ def dir_stat_stab_cruise(CG_position, Cl, sweep_LE_fus, sweep_quarter_wing, forc
     b = 28.95 *3.28084
     L_f= x_AC_tail*3.28084 - x_CG # distance between center of gravity and aerodynamic center of the tail
     surf_fus = surf_fus*3.28084**2
-    #fus_vol = surf_fus*hf_max
     fus_vol = 224.98*3.28084**3
-    h = hf_max/2
-    w = 9*3.28084*0.8
+    h = 1.762*3.28084 #mean fuselage depth
+    w = 7.564*3.28084 #mean fuselage width
     surface_wing_ideal = surface_wing_ideal*3.28084**2
     surf_vert_tail = surf_tail()[1]*3.28084**2
     V_T = surf_vert_tail* L_f/(surface_wing_ideal* b)
     _, AR = getSurface_And_AR(Cl, force)
+    mean_chord = AR/b
     sweep_quarter_wing = sweep_quarter_wing*np.pi/180
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
 
     CN_beta_fuselage = -1.3*fus_vol/(surface_wing_ideal*b)*(h/w)
 
-    CN_beta_w = Cl**2 *(1/(4*np.pi*AR) - np.tan(sweep_quarter_wing)/(np.pi*AR*(AR+4*np.cos(sweep_quarter_wing)))*(np.cos(sweep_quarter_wing) - AR/2 - AR**2/(8*np.cos(sweep_quarter_wing)) + 6*np.abs(x_CG - x_AC_tot*3.28084)/(MAC_tot*3.28084) * np.sin(sweep_quarter_wing/AR)))
-    #CN_beta_w=0.012 #{High, mid, low}-mounted wing effect = {-0.017,0.012,0.024}
+    CN_beta_w = Cl**2 *(1/(4*np.pi*AR) - np.tan(sweep_quarter_wing)/(np.pi*AR*(AR+4*np.cos(sweep_quarter_wing)))*(np.cos(sweep_quarter_wing) - AR/2 - AR**2/(8*np.cos(sweep_quarter_wing)) + 6*np.abs(x_CG - x_AC_tot*3.28084)/(mean_chord*3.28084) * np.sin(sweep_quarter_wing/AR)))
+
     z_w = 0
     a = LiftCurveSlope()
     term = 0.724 + ((3.06*(surf_vert_tail/surface_wing_ideal))/(1 + np.cos(sweep_quarter_wing))) + 0.4 *(z_w/hf_max) + 0.009*AR
@@ -377,15 +378,9 @@ def lat_stat_stab_cruise(CG_position,dihedral_angle, Cl,sweep_LE_fus, sweep_quar
     surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     b, AR_wing, sweep_beta, sweep_beta_tot, c_root, wings_taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, force)
     gamma = dihedral_angle*np.pi/180
-    #weight = CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     CL_wings, CL_w0, CD_wing, CL_max, alpha_L0, CL_alpha_wings = wingCL(Cl,sweep_LE_fus, sweep_quarter_wing, force)
-    CL_beta_dihedral = -0.25 *CL_alpha_wings * gamma* (2 * (1 + 2*wings_taper_ratio)/(3*(1+wings_taper_ratio)))
 
-    #graph_value = -0.15 #value from Nicolai's book page 590
-    x = wings_taper_ratio
-    graph_value  = np.interp(x, [0.5, 1], [-0.21, -0.19])
-    CL_beta_wing_sweep = graph_value * CL_w0
-    CL_beta_wings = CL_beta_wing_sweep + CL_beta_dihedral
+    CL_beta_dihedral = -0.25 *CL_alpha_wings * gamma* (2 * (1 + 2*wings_taper_ratio)/(3*(1+wings_taper_ratio)))
 
     CL_beta_wings_fus = 0 #because middle mounted wing
 
@@ -398,8 +393,14 @@ def lat_stat_stab_cruise(CG_position,dihedral_angle, Cl,sweep_LE_fus, sweep_quar
     a = LiftCurveSlope()
     x_CG = CG_position *3.28084
     b = 28.95 *3.28084
-    L_f= x_AC_tail*3.28084 - x_CG
     CL_beta_tail = -a*term*surf_vert_tail/surface_wing_ideal*z_AC_tail/b
+    
+    #x = wings_taper_ratio
+    graph_value  = np.interp(wings_taper_ratio, [0.5, 1], [-0.21, -0.19]) #Nicolai's book, page 590
+
+    CL_beta_wing_sweep = graph_value * CL_w0
+    CL_beta_wings = CL_beta_wing_sweep + CL_beta_dihedral
+
     CL_beta_tot = CL_beta_wings_fus + CL_beta_wings + CL_beta_tail
 
     return CL_beta_tot, CL_beta_wings, CL_beta_wings_fus, CL_beta_tail
