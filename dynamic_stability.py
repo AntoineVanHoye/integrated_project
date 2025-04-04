@@ -274,7 +274,7 @@ def w_der(i,d):
 def long_dyn_stab(i,d,Cl): 
 
     position, pourc_wings, motors_pos, total_weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    m = 
+    m = total_weight
     g = 9.81
     I_y = 
 
@@ -397,9 +397,10 @@ def p_der(sweep_quarter_wing,AR):
 ##################################################################
 
 
-def lat_dyn_stab(sweep_quarter_wing, AR): 
+def lat_dyn_stab(i,d,Cl): 
 
-    m = 
+    position, pourc_wings, motors_pos, total_weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    m = total_weight
     g = 9.81
     I_x = 
     I_xz = 
@@ -451,13 +452,46 @@ def lat_dyn_stab(sweep_quarter_wing, AR):
     return real_parts, test
 
 ##################################################################
+######ANALYSIS OF THE PHUGOID MODE
+##################################################################
+
+def phugoid(): 
+
+    g = 9.81
+    omega_p = g*np.sqrt(2)/V0
+    xi_p = g*CD/(CL*V0)/omega_p
+
+    return omega_p, xi_p
+
+##################################################################
+######SHORT PERIOD OSCIELLATIONS MODE
+##################################################################
+
+def short_period(i,d,Cl):
+
+    position, pourc_wings, motors_pos, total_weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    Ue = V0 * np.cos(alpha_e)
+    M_q = q_der2(config,fuel)[2]
+    M_w = w_der(config,fuel)[2]
+    Z_w = w_der(config,fuel)[0]
+    M_w_dot = w_dot_der(config,fuel)[2]
+    I_y = 
+    m = total_weight
+
+    omega_s = np.sqrt((M_q/I_y)*(Z_w/m)-(M_w/I_y)*Ue)
+    xi_s = -(M_q/I_y + Z_w/m + M_w_dot/I_y*Ue)/(2*omega_s)
+
+    return omega_s, xi_s
+##################################################################
 ######DEFINITION OF THE PRINT FUNCTION
 ##################################################################
 
 def main(): 
 
-    real_parts_long, test_long = long_dyn_stab(config,fuel,Cl_tot)
-    real_parts_lat, test_lat = lat_dyn_stab(sweep_quarter_wing, AR)
+    real_parts_long, test_long = long_dyn_stab(config,fuel,0.45)
+    real_parts_lat, test_lat = lat_dyn_stab(config,fuel,0.45)
+    omega_p, xi_p = phugoid()
+    omega_s, xi_s = short_period(config,fuel,0.45)
 
     print("--------------------------CHECK OF THE SYSTEM--------------------------------------------")
     if test_long == 1:
@@ -491,6 +525,16 @@ def main():
         print("The system is dynamiccaly unstable for the lateral motion.")
     elif np.any(real_parts_long == 0):
         print("The system is dynamically neutrally stable for the lateral motion.")
+    print("----------------------------------------------------------------------")
+
+    print("--------------------------PHUGOID MODE--------------------------------------------")
+    print("The frequency of the phugoid mode is: ", omega_p, "rad/s")
+    print("The damping ratio of the phugoid mode is: ", xi_p)
+    print("----------------------------------------------------------------------")
+
+    print("--------------------------SHORT PERIOD OSCILLATIONS MODE--------------------------------------------")
+    print("The frequency of the short period oscillations mode is: ", omega_s, "rad/s")
+    print("The damping ratio of the short period oscillations mode is: ", xi_s)
     print("----------------------------------------------------------------------")
 
 if __name__ == "__main__":
