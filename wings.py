@@ -744,7 +744,7 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
     
 
     # --- total drag computation --- #
-    AR_cd = AR + winglet(AR)
+    AR_cd = AR #+ winglet(AR)
     Cd_induce = ((Cl_tot**2)/(np.pi* AR_cd)) * (1+delta)
     Cd_tot = np.zeros(len(AoA))
     cd0 = 0.01361 # in cruise
