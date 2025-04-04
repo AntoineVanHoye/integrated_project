@@ -916,7 +916,7 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     return delta_cl_max
 
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,   532619.4943551689 
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,   542504.6611526054
     
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
