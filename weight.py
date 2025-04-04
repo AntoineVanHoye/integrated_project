@@ -61,7 +61,7 @@ def get_weight():
         Cl = 0.45
         sweep_LE_fus = 50
         sweep_quarter_wing = 29
-        force = 532619.4825886496
+        force =542504.6251269302
         surface_wing_ideal, surf_fus, s, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
         Angle_25 = 29 # Quarter-chord sweep angle in degrees #change
         _, AR_wing, sweep_beta, sweep_beta_tot, c_root, lamda, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, force)
@@ -169,7 +169,7 @@ def get_weight():
     
         # New values corrected 
         m_eng = 4354*2.20462 # Rolls Royce Pearl 700 (no data for the 10X)   #  8377.566 (old engine value) 
-        m_fuel = 23533.2994 *0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
+        m_fuel = 25032.322462*0.8*2.20462 # Replace the value computed w/ a % of the MOTW by the one calculated in the propulsion part.
         
         # --- Compute new MTOW estimate --- 
         m_prediction = m_cab + m_aft + m_wing + m_LG + m_eng + m_nacgrp + m_APU + m_instr + m_hydr + m_furn + m_AC + m_payload + m_passenger + m_ops + m_elec + m_fltcon + m_fuel
