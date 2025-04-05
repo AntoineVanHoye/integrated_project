@@ -43,7 +43,7 @@ plt.rcParams.update({
 #---Commande---#
 polar_Cl_Cd = False
 wing_plot = False 
-lift_and_drag_plots = False
+lift_and_drag_plots = True
 plot_airfoil = False
 
 #---Code---#
@@ -745,9 +745,9 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
 
     # --- total drag computation --- #
     AR_cd = AR #+ winglet(AR)
-    Cd_induce = ((Cl_tot**2)/(np.pi* AR_cd)) * (1+delta)
+    Cd_induce = ((Cl_tot**2)/(np.pi* AR_cd * 0.625))# * (1+delta)
     Cd_tot = np.zeros(len(AoA))
-    cd0 = 0.01361 # in cruise
+    cd0 = 0.01210 # in cruise
     Cd_tot = Cd_induce + cd0 
     Cd_tot0 = np.interp(0, AoA, Cd_tot)
 
@@ -809,28 +809,33 @@ def plotLiftDrag(lift_and_drag_plots, Cl, sweep_LE_fus, sweep_quarter_wing, weig
     dy_dx = np.gradient(Cl_tot, Cd_tot)
 
     # Sélection d'un point (ex: index 50)
-    idx = 11
-    x0, y0 = Cd_tot[idx], Cl_tot[idx]
-    m = dy_dx[idx]  # Pente au point x0
+    idx = 10
+    x0, y0 = (Cd_tot[idx-1] + Cd_tot[idx])/2, (Cl_tot[idx-1] + Cl_tot[idx])/2
+    lift2drag_optimal = y0 / x0
+    m = (dy_dx[idx-1] + dy_dx[idx])/2  # Pente au point x0
 
+    x = np.linspace(0, 0.1, 100)  # Plage de x pour la tangente
     # Tracé de la tangente
-    tangent_line = m * (Cd_tot - x0) + y0
+    tangent_line = m * (x - x0) + y0
     print(m * (0 - x0) + y0)
-    plt.figure(figsize=(10, 6),dpi=300)
-    plt.plot(Cd_tot, Cl_tot)
-    
-    plt.plot(Cd_tot, tangent_line, '-.', label=f"Tangente in Cd={x0:.2f} and Cl ={y0:.2f}")
-    plt.scatter([x0], [y0], color='red', zorder=3)  
-    
-    plt.xlabel('$C_D$ [-]')
-    plt.ylabel('$C_L$ [-]')
-    plt.scatter(Cd_tot0, Cl_tot0, color='green',label="Cruise")
-    Cl_climb = weight/(0.5*  air_density(0)[0] * (true_airspeed_at_altitude(0, 0.45)**2)* surface_wing_ideal)
+    fig, ax = plt.subplots(figsize=(10, 6), dpi=300)  # Création d'un subplot avec des axes
+    ax.set_xlabel('$C_D$ [-]')
+    ax.set_ylabel('$C_L$ [-]')
+
+    ax.plot(Cd_tot, Cl_tot)
+    ax.plot(x, tangent_line, '-.', label=f"Tangente", color='orange')
+
+    Cl_climb = weight / (0.5 * air_density(0)[0] * (true_airspeed_at_altitude(0, 0.45) ** 2) * surface_wing_ideal)
     Cd_climb = np.interp(Cl_climb, Cl_tot, Cd_tot)
-    plt.scatter(Cd_climb, Cl_climb, color='blue',label="Climb")
-    plt.legend(loc="best")
+    
+    ax.scatter([x0], [y0], label=f"Optimum L/D = {lift2drag_optimal:.2f}", color='red', zorder=3)
+    ax.scatter(Cd_tot0, Cl_tot0, color='green', label=f"Cruise L/D = {Cl_tot0/Cd_tot0:.2f}", zorder=3)
+    ax.scatter(Cd_climb, Cl_climb, color='blue', label=f"Climb L/D = {Cl_climb/Cd_climb:.2f}", zorder=3)
+
+    ax.legend(loc="best")
+    ax.grid(True,linewidth=0.5, linestyle='--', color='gray')
     plt.savefig("/Users/antoinevanhoye/Documents/M1/PI/integrated_project/Airfoils/drag_polar.pdf", dpi=300)
-    #plt.show()
+    # plt.show()
 
     # plt.figure(figsize=(8,5))
     # plt.plot(AoA, Cl_tot)
