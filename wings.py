@@ -43,7 +43,7 @@ plt.rcParams.update({
 #---Commande---#
 polar_Cl_Cd = False
 wing_plot = False 
-lift_and_drag_plots = True
+lift_and_drag_plots = False
 plot_airfoil = False
 
 #---Code---#
@@ -320,6 +320,7 @@ def fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     
 
     CL_max = np.cos(sweep_quarter) * 0.95 * ((cl_max + cl_max)/2)
+
     
     return CL_w, CL_w0, CD_fuselage, CL_max, a
 
@@ -450,6 +451,7 @@ def getCalageAngle(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
 
     # --- cl_alpha wing --- #
     cl_alpha_wing, cl_max, alpha_l0, CD_wing, cm = getAirfoilWing()
+    
 
     # --- Twist angle --- #
     alpha_01 = -0.17
@@ -920,100 +922,143 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     delta_cl_max = delta_CL_max* (1/(0.8* np.cos(sweep_HL)))
     return delta_cl_max
 
+def FIXED_GEOM_getCalageAngle(weight):
+
+    # --- Fixed geometry --- #
+    AR = 7.040046247919082
+    sweep_beta = 0.9044241496993639
+    Cl_fuselage = 0.04585311877621623
+
+    # --- cl_alpha wing --- #
+    cl_alpha_wing = 6.680687891225398
+    alpha_l0 = -0.07853981633974483
+
+    # --- Twist angle --- #
+    rho, T = air_density(alti)
+    v = true_airspeed_at_altitude(alti, M)
+    alpha_01 = -0.17
+    eta_a_tip = twist_angle 
+    alpha_L0_wing = alpha_l0 + (alpha_01 * twist_angle * (np.pi/180))
+    surf_ref = 119.05
+    Cl = weight/((1/2)*rho*v**2*surf_ref) # Cl = 2*W/(rho*V^2*S)
+    # --- Cl of wing --- #
+    
+    Cl_wing = Cl - Cl_fuselage#((Cl*surface_wing_ideal) - (Cl_fuselage*surface_fuselage))/surface_wing
+    
+    # --- Rest --- #
+    k = (beta * cl_alpha_wing)/(2*np.pi)
+    a = ((2*np.pi)/((2/(beta*AR)) + np.sqrt((1/((k * np.cos(sweep_beta))))**2 + ((2/(beta * AR))**2) )))/beta
+    
+    alpha_root = (Cl_wing/a) + alpha_L0_wing
+    
+    #((CL*surface_total - Cl_fuselage*surface_fuselage)/(surface_wing*a)) + alpha_L0_wing     # juste all in one equation 
+    return alpha_root, a, Cl
+
+# --- Which geometry ?? --- #
+geometry = 2 # 1 = variable geometry , 2 = fixed geometry
+
 def main():
-    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,   542504.6611526054
+    Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,  542504.6611526054
     
-    surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
-    surface_wing_ideal, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
-    surface_wing_ideal, AR = getSurface_And_AR(Cl, weight)
-    _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    delta_cl_max = getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    print("\n-------------- Total values --------------\n")
-    print(f"New AR = {AR:.3f} [-]")
-    print(f"Cl used = {Cl:.2f} [-]\n")
-    print(f"Total area = {surface_total:.2f} [m^2]")
-    print(f"Surface of fuselage = {surface_fuselage:.2f} [m^2]")
-    print(f"Surface of wing = {surface_wing:.2f} [m^2]")
-    print(f"Surface of wing ideal = {surface_wing_ideal:.2f} [m^2]")
-    print(f"Compressibility parameter beta: {beta:.3f} [-]")
-    print(f"Taper ratio: {c_tip_wing/c_root_fus:.3f} [-]")
-    print(f"High lift device delta clmax: {delta_cl_max:.3f} [-]\n")
-    print(f"Cl alfa: {getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, weight):.3f} [rad^-1]\n")
-    
-    b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
-    Cl_wing, Cl_wing_0, Cd_wing, Cl_max_wing, alpha_L0, a_wing = wingCL(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
-    cl_alpha_wing, cl_max_wing, alpha_l0_wing, CD_wing, cm_wing = getAirfoilWing()
-    print("\n-------------- wing values --------------\n")
-    print(f"\nAR wing: {AR_wing:.3f} [-] \nCL_w0 wing = {Cl_wing_0:.3f} [-]\n")
-    print(f"Wing lift percentage, {float((Cl_wing_0*(surface_wing/surface_total))/Cl):.3f} ")
-    print(f"Chord at wing root: {croot:.3f} [m]\nChord at wing tip: {c_tip_wing:.3f} [m]\nChord at middle wing: {chord_middle:.3f} [m]")
-    print(f"Taper ratio: {taper_ratio:.3f} [-]")
-    print(f"sweep leading: {sweep_LE_wing*(180/np.pi):.3f} [°]")
-    print(f"Wing lift coefficient derivative: {a_wing:.3f}")
-    print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
-    print(f"Cl max wing: {Cl_max_wing:.3f} [-]")
-    print(f"cl alpha wing airfoil: {cl_alpha_wing:.3f} [rad^-1]\n")
-    
-    
+    if geometry == 1: 
 
-    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    cl_alpha_fus, cl_max_fus, alpha_l0_fus, CD_fus, cm_fus = getAirfoilFus()
-    print("\n-------------- fuselage values --------------\n")
-    print(f"\nAR fuselage: {AR_fuselage:.3f} [-]\nCL_w0 fuselage = {Cl_fuselage_0*surface_fuselage/surface_wing_ideal:.3f} [-]\n")
-    print(f"Cord at fuselage root: {c_root:.3f} [m]\nCorde at fuselage tip: {c_tip:.3f} [m]")
-    print(f"Taper ratio: {taper_ratio:.3f} [-]")
-    print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
-    print(f"Fuselage lift coefficient derivative: {a_fus:.3f}")
-    print(f"Cl max fuselage: {Cl_max_fus:.3f} [-]")
-    print(f"cl alpha fuselage airfoil: {cl_alpha_fus:.3f} [rad^-1]\n")
-    
-    MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    #Mgc, y_mgc, Cwre = getMAC2(AR, sweep_LE_fus, sweep_LE_wing)
-    print("\n-------------- MAC values --------------\n")
-    print(f"MAC fus: {MAC_fus:.3f} [m]\nYac fus: {yac_fus:.3f} [m]\nXac fus: {xac_fus:.3f} [m]\n")
-    print(f"MAC wing: {MAC_wing:.3f} [m]\nYac wing: {yac_wing:.3f} [m]\nXac wing: {xac_wing:.3f} [m]\n")
-    print(f"MAC: {MAC:.3f} [m]\nYac: {yac:.3f} [m]\nXac: {xac:.3f} [m]\n")
-    #print(f"MGC: {Mgc:.3f} [m]\nY_MGC: {y_mgc:.3f} [m]\nCwre: {Cwre:.3f} [m]\n")
-    
+        surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        _, _, _, _, _, _, _, c_tip_wing, _, _, _, _, _, _ = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
+        surface_wing_ideal, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
+        surface_wing_ideal, AR = getSurface_And_AR(Cl, weight)
+        _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        delta_cl_max = getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        print("\n-------------- Total values --------------\n")
+        print(f"New AR = {AR:.3f} [-]")
+        print(f"Cl used = {Cl:.2f} [-]\n")
+        print(f"Total area = {surface_total:.2f} [m^2]")
+        print(f"Surface of fuselage = {surface_fuselage:.2f} [m^2]")
+        print(f"Surface of wing = {surface_wing:.2f} [m^2]")
+        print(f"Surface of wing ideal = {surface_wing_ideal:.2f} [m^2]")
+        print(f"Compressibility parameter beta: {beta:.3f} [-]")
+        print(f"Taper ratio: {c_tip_wing/c_root_fus:.3f} [-]")
+        print(f"High lift device delta clmax: {delta_cl_max:.3f} [-]\n")
+        print(f"Cl alfa: {getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, weight):.3f} [rad^-1]\n")
+        
+        b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
+        Cl_wing, Cl_wing_0, Cd_wing, Cl_max_wing, alpha_L0, a_wing = wingCL(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
+        cl_alpha_wing, cl_max_wing, alpha_l0_wing, CD_wing, cm_wing = getAirfoilWing()
+        print("\n-------------- wing values --------------\n")
+        print(f"\nAR wing: {AR_wing:.3f} [-] \nCL_w0 wing = {Cl_wing_0:.3f} [-]\n")
+        print(f"Wing lift percentage, {float((Cl_wing_0*(surface_wing/surface_total))/Cl):.3f} ")
+        print(f"Chord at wing root: {croot:.3f} [m]\nChord at wing tip: {c_tip_wing:.3f} [m]\nChord at middle wing: {chord_middle:.3f} [m]")
+        print(f"Taper ratio: {taper_ratio:.3f} [-]")
+        print(f"sweep leading: {sweep_LE_wing*(180/np.pi):.3f} [°]")
+        print(f"Wing lift coefficient derivative: {a_wing:.3f}")
+        print(f"Alpha_L0: {alpha_L0*(180/np.pi):.3f}")
+        print(f"Cl max wing: {Cl_max_wing:.3f} [-]")
+        print(f"cl alpha wing airfoil: {cl_alpha_wing:.3f} [rad^-1]\n")
+        
+        
 
-    delta = 0.005 #graph slide 61 lecture 6 aerodynimics
-    lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa, Cd_tot0, CL_alfa = get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight)
-    print("\n-------------- Lift and drag --------------\n")
-    print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.5f}[-] \n")
-    print(f"Lift to drag ratio: {(lift_coef/drag_coef):.3f} [-]")
-    print(f"Cl max: {CL_max:.3f} [-]")
-    print(f"Lift coefficient derivative CL_alfa: {CL_alfa:.3f} [rad^-1]")
-    print(f"CD0: {Cd_tot0:.3f} [-]\n")
-    
-    
-    t_root, t_tip,t_bar_over_C = wingMaxthickness(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    print("\n-------------- Other value --------------\n")
-    print(f"Thickness root: {t_root:.3f}, thickness tip: {t_tip:.3f}")
-    print(f"tbar over c: {t_bar_over_C:.3f} [-]\n")
-    #print(f"Mean thinckness: {(t_root+t_tip)/2:.3f}\n")
-    
-    V_fuel = wingFuelvolume(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    print(f"Fuel volume in wing: {V_fuel:.3f} [m^3]\n")
+        b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        cl_alpha_fus, cl_max_fus, alpha_l0_fus, CD_fus, cm_fus = getAirfoilFus()
+        print("\n-------------- fuselage values --------------\n")
+        print(f"\nAR fuselage: {AR_fuselage:.3f} [-]\nCL_w0 fuselage = {Cl_fuselage_0*surface_fuselage/surface_wing_ideal:.3f} [-]\n")
+        print(f"Cord at fuselage root: {c_root:.3f} [m]\nCorde at fuselage tip: {c_tip:.3f} [m]")
+        print(f"Taper ratio: {taper_ratio:.3f} [-]")
+        print(f"sweep quater: {sweep_quarter*(180/np.pi):.3f}")
+        print(f"Fuselage lift coefficient derivative: {a_fus:.3f}")
+        print(f"Cl max fuselage: {Cl_max_fus:.3f} [-]")
+        print(f"cl alpha fuselage airfoil: {cl_alpha_fus:.3f} [rad^-1]\n")
+        
+        MAC_fus, yac_fus, xac_fus, MAC_wing, yac_wing, xac_wing, MAC, yac, xac = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        #Mgc, y_mgc, Cwre = getMAC2(AR, sweep_LE_fus, sweep_LE_wing)
+        print("\n-------------- MAC values --------------\n")
+        print(f"MAC fus: {MAC_fus:.3f} [m]\nYac fus: {yac_fus:.3f} [m]\nXac fus: {xac_fus:.3f} [m]\n")
+        print(f"MAC wing: {MAC_wing:.3f} [m]\nYac wing: {yac_wing:.3f} [m]\nXac wing: {xac_wing:.3f} [m]\n")
+        print(f"MAC: {MAC:.3f} [m]\nYac: {yac:.3f} [m]\nXac: {xac:.3f} [m]\n")
+        #print(f"MGC: {Mgc:.3f} [m]\nY_MGC: {y_mgc:.3f} [m]\nCwre: {Cwre:.3f} [m]\n")
+        
 
-    _, _, Swetted = wingSurfaceWetted(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    print(f"Surface wetted: {Swetted:.3f} [m^2]\n")
-    
-    Vs, Vs0 = stallVelocity(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    print(f"Stall velocity: {Vs:.3f} [m/s]\nStall velocity in approach config: {Vs0:.3f} [m/s]\n")
-    
+        delta = 0.005 #graph slide 61 lecture 6 aerodynimics
+        lift_coef, drag_coef, CL_max, AoA_L0, cl, _, aoa, Cd_tot0, CL_alfa = get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight)
+        print("\n-------------- Lift and drag --------------\n")
+        print(f"\n CL = {lift_coef:.3f}[-] \n CD = {drag_coef:.5f}[-] \n")
+        print(f"Lift to drag ratio: {(lift_coef/drag_coef):.3f} [-]")
+        print(f"Cl max: {CL_max:.3f} [-]")
+        print(f"Lift coefficient derivative CL_alfa: {CL_alfa:.3f} [rad^-1]")
+        print(f"CD0: {Cd_tot0:.3f} [-]\n")
+        
+        
+        t_root, t_tip,t_bar_over_C = wingMaxthickness(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        print("\n-------------- Other value --------------\n")
+        print(f"Thickness root: {t_root:.3f}, thickness tip: {t_tip:.3f}")
+        print(f"tbar over c: {t_bar_over_C:.3f} [-]\n")
+        #print(f"Mean thinckness: {(t_root+t_tip)/2:.3f}\n")
+        
+        V_fuel = wingFuelvolume(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        print(f"Fuel volume in wing: {V_fuel:.3f} [m^3]\n")
+
+        _, _, Swetted = wingSurfaceWetted(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        print(f"Surface wetted: {Swetted:.3f} [m^2]\n")
+        
+        Vs, Vs0 = stallVelocity(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        print(f"Stall velocity: {Vs:.3f} [m/s]\nStall velocity in approach config: {Vs0:.3f} [m/s]\n")
+        
 
 
-    AoA_root,_ = getCalageAngle(Cl, sweep_LE_fus, sweep_quarter_wing, weight) #right values ????
-    print(f"Setting angle: {AoA_root*(180/np.pi):.3} [°]")
-    print(f"AoA zero lift: {AoA_L0:.3f} [°]")
-    
-    Re = getReynold(alti, MAC)
-    print(f"Re_mac: {Re:.3f} [-]")
+        AoA_root,_ = getCalageAngle(Cl, sweep_LE_fus, sweep_quarter_wing, weight) #right values ????
+        print(f"Setting angle: {AoA_root*(180/np.pi):.3} [°]")
+        print(f"AoA zero lift: {AoA_L0:.3f} [°]")
+        
+        Re = getReynold(alti, MAC)
+        print(f"Re_mac: {Re:.3f} [-]")
 
-    plotAllWing(wing_plot, sweep_LE_fus, sweep_quarter_wing, Cl, weight)
-    plotLiftDrag(lift_and_drag_plots, Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        plotAllWing(wing_plot, sweep_LE_fus, sweep_quarter_wing, Cl, weight)
+        plotLiftDrag(lift_and_drag_plots, Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+
+    if geometry == 2:
+        AoA_root,a,Cl = FIXED_GEOM_getCalageAngle(weight)
+        print(f"The new setting angle is {AoA_root*(180/np.pi):.3} [°]")
+        print("The new cl_alpha is ", a)
+        print("The new cl is ", Cl)
     return
 
 

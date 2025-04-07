@@ -177,7 +177,7 @@ def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force):
     passengers_weight = passengers(i)[0]
     passengers_pos = passengers(i)[1] 
 
-    
+    """
     print("fuel:",fuel_pos,"m and",fuel_pos*3.28084,"ft ->",fuel_pos/l_fus*100)
     print("wing:",wing_pos, "m and",wing_pos*3.28084,"ft ->", wing_pos/l_fus *100)
     print("fus:",fus_pos, "m and",fus_pos*3.28084,"ft ->", fus_pos/l_fus *100)
@@ -195,7 +195,7 @@ def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force):
     print("nacelle:",nacelle_pos, "m and", nacelle_pos*3.28084,"ft ->", nacelle_pos/l_fus *100)
     print("enginst:",enginst_pos, "m and",enginst_pos*3.28084,"ft ->", enginst_pos/l_fus *100)
     print("elec_syst:",elec_syst_pos, "m and",elec_syst_pos*3.28084,"ft ->", elec_syst_pos/l_fus *100)
-    
+    """
     
     total_mom = (wing_weight*wing_pos) + (fus_weight*fus_pos) + (land_gear_weight*land_gear_pos) + (surf_cont_weight*surf_cont_pos) + (instr_weight*instr_pos) + (elec_syst_weight*elec_syst_pos) + (furn_weight*furn_pos) + (air_cond_weight*air_cond_pos) + (passengers_weight*passengers_pos) + (motors_weight*motors_pos) + (fuel_pos*fuel_weight) + (aft_pos*aft_weight) + (nacelle_pos*nacelle_weight) + (APU_pos*APU_weight) + (enginst_pos*enginst_weight) + (hydr_pos*hydr_syst_weight) + (payload_pos*payload_weight) + (ops_pos*ops_weight) 
     total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst_weight + payload_weight + ops_weight 
