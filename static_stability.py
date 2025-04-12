@@ -70,7 +70,7 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, 
     #Cm0_tot = 2/(surface_wing_ideal*MAC_tot)*( trapz(Cm0_airfoil_wing*c_wing**2, y_wing) + trapz(Cm0_airfoil_fus*c_fus**2, y_fus))
     #Cm0_tot = (Cm0_wing*surf_wing*MAC_wing + Cm0_fus*surf_fus*MAC_fus)/(surface_wing_ideal*MAC_tot)
     #Cm0_tot = (Cm0_wing*surf_wing + Cm0_fus*surf_fus)/surf_tot
-
+    
     return Cm0_tot,Cm0_fus,Cm0_wing
 
 
@@ -80,7 +80,7 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, 
 
 z_AC_tot = 0
 z_CG_tot = 0
-z_CG_motors = 1.5
+z_CG_motors = 2.7
 
 ##################################################################
 ######TAIL QUANTITIES

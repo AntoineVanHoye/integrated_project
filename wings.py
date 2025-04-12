@@ -107,6 +107,7 @@ def getAirfoilFus():
         cm = -0.058
     return  cl_alpha, cl_max, alpha_L0, CD_fuselage, cm
 
+
 def getAirfoilWing():
     airfoil = 1
     if airfoil == 1:
@@ -137,6 +138,7 @@ def getAirfoilWing():
         alpha_l0 = -12*(np.pi/180)
         CD_wing = 0.007 
     return cl_alpha, cl_max, alpha_l0, CD_wing, cm
+
 
 def getAirfoilMiddle():
     airfoil = 1
@@ -200,7 +202,6 @@ def true_airspeed_at_altitude(altitude, M):
     v = M * a  # [m/s] Aircraft velocity
     return v
 v = true_airspeed_at_altitude(alti, M)
-
 
 def guess_CL_max(AR):
     CL = np.linspace(0, 1.5, 100)
@@ -438,7 +439,7 @@ def wingGeometryIDEAL(lift_coef, weight, sweep_quarter_wing):
     sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR) * (((1-taper_wing)/(1+taper_wing)) * (0.25 - 0)))
     sweep_trailing = np.arctan2(h[0], (c[0] - ((h[0]*np.tan(sweep_leading)) + c[1]))) - (np.pi/2) 
     sweep_beta = np.arctan(np.tan(sweep_quarter)/beta) 
-
+    
     chord_middle = np.interp(cabin_width/2, [0.0, span_max/2], c)
     return surface_wing, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta
 
@@ -955,7 +956,7 @@ def FIXED_GEOM_getCalageAngle(weight):
     return alpha_root, a, Cl
 
 # --- Which geometry ?? --- #
-geometry = 2 # 1 = variable geometry , 2 = fixed geometry
+geometry = 1 # 1 = variable geometry , 2 = fixed geometry
 
 def main():
     Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,  542504.6611526054
