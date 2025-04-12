@@ -20,7 +20,7 @@ rho = 0.28724050871107903
 V0 = 265.5380870986307
 g = 9.81
 CL = 0.45
-CD = 0
+CD = 0.028
 
 ##################################################################
 ######WING PARAMETERS      
@@ -65,7 +65,7 @@ x_AC_tot = 8.556
 cl_alpha = (cl_alpha_wing * b_wing + cl_alpha_fus * b_fus) / b
 kappa = cl_alpha/(2*np.pi)
 sweep_half_chord = (sweep_half_chord_fus*surf_fus + sweep_half_chord_wing*surf_wing)/surf_tot
-CL_alpha = 0
+CL_alpha = 3.03
 
 ##################################################################
 ######TAIL PARAMETERS
@@ -77,7 +77,7 @@ c_root_tail = 3.5
 MAC_tail = 2.5120665203177994
 x_AC_tail_local = 2.660991632261686
 x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1
-eta_tail = 0
+eta_tail = 3.98*np.pi/180
 hor_tail_surf = 35
 AR_tail = 5.079670344831602
 CL_alpha_tail = 2.745145450926034
@@ -86,18 +86,18 @@ CL_alpha_tail = 2.745145450926034
 ######INERTIAS
 ##################################################################
 
-I_y = 165669.0  / 2.20462
-I_x = 0
-I_xz = 0
-I_z = 0
+I_y = 165669.0
+I_x = 165669.0
+I_xz = 165669.0
+I_z = 165669.0
 
 ##################################################################
 ######PARAMETERS TO CHANGE
 ##################################################################
 
-Kn = 0
-Le = 0
-m = 0
+Kn = 0.1
+Le = 584000
+m = 17642.0
 x_CG_tot = 8.5
 
 l_f = x_AC_tail - x_CG_tot
@@ -182,7 +182,7 @@ def q_der1(i,d):
     CL_q_tail = 2*CL_alpha_tail*eta_tail * V_tail
 
     K = 0.7
-    CM_q_wing_M0 = -K * cl_alpha_wing * np.cos(sweep_quarter_wing) * ((AR_tail*(2 * (X_W/MAC_wing)**2 + 1/2 *(X_W/MAC_wing)))(AR + 2*np.cos(sweep_quarter_wing)) + 1/24 * (AR_tail**3 * np.tan(sweep_quarter_wing)**2)/(AR_tail + 6*np.cos(sweep_quarter_wing) + 1/8))
+    CM_q_wing_M0 = -K * cl_alpha_wing * np.cos(sweep_quarter_wing) * ((AR_tail*(2 * (X_W/MAC_wing)**2 + 1/2 *(X_W/MAC_wing)))/(AR + 2*np.cos(sweep_quarter_wing)) + 1/24 * (AR_tail**3 * np.tan(sweep_quarter_wing)**2)/(AR_tail + 6*np.cos(sweep_quarter_wing) + 1/8))
     CM_q_wing = (((AR_tail**3 * np.tan(sweep_quarter_wing)**2)/(AR_tail*B + 6*np.cos(sweep_quarter_wing)) + 3/B)/(((AR_tail**3 * np.tan(sweep_quarter_wing)**2)/(AR_tail*B + 6*np.cos(sweep_quarter_wing))) + 3)) * CM_q_wing_M0
     CM_q_tail = -2*CL_alpha_tail*eta_tail*V_tail*l_T/MAC_tail
 
@@ -466,8 +466,8 @@ def short_period(i,d,Cl):
     Z_w = w_der(config,fuel)[0]
     M_w_dot = w_dot_der(config,fuel)[2]
 
-    omega_s = np.sqrt((M_q/I_y)*(Z_w/m)-(M_w/I_y)*Ue)
-    xi_s = -(M_q/I_y + Z_w/m + M_w_dot/I_y*Ue)/(2*omega_s)
+    omega_s = np.sqrt((M_q/I_y)*(Z_w/m)-(M_w/I_y)*U_e)
+    xi_s = -(M_q/I_y + Z_w/m + M_w_dot/I_y*U_e)/(2*omega_s)
 
     return omega_s, xi_s
 ##################################################################
