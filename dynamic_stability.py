@@ -11,7 +11,7 @@ alpha_e = 0*np.pi/180
 delta = 0.005
 rho = 0.28724050871107903*(0.0685218/35.3147) #air density in slugs/ft^3
 V0 = 265.5380870986307*3.28084 #velocity in ft/s
-g = 9.81*3.28084 #gravity in ft/s^2
+g = 9.81#*3.28084 #gravity in ft/s^2
 CL = 0.45
 CD = 0.028
 CD0 = 0.0012
@@ -116,8 +116,16 @@ theta_e = 0
 
 K = 0.7 #for q derivatives
 k = 0.9 #for v derivatives
+#for r derivatives
 term1 = -0.5
-term2 = -0.4 #for r derivatives
+term2 = -0.4 
+#for u derivatives 
+K1 = 1.3
+xAC_cR = 0.95
+K2 = 0.8
+K1_bis = 1.3
+xAC_cR_bis = 0.8
+K2_bis = 0.8
 
 ##################################################################
 ######LONGITUDINAL DYNAMIC DERIVATIVES
@@ -147,7 +155,9 @@ def u_der1():
     CD_alpha = alpha_der()[1]
     CD_M = 0
     CM_alpha = alpha_der()[2]
-    x_AC_M = 0
+    x_AC = K1*(xAC_cR - K2)
+    x_AC_bis = K1_bis*(xAC_cR_bis - K2_bis)
+    x_AC_M = (x_AC - x_AC_bis)/(0.9-0.8) #approx : linear variation of M
 
     CL_u = 2*CL - alpha_e*CL_alpha + M*CL_M
     CD_u = 2*CD - alpha_e*CD_alpha + M*CD_M
