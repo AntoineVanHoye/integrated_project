@@ -6,15 +6,15 @@ import numpy as np
 
 M = 0.9
 beta = np.sqrt(1-M**2)
-e = 0.85 # Oswald efficiency factor
+e = 0.65 # Oswald efficiency factor
 alpha_e = 0*np.pi/180
-delta = 0.005
-rho = 0.28724050871107903*(0.0685218/35.3147) #air density in slugs/ft^3
+rho = 0.28724050871107903/(35.3147*14.5939) #air density in slugs/ft^3
 V0 = 265.5380870986307*3.28084 #velocity in ft/s
-g = 9.81#*3.28084 #gravity in ft/s^2
+g = 9.81 *3.28084 #gravity in ft/s^2
 CL = 0.45
-CD = 0.028
+CD = 0.02
 CD0 = 0.0012
+beta_M0 = 1
 
 ##################################################################
 ######WING PARAMETERS      
@@ -43,7 +43,7 @@ AR_fus = 0.637
 taper_ratio_fus = 0.681
 sweep_quarter_fus = 41.791 *np.pi/180
 sweep_half_chord_fus = np.arctan(np.tan(sweep_quarter_fus)+4/AR_fus*(1-taper_ratio_fus)/(1+taper_ratio_fus)*(0.25-0.5))
-av_section_fus = 1.792*7.564*10.7639 
+av_section_fus = 15.71563982*10.7639 
 
 ##################################################################
 ######GENERAL GEOMETRICAL PARAMETERS      
@@ -60,35 +60,39 @@ MAC_tot = 11.098*3.28084
 x_AC_tot = 8.556*3.28084
 cl_alpha = (cl_alpha_wing * b_wing + cl_alpha_fus * b_fus) / b
 kappa = cl_alpha/(2*np.pi)
-sweep_half_chord = (sweep_half_chord_fus*surf_fus + sweep_half_chord_wing*surf_wing)/surf_tot
-CL_alpha = 3.17
+sweep_half_chord = (sweep_half_chord_fus*b_fus + sweep_half_chord_wing*b_wing)/b
+CL_alpha = 2*np.pi*AR/(2+np.sqrt(4+(AR**2 *beta**2 * kappa**2)*(1 + np.tan(sweep_half_chord)**2/beta**2)))
+mean_chord = b/AR
 
 ##################################################################
 ######TAIL PARAMETERS
 ##################################################################
 
-z_f = 1.51*3.28084 #distance between AC of the tail and AC of the aircraft
 surf_vert_tail = 19*10.7639
 c_root_tail = 3.5*3.28084
 MAC_tail = 2.5120665203177994*3.28084
 x_AC_tail_local = 2.660991632261686*3.28084
-x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1
-eta_tail = 3.98*np.pi/180
+x_AC_tail = l_cabin + l_cockpit + x_AC_tail_local + 1*3.28084 
+eta_tail = 0.9
 hor_tail_surf = 35*10.7639
 AR_tail = 5.079670344831602
-CL_alpha_tail = 2.745145450926034
+AR_hor_tail = 4.464285714285714
 y_AC_tail = 2.8645301924973645*3.28084
 sweep_quarter_tail = 34.89785663924308 * np.pi/180
 z_w = 1*3.28084 #distance from body centerline to quarter chord point of exposed wing root chord, positive for the quarter chord point below the body centerline
+z_f = x_AC_tail - x_AC_tot
+cl_alpha_tail = (0.00606 - 0.00593)/(2.5-2.25)
+kappa_tail = cl_alpha_tail/(2*np.pi)
+CL_alpha_tail = 2*np.pi*AR_hor_tail/(2 + np.sqrt(4 + (AR_hor_tail**2*beta**2/kappa_tail**2)*(1 + np.tan(sweep_quarter_tail)**2/beta**2)))
 
 ##################################################################
 ######INERTIAS
 ##################################################################
 
-I_y = 165669.0
-I_x = 165669.0
-I_xz = 165669.0
-I_z = 136985.0
+I_y = 392895 * 0.737562149 
+I_x = 1062064 * 0.737562149 
+I_xz = 66514* 0.737562149 
+I_z = 1346584* 0.737562149 
 
 ##################################################################
 ######PARAMETERS TO CHANGE
@@ -96,11 +100,12 @@ I_z = 136985.0
 
 Kn = 0.1
 Le = 584000*0.224809 #lift force in lb
-m = 106000*0.45359237 #mass in kg
+m = 106000* 0.031080950037834 #mass in slug (lbf--> slug)
 x_CG_tot = 8.5*3.28084
 
 l_V = x_AC_tail - x_CG_tot
-V_tail = hor_tail_surf * (x_AC_tail - x_CG_tot)/(surf_tot* MAC_tot)
+V_tail = hor_tail_surf * (x_AC_tail - x_CG_tot)/(surface_wing_ideal* MAC_tot)
+X_W = np.abs(x_AC_tot - x_CG_tot)
 
 ##################################################################
 ######COMPUTATION OF METHOD PARAMETERS
@@ -136,11 +141,10 @@ K2_bis = 0.8
 ##################################################################
 
 def alpha_der():
-
-    CL_alpha = 2*np.pi*AR/(2+np.sqrt(4+(AR**2 *beta**2 * kappa**2)*(1 + np.tan(sweep_half_chord)**2/beta**2)))
+    
     CD_alpha = 2*CL*CL_alpha/(np.pi*AR*e)
     CM_alpha = -Kn * CL_alpha
-
+    
     return CL_alpha, CD_alpha, CM_alpha
 
 ##################################################################
@@ -153,7 +157,7 @@ def u_der1():
     CM_alpha = alpha_der()[2]
     CL_M = 0
     CD_alpha = alpha_der()[1]
-    CD_M = 0
+    CD_M = -0.5
     CM_alpha = alpha_der()[2]
     x_AC = K1*(xAC_cR - K2)
     x_AC_bis = K1_bis*(xAC_cR_bis - K2_bis)
@@ -161,7 +165,7 @@ def u_der1():
 
     CL_u = 2*CL - alpha_e*CL_alpha + M*CL_M
     CD_u = 2*CD - alpha_e*CD_alpha + M*CD_M
-    CM_u = -alpha_e * CM_alpha + CL * x_AC_M
+    CM_u = -alpha_e * CM_alpha - CL * x_AC_M
 
     return CL_u, CD_u, CM_u
 
@@ -186,24 +190,21 @@ def u_der2():
 ##################################################################
 
 def q_der1():
+ 
+    CL_alpha_M0 = 2*np.pi*AR/(2+np.sqrt(4+(AR**2 *beta_M0**2 * kappa**2)*(1 + np.tan(sweep_half_chord)**2/beta_M0**2)))
 
-    CL_alpha = alpha_der()[0]   
-    l_T = x_AC_tail - x_CG_tot
-    X_W = np.abs(x_AC_tot - x_CG_tot)
-    mean_chord = AR_tail/b
-
-    CL_q_wing_M0 = (1/2 + 2*X_W/mean_chord)*CL_alpha
-    CL_q_wing = (AR_tail + 2*np.cos(sweep_quarter_wing))/(AR_tail*B + 2*np.cos(sweep_quarter_wing))*CL_q_wing_M0
+    CL_q_wing_M0 = (1/2 + 2*X_W/mean_chord)*CL_alpha_M0
+    CL_q_wing = (AR + 2*np.cos(sweep_quarter_wing))/(AR*B + 2*np.cos(sweep_quarter_wing))*CL_q_wing_M0
     CL_q_tail = 2*CL_alpha_tail*eta_tail * V_tail
 
-    CM_q_wing_M0 = -K * cl_alpha_wing * np.cos(sweep_quarter_wing) * ((AR_tail*(2 * (X_W/MAC_wing)**2 + 1/2 *(X_W/MAC_wing)))/(AR + 2*np.cos(sweep_quarter_wing)) + 1/24 * (AR_tail**3 * np.tan(sweep_quarter_wing)**2)/(AR_tail + 6*np.cos(sweep_quarter_wing) + 1/8))
-    CM_q_wing = (((AR_tail**3 * np.tan(sweep_quarter_wing)**2)/(AR_tail*B + 6*np.cos(sweep_quarter_wing)) + 3/B)/(((AR_tail**3 * np.tan(sweep_quarter_wing)**2)/(AR_tail*B + 6*np.cos(sweep_quarter_wing))) + 3)) * CM_q_wing_M0
-    CM_q_tail = -2*CL_alpha_tail*eta_tail*V_tail*l_T/MAC_tail
+    CM_q_wing_M0 = -K * cl_alpha_wing * np.cos(sweep_quarter_wing) * (((AR*(2 * (X_W/MAC_wing)**2 + 1/2 *(X_W/MAC_wing)))/(AR + 2*np.cos(sweep_quarter_wing))) + (1/24 * (AR**3 * np.tan(sweep_quarter_wing)**2)/(AR + 6*np.cos(sweep_quarter_wing)) + 1/8))
+    CM_q_wing = ((((AR**3 * np.tan(sweep_quarter_wing)**2)/(AR*B + 6*np.cos(sweep_quarter_wing))) + 3/B)/(((AR**3 * np.tan(sweep_quarter_wing)**2)/(AR*B + 6*np.cos(sweep_quarter_wing))) + 3)) * CM_q_wing_M0
+    CM_q_tail = -2*CL_alpha_tail*eta_tail*V_tail*l_V/MAC_tail
 
-    CD_q = 0 #approximation
+    CD_q = 0 #approximation, /!\ check for transonic 
     CL_q = CL_q_wing + CL_q_tail #only horizontal tail
     CM_q = CM_q_wing + CM_q_tail
-
+    
     return CL_q, CD_q, CM_q
 
 def q_der2():
@@ -229,15 +230,14 @@ def q_der2():
 def alpha_dot_der():
 
     deps_dalpha = 0 #approximation
-    l_T = x_AC_tail - x_CG_tot
-    CD_alpha_dot = 0
+    CD_alpha_dot = 0 #approximation, /!\ check for transonic 
 
-    CL_alpha_dot_W = 0
+    CL_alpha_dot_W = 0 #approximation, /!\ check for other types of wings 
     CL_alpha_dot_H = 2*CL_alpha_tail*eta_tail*V_tail*deps_dalpha
     CL_alpha_dot = CL_alpha_dot_W + CL_alpha_dot_H
 
-    CM_alpha_dot_W = 0
-    CM_alpha_dot_H = -2*CL_alpha_tail*eta_tail*V_tail*deps_dalpha*l_T/MAC_tail
+    CM_alpha_dot_W = 0 #approximation
+    CM_alpha_dot_H = -2*CL_alpha_tail*eta_tail*V_tail*deps_dalpha*l_V/MAC_tot
     CM_alpha_dot = CM_alpha_dot_W + CM_alpha_dot_H
 
     return CL_alpha_dot, CD_alpha_dot, CM_alpha_dot
@@ -256,9 +256,9 @@ def w_dot_der():
     Z_w_dot = 1/(2*np.cos(alpha_e)) * (-CL_alpha_dot*np.cos(alpha_e) - CD_alpha_dot*np.sin(alpha_e))
     M_w_dot = 1/(2*np.cos(alpha_e)) * CM_alpha_dot
 
-    X_w_dot = X_w_dot * (1/2*rho*surf_tot*MAC_tot)
-    Z_w_dot = Z_w_dot * (1/2*rho*surf_tot*MAC_tot)
-    M_w_dot = M_w_dot * (1/2*rho*surf_tot*MAC_tot**2)
+    X_w_dot = X_w_dot * (1/2*rho*surface_wing_ideal*MAC_tot)
+    Z_w_dot = Z_w_dot * (1/2*rho*surface_wing_ideal*MAC_tot)
+    M_w_dot = M_w_dot * (1/2*rho*surface_wing_ideal*MAC_tot**2)
 
     return X_w_dot, Z_w_dot, M_w_dot
 
@@ -276,16 +276,16 @@ def w_der():
     Xe = Le*np.sin(alpha_e) - De*np.cos(alpha_e)
     Ze = -Le*np.cos(alpha_e) - De*np.sin(alpha_e)
 
-    C_Xe = Xe/(1/2*rho*V0**2*surf_tot)
-    C_Ze = Ze/(1/2*rho*V0**2*surf_tot)
+    C_Xe = Xe/(1/2*rho*V0**2*surface_wing_ideal)
+    C_Ze = Ze/(1/2*rho*V0**2*surface_wing_ideal)
 
     Z_w = 1/np.cos(alpha_e) * (C_Xe -CL_alpha*np.cos(alpha_e) - CD_alpha*np.sin(alpha_e))
     X_w = 1/np.cos(alpha_e) * (-C_Ze + CL_alpha*np.sin(alpha_e) - CD_alpha*np.cos(alpha_e))
     M_w = 1/np.cos(alpha_e) * CM_alpha
 
-    Z_w = Z_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
-    X_w = X_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
-    M_w = M_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot**2)
+    Z_w = Z_w * (1/2*rho*V0*surface_wing_ideal)
+    X_w = X_w * (1/2*rho*V0*surface_wing_ideal)
+    M_w = M_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
 
     return Z_w, X_w, M_w
 
@@ -521,14 +521,14 @@ def main():
     if np.all(real_parts_long < 0):
         print("The aircraft is dynamically stable for the longitudinal motion.")
     elif np.any(real_parts_long > 0):
-        print("The system is dynamiccaly unstable for the longitudinal motion.")
+        print("The system is dynamically unstable for the longitudinal motion.")
     elif np.any(real_parts_long == 0):
         print("The system is dynamically neutrally stable for the longitudinal motion.")
     
     if np.all(real_parts_lat < 0):
         print("The aircraft is dynamically stable for the lateral motion.")
     elif np.any(real_parts_lat > 0):
-        print("The system is dynamiccaly unstable for the lateral motion.")
+        print("The system is dynamically unstable for the lateral motion.")
     elif np.any(real_parts_lat == 0):
         print("The system is dynamically neutrally stable for the lateral motion.")
     print("----------------------------------------------------------------------")
@@ -542,6 +542,34 @@ def main():
     print("The frequency of the short period oscillations mode is: ", omega_s, "rad/s")
     print("The damping ratio of the short period oscillations mode is: ", xi_s)
     print("----------------------------------------------------------------------")
+
+    print("--------------------------DERIVATIVES FOR THE LONGITUDINAL MOTION--------------------------------------------")
+    print("CL_alpha: ", alpha_der()[0])
+    print("CD_alpha: ", alpha_der()[1])
+    print("CM_alpha: ", alpha_der()[2])
+    print("CL_u: ", u_der1()[0])
+    print("CD_u: ", u_der1()[1])
+    print("CM_u: ", u_der1()[2])
+    print("CL_q: ", q_der1()[0])
+    print("CD_q: ", q_der1()[1])
+    print("CM_q: ", q_der1()[2])
+    print("CL_alpha_dot: ", alpha_dot_der()[0])
+    print("CD_alpha_dot: ", alpha_dot_der()[1])
+    print("CM_alpha_dot: ", alpha_dot_der()[2])
+    print("----------------------------------------------------------------------")
+
+    print("--------------------------DERIVATIVES FOR THE LATERAL MOTION--------------------------------------------")
+    print("Y_v: ", v_der()[0])
+    print("L_v: ", v_der()[1])
+    print("N_v: ", v_der()[2])
+    print("Y_r: ", r_der()[0])
+    print("L_r: ", r_der()[1])
+    print("N_r: ", r_der()[2])
+    print("Y_p: ", p_der()[0])
+    print("L_p: ", p_der()[1])
+    print("N_p: ", p_der()[2])
+    print("----------------------------------------------------------------------")
+
 
 if __name__ == "__main__":
     main()
