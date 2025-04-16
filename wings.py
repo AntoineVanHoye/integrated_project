@@ -907,6 +907,7 @@ def getReynold(altitude, c):
     T = 12.0 + 273.15   #[k]
     rho = p_atmo/(287*T)
     mu = 1.716e-5 * (T/273.15)**(3/2) * ((273.15 + 110.4)/(T + 110.4)) # Sutherland's law
+    print(mu)
     Re = (rho * U_inf * c) / mu
     return Re
 

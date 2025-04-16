@@ -63,7 +63,7 @@ kappa = cl_alpha/(2*np.pi)
 sweep_half_chord = (sweep_half_chord_fus*b_fus + sweep_half_chord_wing*b_wing)/b
 CL_alpha = 2*np.pi*AR/(2+np.sqrt(4+(AR**2 *beta**2 / kappa**2)*(1 + np.tan(sweep_half_chord)**2/beta**2)))
 mean_chord = b/AR
-
+print(kappa)
 ##################################################################
 ######TAIL PARAMETERS
 ##################################################################
@@ -162,6 +162,7 @@ def u_der1():
     x_AC = K1*(xAC_cR - K2)
     x_AC_bis = K1_bis*(xAC_cR_bis - K2_bis)
     x_AC_M = (x_AC - x_AC_bis)/(0.9-0.8) #approx : linear variation of M
+
     CL_u = 2*CL - alpha_e*CL_alpha + M*CL_M
     CD_u = 2*CD - alpha_e*CD_alpha + M*CD_M
     CM_u = -alpha_e * CM_alpha - CL * x_AC_M
