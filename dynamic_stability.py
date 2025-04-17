@@ -440,10 +440,10 @@ def r_der():
     term_twist = 0.0002
     Lr_CL = ((1 + ((AR*(1-B**2)/(2*B*(AR*B+2*np.cos(sweep_quarter_wing))))) + ((AR*B+2*np.cos(sweep_quarter_wing)/(AR*B+4*np.cos(sweep_quarter_wing))))*np.tan(sweep_quarter_wing)**2/8)/(1 + ((AR + 2*np.cos(sweep_quarter_wing))/(AR + 4*np.cos(sweep_quarter_wing)))*np.tan(sweep_quarter_wing)**2/8))*Clr_CL_M0
 
-    Y_r = -2*Y_beta_V * (y_AC_tail * np.sin(alpha_e) + l_V * np.cos(alpha_e)/b)
+    Y_r = -2*Y_beta_V * (y_AC_tail * np.sin(alpha_e) + l_V * np.cos(alpha_e))/b
     
     L_rW = CL *Lr_CL +  term_twist*twist_angle 
-    L_rV = -2/b**2*(l_V * np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*(y_AC_tail*np.cos(alpha_e - l_V*np.sin(alpha_e)))*Y_beta_V
+    L_rV = -2/b**2*(l_V * np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*(y_AC_tail*np.cos(alpha_e) - l_V*np.sin(alpha_e))*Y_beta_V
     
     N_rV = 2/b**2*(l_V*np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))**2*Y_beta_V
     N_rW = term1 * CL**2 + term2*CD0
@@ -469,7 +469,7 @@ def p_der():
     Np_CL_M0 = -1/6 * ((AR + 6*(AR+np.cos(sweep_quarter_wing))*(x/MAC_tot*np.tan(sweep_quarter_wing)/AR + np.tan(sweep_quarter_wing)**2/12))/(AR + 4*np.cos(sweep_quarter_wing)))
     Np_CL = ((AR + 4*np.cos(sweep_quarter_wing))/(AR*B+4*np.cos(sweep_quarter_wing))*((AR*B + 1/2*(AR*B+np.cos(sweep_quarter_wing))*np.tan(sweep_quarter_wing)**2))/(AR+1/2*(AR+np.cos(sweep_quarter_wing))*np.tan(sweep_quarter_wing)**2))*Np_CL_M0
 
-    Y_p = 2*Y_beta_V * (y_AC_tail * np.cos(alpha_e) - l_V * np.sin(alpha_e)/b)
+    Y_p = 2*Y_beta_V * (y_AC_tail * np.cos(alpha_e) - l_V * np.sin(alpha_e))/b
 
     L_p_WB = factor *kappa/beta
     L_p_H = 0.5*factor*kappa/beta*hor_tail_surf/surface_wing_ideal*(span_hor_tail/b)**2
@@ -477,7 +477,7 @@ def p_der():
 
     L_p = L_p_WB + L_p_H + L_p_V
 
-    N_p_V = -2/b * (l_V*np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*Y_beta_V*(y_AC_tail*np.cos(alpha_e)-l_V*np.sin(alpha_e)/b)
+    N_p_V = -2/b * (l_V*np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*Y_beta_V*(y_AC_tail*np.cos(alpha_e)-l_V*np.sin(alpha_e))/b
     N_p_W = - L_p_WB*np.tan(wing_aoa) - (-L_p*np.tan(wing_aoa) - Np_CL * CL) + term_twist*twist_angle 
     N_p = N_p_W + N_p_V
 
