@@ -6,7 +6,7 @@ import numpy as np
 
 M = 0.9
 beta = np.sqrt(1-M**2)
-e = 0.85 # Oswald efficiency factor
+e = 0.65 # Oswald efficiency factor
 alpha_e = 0*np.pi/180
 delta = 0.005
 rho = 0.28724050871107903*(0.0685218/35.3147) #air density in slugs/ft^3
@@ -15,8 +15,8 @@ V0 = 265.5380870986307*3.28084 #velocity in ft/s
 V0_adim = 265.5380870986307*3.28084
 g = 9.81 *3.28084 #gravity in ft/s^2
 CL = 0.45
-CD = 0.028
-CD0 = 0.0012
+CD = 0.026
+CD0 = 0.02
 beta_M0 = 1
 
 ##################################################################
@@ -92,7 +92,7 @@ span_hor_tail = 12.5*3.28084
 AR_tail = 5.079670344831602
 AR_hor_tail = 4.464285714285714
 AR_vert_tail = 2.4234693877551026
-y_AC_tail = 2.8645301924973645*3.28084
+y_AC_tail = 1.8645301924973645*3.28084
 sweep_quarter_tail = 34.89785663924308 * np.pi/180
 z_w = 0.7*3.28084 #distance from body centerline to quarter chord point of exposed wing root chord, positive for the quarter chord point below the body centerline
 z_f = x_AC_tail - x_AC_tot
@@ -100,6 +100,7 @@ cl_alpha_tail = (0.00606 - 0.00593)/(2.5-2.25)
 kappa_tail = cl_alpha_tail/(2*np.pi)
 CL_alpha_tail = 2*np.pi*AR_hor_tail/(2 + np.sqrt(4 + (AR_hor_tail**2*beta**2/kappa_tail**2)*(1 + np.tan(sweep_quarter_tail)**2/beta**2)))
 CL_alpha_tail_vert = 2*np.pi*AR_vert_tail/(2 + np.sqrt(4 + (AR_vert_tail**2*beta**2/kappa_tail**2)*(1 + np.tan(sweep_quarter_tail)**2/beta**2)))
+CL_tail = 0.20545613522169995
 
 ##################################################################
 ######INERTIAS
@@ -121,7 +122,7 @@ x_CG_tot = 8.5*3.28084
 
 x = x_AC_tot - x_CG_tot
 l_V = x_AC_tail - x_CG_tot
-V_tail = hor_tail_surf * (x_AC_tail - x_CG_tot)/(surf_tot* MAC_tot)
+V_tail = hor_tail_surf * (x_AC_tail - x_CG_tot)/(surface_wing_ideal* MAC_tot)
 X_W = np.abs(x_AC_tot - x_CG_tot)
 
 ##################################################################
@@ -363,12 +364,22 @@ def long_dyn_stab():
         if i == 0 :
             print(f"Short period oscillations mode :")
             print(f"  ω_n = {omega_n:.4f} rad/s")
-            print(f"  ζ = {zeta:.4f}\n")
-        
+            print(f"  ζ = {zeta:.4f}")
+            if zeta > 0.3 and zeta < 2:
+                print("You are level 1\n")
+            if zeta > 0.2 and zeta < 0.3:
+                print("You are level 2\n")
+            if zeta > 0.15 and zeta < 0.2:
+                print("You are level 3\n")
+
         if i == -1 :
             print(f"Phugoid mode :")
             print(f"  ω_n = {omega_n:.4f} rad/s")
-            print(f"  ζ = {zeta:.4f}\n")
+            print(f"  ζ = {zeta:.4f}")
+            if zeta > 0.04: 
+                print("You are level 1\n")
+            if zeta >0 and zeta<0.04:
+                print("You are level 2\n")
 
     return real_parts, test, eigenvalues
 
@@ -401,7 +412,7 @@ def beta_der():
     Y_beta_V = -k*CL_alpha_tail_vert * term * surf_vert_tail/surface_wing_ideal
     
     L_beta_WB = 57.3*(CL*(term3 * KM1 * KF1 + term4))
-    L_beta_H = 57.3*(CL*(term5 * KM2 * KF2 + term6))*hor_tail_surf*span_hor_tail/(surface_wing_ideal*b)
+    L_beta_H = 57.3*(CL_tail*(term5 * KM2 * KF2 + term6))*hor_tail_surf*span_hor_tail/(surface_wing_ideal*b)
     L_beta_V = Y_beta_V * (y_AC_tail*np.cos(alpha_e) - l_V*np.sin(alpha_e))/b
 
     N_beta_W = 0
@@ -531,10 +542,29 @@ def lat_dyn_stab():
     print(f"Dutch roll mode :")
     print(f"  ω_n = {omega_n:.4f} rad/s")
     print(f"  ζ = {zeta:.4f}\n")
-    time_constant_1 = -1/eigenvalues[1].real
-    time_constant_2 = -1/eigenvalues[4].real
-    print(f"The time constant for the spiral mode = {time_constant_1:.4f} s")
-    print(f"The time constant for the roll subsidence mode = {time_constant_2:.4f} s")
+    if zeta > 0.08 and zeta*omega_n > 0.15 and omega_n > 0.4: 
+        print("You are level 1\n")
+    if zeta > 0.02 and zeta*omega_n > 0.05 and omega_n > 0.4:
+        print("You are level 2\n")
+    time_constant_2 = -1/eigenvalues[1].real
+    time_constant_1 = -1/eigenvalues[4].real
+    print(f"Roll subsidence mode:")
+    print(f"The time constant for the roll subsidence mode = {time_constant_1:.4f} s")
+    if time_constant_1 > 20:
+        print("You are level 1\n")
+    if time_constant_1 > 8 and time_constant_1 < 20:
+        print("You are level 2\n")
+    if time_constant_1 > 4 and time_constant_1 < 8:
+        print("You are level 3\n")
+    print(f"Spiral mode:")
+    print(f"The time constant for the spiral mode = {time_constant_2:.4f} s")
+    if time_constant_2 < 1.4: 
+        print("You are level 1\n")
+    if time_constant_2 > 1.4 and time_constant_2 < 3:
+        print("You are level 2\n")
+    if time_constant_2 > 3 and time_constant_2 < 10:
+        print("You are level 3\n")
+
     return real_parts, test, eigenvalues
 
 ##################################################################
