@@ -10,8 +10,10 @@ e = 0.85 # Oswald efficiency factor
 alpha_e = 0*np.pi/180
 delta = 0.005
 rho = 0.28724050871107903*(0.0685218/35.3147) #air density in slugs/ft^3
+rho_adim = 0.28724050871107903 *(0.0685218/35.3147)
 V0 = 265.5380870986307*3.28084 #velocity in ft/s
-g = 9.81 #gravity in ft/s^2
+V0_adim = 265.5380870986307*3.28084
+g = 9.81 *3.28084 #gravity in ft/s^2
 CL = 0.45
 CD = 0.028
 CD0 = 0.0012
@@ -23,6 +25,7 @@ beta_M0 = 1
 
 sweep_quarter_wing = 29.0*np.pi/180
 surface_wing_ideal = 119.05*10.7639 #surface of the wing in ft^2
+surface_wing_ideal_adim = 119.05*10.7639
 sweep_LE_wing = 31.599 *np.pi/180
 surf_wing = 71.11*10.7639
 cl_alpha_wing = 6.680687891225398
@@ -32,6 +35,7 @@ sweep_half_chord_wing = np.arctan(np.tan(sweep_quarter_wing)+4/AR_wing*(1-taper_
 MAC_wing = 3.706*3.28084 #mean aerodynamic chord in ft
 B = np.sqrt(1 - M**2 * np.cos(sweep_quarter_wing)**2)
 wing_aoa = 2.92*np.pi/180
+twist_angle = -2.63*np.pi/180
 
 ##################################################################
 ######FUSELAGE PARAMETERS      
@@ -49,13 +53,14 @@ av_section_fus = 15.71563982*10.7639
 length_fus = 16.8*3.28084 #length of the fuselage in ft
 x1 = 0.4*length_fus
 x0 = (0.378 + 0.527*x1/length_fus)*length_fus
-section_x0 = 15.71563982*10.7639
+section_x0 = 19.77543273327567*10.7639
 
 ##################################################################
 ######GENERAL GEOMETRICAL PARAMETERS      
 ##################################################################
 
 b = 28.95*3.28084 # Wingspan in ft
+b_adim = 28.95*3.28084
 b_wing = b - b_fus
 l_cabin = 10.1*3.28084
 cabin_width = 9*3.28084    
@@ -63,6 +68,7 @@ l_cockpit = 2.01*3.28084
 AR = 7.04
 surf_tot = 198.17*10.7639
 MAC_tot = 11.098*3.28084
+MAC_tot_adim = 11.098*3.28084
 x_AC_tot = 8.556*3.28084
 cl_alpha = (cl_alpha_wing * b_wing + cl_alpha_fus * b_fus) / b
 kappa = cl_alpha/(2*np.pi)
@@ -99,10 +105,10 @@ CL_alpha_tail_vert = 2*np.pi*AR_vert_tail/(2 + np.sqrt(4 + (AR_vert_tail**2*beta
 ######INERTIAS
 ##################################################################
 
-I_y = 398469.35 
-I_x = 1070353.72  
-I_xz = 75798.46919250
-I_z = 1344583.40 
+I_y = 398469.35 * 0.737562149
+I_x = 1070353.72  * 0.737562149
+I_xz = 75798.46919250* 0.737562149
+I_z = 1344583.40 * 0.737562149
 
 ##################################################################
 ######PARAMETERS TO CHANGE
@@ -110,7 +116,7 @@ I_z = 1344583.40
 
 Kn = 0.1
 Le = 584000*0.224809 #lift force in lb
-m = 106000*0.45359237 #mass in kg
+m = 105682.71* 0.031080950037834#*0.45359237 #mass in kg
 x_CG_tot = 8.5*3.28084
 
 x = x_AC_tot - x_CG_tot
@@ -189,9 +195,9 @@ def u_der2():
     X_u = CL_u *np.sin(alpha_e) - CD_u* np.cos(alpha_e)
     M_u = CM_u
 
-    X_u = X_u * (1/2*rho*V0*surface_wing_ideal)
-    Z_u = Z_u * (1/2*rho*V0*surface_wing_ideal)
-    M_u = M_u * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
+    X_u = X_u * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim)
+    Z_u = Z_u * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim)
+    M_u = M_u * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*MAC_tot_adim)
 
     return Z_u, X_u, M_u
 
@@ -227,9 +233,9 @@ def q_der2():
     X_q = 1/2*(CL_q*np.sin(alpha_e) - CD_q*np.cos(alpha_e))
     M_q = 1/2*CM_q
 
-    Z_q = Z_q * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
-    X_q = X_q * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
-    M_q = M_q * (1/2*rho*V0*surface_wing_ideal*MAC_tot**2)
+    Z_q = Z_q * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*MAC_tot_adim)
+    X_q = X_q * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*MAC_tot_adim)
+    M_q = M_q * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*MAC_tot_adim**2)
 
     return Z_q, X_q, M_q
 
@@ -266,9 +272,9 @@ def w_dot_der():
     Z_w_dot = 1/(2*np.cos(alpha_e)) * (-CL_alpha_dot*np.cos(alpha_e) - CD_alpha_dot*np.sin(alpha_e))
     M_w_dot = 1/(2*np.cos(alpha_e)) * CM_alpha_dot
 
-    X_w_dot = X_w_dot * (1/2*rho*surface_wing_ideal*MAC_tot)
-    Z_w_dot = Z_w_dot * (1/2*rho*surface_wing_ideal*MAC_tot)
-    M_w_dot = M_w_dot * (1/2*rho*surface_wing_ideal*MAC_tot**2)
+    X_w_dot = X_w_dot * (1/2*rho_adim*surface_wing_ideal_adim*MAC_tot_adim)
+    Z_w_dot = Z_w_dot * (1/2*rho_adim*surface_wing_ideal_adim*MAC_tot_adim)
+    M_w_dot = M_w_dot * (1/2*rho_adim*surface_wing_ideal_adim*MAC_tot_adim**2)
 
     return X_w_dot, Z_w_dot, M_w_dot
 
@@ -293,9 +299,9 @@ def w_der():
     X_w = 1/np.cos(alpha_e) * (-C_Ze + CL_alpha*np.sin(alpha_e) - CD_alpha*np.cos(alpha_e))
     M_w = 1/np.cos(alpha_e) * CM_alpha
 
-    Z_w = Z_w * (1/2*rho*V0*surface_wing_ideal)
-    X_w = X_w * (1/2*rho*V0*surface_wing_ideal)
-    M_w = M_w * (1/2*rho*V0*surface_wing_ideal*MAC_tot)
+    Z_w = Z_w * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim)
+    X_w = X_w * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim)
+    M_w = M_w * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*MAC_tot_adim)
 
     return Z_w, X_w, M_w
 
@@ -347,7 +353,23 @@ def long_dyn_stab():
         test = 1
     else:
         test = 0
-    
+
+    for i in [0, -1]:  
+        eig = eigenvalues[i]
+        sigma = eig.real
+        omega_d = eig.imag
+        omega_n = np.sqrt(sigma**2 + omega_d**2)
+        zeta = -sigma / omega_n if omega_n != 0 else 0
+        if i == 0 :
+            print(f"Short period oscillations mode :")
+            print(f"  ω_n = {omega_n:.4f} rad/s")
+            print(f"  ζ = {zeta:.4f}\n")
+        
+        if i == -1 :
+            print(f"Phugoid mode :")
+            print(f"  ω_n = {omega_n:.4f} rad/s")
+            print(f"  ζ = {zeta:.4f}\n")
+
     return real_parts, test, eigenvalues
 
 ##################################################################
@@ -390,9 +412,9 @@ def beta_der():
     Y_beta = Y_beta_W + Y_beta_B + Y_beta_V
     N_beta = N_beta_W + N_beta_B + N_beta_V
 
-    Y_beta_normed = Y_beta * (1/4*rho*V0*surface_wing_ideal)
-    L_beta = L_beta * (1/4*rho*V0*surface_wing_ideal*b)
-    N_beta = N_beta * (1/4*rho*V0*surface_wing_ideal*b)
+    Y_beta_normed = Y_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim)
+    L_beta = L_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
+    N_beta = N_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
 
     return L_beta, N_beta, Y_beta_normed, Y_beta_V
 
@@ -404,11 +426,12 @@ def r_der():
 
     Y_beta_V = beta_der()[3]
     Clr_CL_M0 = 0.35
+    term_twist = 0.0002
     Lr_CL = ((1 + ((AR*(1-B**2)/(2*B*(AR*B+2*np.cos(sweep_quarter_wing))))) + ((AR*B+2*np.cos(sweep_quarter_wing)/(AR*B+4*np.cos(sweep_quarter_wing))))*np.tan(sweep_quarter_wing)**2/8)/(1 + ((AR + 2*np.cos(sweep_quarter_wing))/(AR + 4*np.cos(sweep_quarter_wing)))*np.tan(sweep_quarter_wing)**2/8))*Clr_CL_M0
 
     Y_r = -2*Y_beta_V * (y_AC_tail * np.sin(alpha_e) + l_V * np.cos(alpha_e)/b)
     
-    L_rW = CL *Lr_CL
+    L_rW = CL *Lr_CL +  term_twist*twist_angle 
     L_rV = -2/b**2*(l_V * np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*(y_AC_tail*np.cos(alpha_e - l_V*np.sin(alpha_e)))*Y_beta_V
     
     N_rV = 2/b**2*(l_V*np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))**2*Y_beta_V
@@ -417,9 +440,9 @@ def r_der():
     L_r = L_rW + L_rV
     N_r = N_rW + N_rV
 
-    Y_r = Y_r * (1/4*rho*V0*surface_wing_ideal*b)
-    L_r = L_r * (1/4*rho*V0*surface_wing_ideal*b**2)
-    N_r = N_r * (1/4*rho*V0*surface_wing_ideal*b**2)
+    Y_r = Y_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
+    L_r = L_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
+    N_r = N_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
 
     return Y_r, L_r, N_r
 
@@ -428,7 +451,8 @@ def r_der():
 ##################################################################
 
 def p_der():
-    
+
+    term_twist = 0.0002
     Y_beta_V = beta_der()[3]
     factor = -0.23
     Np_CL_M0 = -1/6 * ((AR + 6*(AR+np.cos(sweep_quarter_wing))*(x/MAC_tot*np.tan(sweep_quarter_wing)/AR + np.tan(sweep_quarter_wing)**2/12))/(AR + 4*np.cos(sweep_quarter_wing)))
@@ -443,12 +467,12 @@ def p_der():
     L_p = L_p_WB + L_p_H + L_p_V
 
     N_p_V = -2/b * (l_V*np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*Y_beta_V*(y_AC_tail*np.cos(alpha_e)-l_V*np.sin(alpha_e)/b)
-    N_p_W = - L_p_WB*np.tan(wing_aoa) - (-L_p*np.tan(wing_aoa) - Np_CL * CL)
+    N_p_W = - L_p_WB*np.tan(wing_aoa) - (-L_p*np.tan(wing_aoa) - Np_CL * CL) + term_twist*twist_angle 
     N_p = N_p_W + N_p_V
 
-    Y_p = Y_p * (1/4*rho*V0*surface_wing_ideal*b)   
-    L_p = L_p * (1/4*rho*V0*surface_wing_ideal*b**2)
-    N_p = N_p * (1/4*rho*V0*surface_wing_ideal*b**2)
+    Y_p = Y_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)   
+    L_p = L_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
+    N_p = N_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
 
     return Y_p, L_p, N_p
 
@@ -499,6 +523,18 @@ def lat_dyn_stab():
     else:
         test = 0
     
+    eig = eigenvalues[2]
+    sigma = eig.real
+    omega_d = eig.imag
+    omega_n = np.sqrt(sigma**2 + omega_d**2)
+    zeta = -sigma / omega_n if omega_n != 0 else 0
+    print(f"Dutch roll mode :")
+    print(f"  ω_n = {omega_n:.4f} rad/s")
+    print(f"  ζ = {zeta:.4f}\n")
+    time_constant_1 = -1/eigenvalues[1].real
+    time_constant_2 = -1/eigenvalues[4].real
+    print(f"The time constant for the spiral mode = {time_constant_1:.4f} s")
+    print(f"The time constant for the roll subsidence mode = {time_constant_2:.4f} s")
     return real_parts, test, eigenvalues
 
 ##################################################################
@@ -527,6 +563,7 @@ def short_period():
     xi_s = -(M_q/I_y + Z_w/m + M_w_dot/I_y*U_e)/(2*omega_s)
 
     return omega_s, xi_s
+
 ##################################################################
 ######DEFINITION OF THE PRINT FUNCTION
 ##################################################################
@@ -576,10 +613,59 @@ def main():
     elif np.any(real_parts_lat == 0):
         print("The system is dynamically neutrally stable for the lateral motion.")
     print("----------------------------------------------------------------------")
-    
+
     print("--------------------------PHUGOID MODE--------------------------------------------")
     print("The frequency of the phugoid mode is: ", omega_p, "rad/s")
     print("The damping ratio of the phugoid mode is: ", xi_p)
+
+    print("--------------------------SHORT PERIOD MODE--------------------------------------------")
+    print("The frequency of the short period mode is: ", omega_s, "rad/s")
+    print("The damping ratio of the short period mode is: ", xi_s)
+    print("----------------------------------------------------------------------")
+
+    print("--------------------------LONGITUDINAL DERIVATIVES--------------------------------------------")
+    print("The longitudinal derivatives are:")
+    print("CL_alpha: ", alpha_der()[0])
+    print("CD_alpha: ", alpha_der()[1])
+    print("CM_alpha: ", alpha_der()[2])
+    print("CL_u: ", u_der1()[0])
+    print("CD_u: ", u_der1()[1])
+    print("CM_u: ", u_der1()[2])
+    print("CL_q: ", q_der1()[0])
+    print("CD_q: ", q_der1()[1])
+    print("CM_q: ", q_der1()[2])
+    print("CL_alpha_dot: ", alpha_dot_der()[0])
+    print("CD_alpha_dot: ", alpha_dot_der()[1])
+    print("CM_alpha_dot: ", alpha_dot_der()[2])
+    print("")
+    print("And, in the matrices, we have:")
+    print("Z_u: ", u_der2()[0])
+    print("X_u: ", u_der2()[1])
+    print("M_u: ", u_der2()[2])
+    print("Z_q: ", q_der2()[0])
+    print("X_q: ", q_der2()[1])
+    print("M_q: ", q_der2()[2])
+    print("X_w_dot: ", w_dot_der()[0])
+    print("Z_w_dot: ", w_dot_der()[1])
+    print("M_w_dot: ", w_dot_der()[2])
+    print("X_w: ", w_der()[0])
+    print("Z_w: ", w_der()[1])
+    print("M_w: ", w_der()[2])
+    print("")
+    print("----------------------------------------------------------------------")
+    print("--------------------------LATERAL DERIVATIVES--------------------------------------------")
+    print("The lateral derivatives are:")
+    print("L_beta: ", beta_der()[0])
+    print("N_beta: ", beta_der()[1])
+    print("Y_beta: ", beta_der()[2])
+    print("Y_r: ", r_der()[0])
+    print("L_r: ", r_der()[1])
+    print("N_r: ", r_der()[2])
+    print("Y_p: ", p_der()[0])
+    print("L_p: ", p_der()[1])
+    print("N_p: ", p_der()[2])
+    print("----------------------------------------------------------------------")
+
 
 if __name__ == "__main__":
     main()
