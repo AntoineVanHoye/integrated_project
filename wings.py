@@ -20,7 +20,7 @@ delta = 0.035           #graph slide 61 lecture 6 aerodinimics
 e = 1/(1+delta)            #Ostxald's efficiency factor
 #sweep_LE_fus = 40   #[°] sweep angle fuselage
 #sweep_LE_wing = 30 #[°] sweep angle wing
-twist_angle = -3         #[°] twist angle
+twist_angle = -2.63         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 beta = np.sqrt(1-(M**2))
 
