@@ -178,7 +178,7 @@ def u_der1():
     CD_alpha = alpha_der()[1]
     CD_M = 0
     CM_alpha = alpha_der()[2]
-    x_AC_M = 0
+    x_AC_M = 0.0608691
 
     CL_u = 2*CL - alpha_e*CL_alpha + M*CL_M
     CD_u = 2*CD - alpha_e*CD_alpha + M*CD_M
