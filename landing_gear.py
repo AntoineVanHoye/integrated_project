@@ -8,7 +8,7 @@ import matplotlib.patches as patches
 
 
 #geometry
-x_cg = 8.980632020973697        # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
+x_cg = 8.895        # coordinate in x of the center of gravity (estimate). Y coordinate will for now assumed to be on the chord
 y_cg = 0                        # coordinate in y of the center of gravity (estimate)
 Vstall = 52.57* 3.2808399       # stalling velocity with flaps(m/s)
 Cl0 = 0.244                     # lift coefficient at 0 degree angle
@@ -35,7 +35,7 @@ w_mfwd = 1 - w_nfwd             # weight fraction on the rear lg for the most fo
 #Theta =         # Maximum pitch angle
 #Phi =           # Maximum roll angle
 
-#Gamma =         # Dihedral angle (discuss with Antoine)
+Gamma = 0        # Dihedral angle (discuss with Antoine)
 #Hg =            # Wing height
 #t =             # Distance between landing gears
 
@@ -62,7 +62,7 @@ print(f"At 20 degree F :{AlphaLOF_20}",f"At 85 degree F :{AlphaLOF_85}")
     
     # Load coordinates from the remaining lines
 points = pd.read_csv(r"Airfoils/NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
-angle = np.radians(2)                                   # attack angle
+angle = np.radians(0)                                   # setting angle
 
 # Matrice de rotation (attack angle)
 rotation_matrix = np.array([
@@ -78,7 +78,7 @@ x, y = points[:, 0], points[:, 1]
 
 points2 = pd.read_csv(r"Airfoils/NACA45118_XYZ.csv", sep=",", header=None).to_numpy()
 
-angle = np.radians(2)                                   # attack angle
+angle = np.radians(0)                                   # setting angle
 
 # Matrice de rotation (attack angle)
 rotation_matrix = np.array([
@@ -93,7 +93,7 @@ x_b, y_b = points2[:, 0]+ transla_b , points2[:, 1] #draw root wing limit
 
 
 points3 = pd.read_csv(r"Airfoils/NASASC(2)0010.csv", sep=",", header=None).to_numpy()
-angle = np.radians(1)                                   # attack angle
+angle = np.radians(-0.24)                                   # attack angle
 
 # Matrice de rotation (attack angle)
 rotation_matrix = np.array([
@@ -139,7 +139,7 @@ plt.rcParams.update({
     "ytick.labelsize": 18,            # Font size for y-axis ticks
     "legend.fontsize": 18             # Font size for legend
 })
-plt.figure(figsize=(10, 6),dpi=300)
+plt.figure(figsize=(5, 3),dpi=300)
 
 z_cg = 0
 z = np.zeros((len(x)))
@@ -300,7 +300,7 @@ densite_aile2 = M[2]/ (2*Vol_aile2)
 #print(densite_aile2)
 
 # Plot the airfoil
-plt.figure(figsize=(10, 6),dpi=300)
+plt.figure(figsize=(5, 3),dpi=300)
 plt.plot(x*3.28084, y*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
 plt.plot(x_t*3.28084, y_t*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
 plt.plot(x_b*3.28084, y_b*3.28084, marker=None, markersize=2, linestyle='-', color='blue')
