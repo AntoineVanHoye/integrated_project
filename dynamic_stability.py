@@ -246,7 +246,7 @@ def q_der2():
 
 def alpha_dot_der():
 
-    deps_dalpha = 0 #approximation
+    deps_dalpha = 0.28665975545528877
     CD_alpha_dot = 0
 
     CL_alpha_dot_W = 0

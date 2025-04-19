@@ -279,7 +279,7 @@ def long_stat_stab_cruise(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): #in
     #neutral point : position of the cg in order to have the derivative equals 0
     x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]
-    deps = 0
+    deps = 0#2*3.17/(np.pi*7.04)
     Fp = prop_force()
     eta = 0.9
     #hn = x_AC_tot/MAC_tot + V_T*a1_over_a*(1- deps) + dalpha_prop * Fp * (engines_pos-x_CG_tot)/MAC_tot#- 0.5*fus_width**2 * fus_length/(S_wing*a*MAC_wing)  #position of the neutral point  
@@ -302,7 +302,7 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, Cl, sweep_LE_fus, sweep_quar
     a = getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]
-    deps = 0
+    deps = 0#2*3.17/(np.pi*7.04)
     V_T = tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
     dalpha_prop = 1 - deps
     Fp = prop_force()
