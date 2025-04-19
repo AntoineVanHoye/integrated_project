@@ -20,7 +20,7 @@ delta = 0.035           #graph slide 61 lecture 6 aerodinimics
 e = 1/(1+delta)            #Ostxald's efficiency factor
 #sweep_LE_fus = 40   #[°] sweep angle fuselage
 #sweep_LE_wing = 30 #[°] sweep angle wing
-twist_angle = -3         #[°] twist angle
+twist_angle = -2.63         #[°] twist angle
 #Lambda = 0.6           # [-] taper ratio
 beta = np.sqrt(1-(M**2))
 
@@ -107,11 +107,12 @@ def getAirfoilFus():
         cm = -0.058
     return  cl_alpha, cl_max, alpha_L0, CD_fuselage, cm
 
+
 def getAirfoilWing():
     airfoil = 1
     if airfoil == 1:
         cl_alpha = (1.1117+0.0543)/(5+5) * (180/np.pi) # SC(2)-0710 M0.85 Re12M cm = -0.129
-        cl_max = 2.243
+        cl_max = 1.6#2.243
         alpha_l0 = -4.5*(np.pi/180)
         CD_wing = 0.00907 #at 6° aoa  and at 0° aoa = 0.006
         cm = -0.129
@@ -137,6 +138,7 @@ def getAirfoilWing():
         alpha_l0 = -12*(np.pi/180)
         CD_wing = 0.007 
     return cl_alpha, cl_max, alpha_l0, CD_wing, cm
+
 
 def getAirfoilMiddle():
     airfoil = 1
@@ -200,7 +202,6 @@ def true_airspeed_at_altitude(altitude, M):
     v = M * a  # [m/s] Aircraft velocity
     return v
 v = true_airspeed_at_altitude(alti, M)
-
 
 def guess_CL_max(AR):
     CL = np.linspace(0, 1.5, 100)
@@ -438,7 +439,7 @@ def wingGeometryIDEAL(lift_coef, weight, sweep_quarter_wing):
     sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR) * (((1-taper_wing)/(1+taper_wing)) * (0.25 - 0)))
     sweep_trailing = np.arctan2(h[0], (c[0] - ((h[0]*np.tan(sweep_leading)) + c[1]))) - (np.pi/2) 
     sweep_beta = np.arctan(np.tan(sweep_quarter)/beta) 
-
+    
     chord_middle = np.interp(cabin_width/2, [0.0, span_max/2], c)
     return surface_wing, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta
 
@@ -837,13 +838,14 @@ def plotLiftDrag(lift_and_drag_plots, Cl, sweep_LE_fus, sweep_quarter_wing, weig
     ax.legend(loc="best")
     ax.grid(True,linewidth=0.5, linestyle='--', color='gray')
     plt.savefig("/Users/antoinevanhoye/Documents/M1/PI/integrated_project/Airfoils/drag_polar.pdf", dpi=300)
-    # plt.show()
-
-    # plt.figure(figsize=(8,5))
-    # plt.plot(AoA, Cl_tot)
-    # plt.xlabel('$AoA$ [rad]')
-    # plt.ylabel('$CL$')
-    # plt.show()
+    
+    plt.show()
+    plt.figure(figsize=(8,5))
+    plt.plot(AoA*np.pi/180, Cl_tot)
+    plt.xlabel('$AoA$ [rad]')
+    plt.ylabel('$CL$')
+    plt.grid()
+    plt.show()
 
     # plt.figure(figsize=(8,5))
     # plt.plot(AoA, Cd_tot)
@@ -906,6 +908,7 @@ def getReynold(altitude, c):
     T = 12.0 + 273.15   #[k]
     rho = p_atmo/(287*T)
     mu = 1.716e-5 * (T/273.15)**(3/2) * ((273.15 + 110.4)/(T + 110.4)) # Sutherland's law
+    print(mu)
     Re = (rho * U_inf * c) / mu
     return Re
 
@@ -913,14 +916,46 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
     surface_wing_ideal, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
     _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-    taper_ratio = c_tip_wing/c_root_fus
+    
     CL_max_tot = get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight)[2]
-    sweep_LE_tot = ((sweep_LE_wing*surface_wing + sweep_LE_fus*surface_fuselage)/surface_total)*(np.pi/180)
-    sweep_HL = np.arctan(np.tan(sweep_LE_tot) + (4/AR) * (((1-taper_ratio)/(1+taper_ratio)) * (0 - 0.70)))
-    #print(sweep_HL*(180/np.pi))
+    
+    sweep_HL = np.arctan(np.tan(sweep_LE_wing) + (4/AR) * (((1-taper_wing)/(1+taper_wing)) * (0 - 0.70)))
+    
     delta_CL_max = 2.1 - CL_max_tot  #2.1 Amos' value And 1.9 for landing configuration
-    delta_cl_max = delta_CL_max* (1/(0.8* np.cos(sweep_HL)))
+    delta_cl_max = delta_CL_max* (1/(0.6* np.cos(sweep_HL)))
     return delta_cl_max
+
+def getHighLiftDevice2(Cl, sweep_LE_fus, sweep_quarter_wing, weight, CLmax):
+    surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+    cl_alpha, Clmax_fus, alpha_L0, CD_fuselage, cm = getAirfoilFus()
+    cl_alpha, Clmax_wing, alpha_L0, CD_fuselage, cm = getAirfoilWing()
+    
+    ## -- Fuselage -- ##
+    AR_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)[1]
+    taper_fus = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)[4]
+    sweep_hinge_fus = np.arctan(np.tan(sweep_LE_fus*(np.pi/180)) + (4/AR_fus) * (((1-taper_fus)/(1+taper_fus)) * (0 - 0.7)))
+
+    CL_max_fuselage = (0.9/surface_wing_ideal) *(Clmax_fus*surface_fuselage)*(surface_fuselage/surface_total)
+    
+    ## -- Wing -- ##
+    Sf = 0.4 * surface_wing
+
+    _, AR, taper_wing, croot, ctip, chord_middle, sweep_leading, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
+    sweep_hinge_wing = np.arctan(np.tan(sweep_quarter_wing*(np.pi/180)) + (4/AR) * (((1-taper_wing)/(1+taper_wing)) * (0.25 - 0.7)))
+
+    CL_max_wing_unflapped = (0.9/surface_wing_ideal) *(Clmax_wing*1*(surface_wing-Sf))
+
+    CL_max_wing_flapped = CLmax - CL_max_wing_unflapped - CL_max_fuselage
+
+    
+    clmax_delta = (CL_max_wing_flapped * surface_wing_ideal / 0.9) / (Sf * np.cos(sweep_hinge_wing))
+    if clmax_delta < 1.25 or clmax_delta > 1.9:
+        print(f"\nCL max wing flapped is not in the range of 1.25 to 1.9: {clmax_delta:.4f} \n")
+    
+    coef = [-2.093e-4, 0.02418, 1.25-clmax_delta]
+    roots = np.roots(coef)
+    
+    return roots
 
 def FIXED_GEOM_getCalageAngle(weight):
 
@@ -955,7 +990,7 @@ def FIXED_GEOM_getCalageAngle(weight):
     return alpha_root, a, Cl
 
 # --- Which geometry ?? --- #
-geometry = 2 # 1 = variable geometry , 2 = fixed geometry
+geometry = 1 # 1 = variable geometry , 2 = fixed geometry
 
 def main():
     Cl, sweep_LE_fus, sweep_quarter_wing, weight = 0.45, 50.0, 29.0,  542504.6611526054
@@ -1050,6 +1085,10 @@ def main():
         
         Re = getReynold(alti, MAC)
         print(f"Re_mac: {Re:.3f} [-]")
+
+        
+        #delta = getHighLiftDevice2(Cl, sweep_LE_fus, sweep_quarter_wing, weight, 2.1)
+        #print(f"Angle of flaps for 2.1 cl max: {delta[0]:.3f} or {delta[1]:.3f} [-]\n")
 
         plotAllWing(wing_plot, sweep_LE_fus, sweep_quarter_wing, Cl, weight)
         plotLiftDrag(lift_and_drag_plots, Cl, sweep_LE_fus, sweep_quarter_wing, weight)

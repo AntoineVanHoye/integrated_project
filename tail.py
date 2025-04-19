@@ -397,7 +397,7 @@ def setting_angle(force):
     alpha_root =CL/a
     return alpha_root
 
-force = -67664.11737749541
+force = -72820.97594029957
 
 def main():
     c_root_tail,span_hor,span_vert,AR_h, AR,gamma_h, surf_tot_tail, MAC_tail,yac,xac = geomtail()
@@ -406,12 +406,15 @@ def main():
     alpha_root = setting_angle(force)
     print("--------------------------ROOT CHORD--------------------------------------------")
     print("The root chord of the tail is",c_root_tail,"m or",c_root_tail*3.28084,"ft")
+    print("--------------------------LIFT COEFFICIENT--------------------------------------------")
+    print("The lift coefficient of the tail is",need_CL(force))
     print("--------------------------SPANS--------------------------------------------")
     print("The horizontal span of the tail is",span_hor,"m or",span_hor*3.28084,"ft")
     print("The vertical span of the tail is",span_vert,"m or",span_vert*3.28084,"ft")
     print("The total span of the tail is",np.sqrt(span_hor**2+span_vert**2),"m or",np.sqrt(span_hor**2+span_vert**2)*3.28084,"ft")
     print("--------------------------AR--------------------------------------------")
     print("The aspect ratio of the horizontal tail is",AR_h)
+    print("The aspect ratio of the vertical tail is",span_vert**2/surf_tail()[1])
     print("The total aspect ratio of the tail is",AR)
     print("--------------------------SWEEP QUARTER--------------------------------------------")
     print("The sweep quarter chord of the tail is",sweep_quarter_tail*180/np.pi,"degrees")
