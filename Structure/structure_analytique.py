@@ -1,7 +1,9 @@
 
+
 import numpy as np
 from matplotlib import pyplot as plt
 import pandas as pd
+import math
 
 
 #geometry wings
@@ -46,12 +48,17 @@ def structural_loads_regular_wing (n, alpha): # There will be more parameters as
 
 # -------------------------------------------------------------------
 
+def dist_2_pts(x1, y1, x2, y2):
+    return math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
+# -------------------------------------------------------------------
 def dist_2_booms(x_coord, y_coord): 
     dist = [] 
     max_dist = 0
-    max_pair = (None, None)  # Will hold the indices (or points) of the max distance
+    max_pair = (None, None)  # Will hold the points of the max distance
 
-    for i in range(1, len(x_coord)):
+    n = len(x_coord)
+    for i in range(1, n):
         dx = x_coord[i] - x_coord[i-1]
         dy = y_coord[i] - y_coord[i-1]
         d = np.sqrt(dx**2 + dy**2)
@@ -61,7 +68,48 @@ def dist_2_booms(x_coord, y_coord):
             max_dist = d
             max_pair = ((x_coord[i-1], y_coord[i-1]), (x_coord[i], y_coord[i]))
 
-    return dist, max_dist, max_pair 
+    # Add distance between last and first point to close the shape
+    dx = x_coord[0] - x_coord[-1]
+    dy = y_coord[0] - y_coord[-1]
+    d = np.sqrt(dx**2 + dy**2)
+    dist.append(d)
+
+    if d > max_dist:
+        max_dist = d
+        max_pair = ((x_coord[-1], y_coord[-1]), (x_coord[0], y_coord[0]))
+
+    return dist, max_dist, max_pair
+
+# -------------------------------------------------------------------
+
+def polygon_area(x_coords, y_coords): # Fct to compute the area of the cells
+    n = len(x_coords)
+    area = 0.0
+
+    for i in range(n):
+        j = (i + 1) % n  # Wraps around to connect last to first
+        area += x_coords[i] * y_coords[j]
+        area -= x_coords[j] * y_coords[i]
+
+    return abs(area) / 2.0
+
+# -------------------------------------------------------------------
+
+def swept_area_from_center(x_points, z_points, x_centroid, z_centroid):
+    n = len(x_points)
+    total_area = 0.0
+    individual_areas = []
+
+    for i in range(n):
+        x1, z1 = x_points[i], z_points[i]
+        x2, z2 = x_points[(i + 1) % n], z_points[(i + 1) % n]  # wrap around
+
+        # Area computation
+        area = 0.5 * abs(x1 * z2 + x2 * z_centroid + x_centroid * z1 - z1 * x2 - z2 * x_centroid - z_centroid * x1)
+        individual_areas.append(area)
+        total_area += area
+
+    return total_area, individual_areas
 
 # -------------------------------------------------------------------
 
@@ -94,41 +142,182 @@ def boom_area(z_booms_ordered_centroid, x_booms_ordered_centroid, M_x, M_z, sigm
     
     return B_min, sigma_yy
     
-
 # -------------------------------------------------------------------
 
-def skin_thickness(B, sigma_yy, delta_x, delta_z, T_x, T_z, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1) :
+def skin_thickness(B, sigma_yy, delta_y, delta_x, delta_z, T_x, T_z, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1, tau_max, x_booms_cell_2, z_booms_cell_2) :
     
     # Taper effect (suite) :
-    T_x_web = T_x - B* np.sum(sigma_yy * delta_x)
-    T_z_web = T_z - B* np.sum(sigma_yy * delta_z)
+    T_x_web = T_x - B* np.sum(sigma_yy * (delta_x/delta_y))
+    T_z_web = T_z - B* np.sum(sigma_yy * (delta_z/delta_y))
     
     # Inertia per unit area (the boom area 'B' is considered to be the same everywhere)
     I_xx_over_B = np.sum(np.array(z_booms_ordered_centroid)**2) 
     I_zz_over_B = np.sum(np.array(x_booms_ordered_centroid)**2) 
     I_xz_over_B = np.sum(np.array(x_booms_ordered_centroid) * np.array(z_booms_ordered_centroid)) 
     
-    # ---- Open shear flow ---- 
+    # ---- Open shear flow ----
+    denom = (I_xx_over_B*I_zz_over_B - I_xz_over_B**2)
+    factor_1 = (I_zz_over_B*T_z_web - I_xz_over_B*T_x_web)/denom
+    factor_2 = (I_xx_over_B*T_x_web - I_xz_over_B*T_z_web)/denom
     
     # -- Cell 1 --
-    q_0_cell_1 = [0] # Cut in cell 1, the open shear flow between booms 1 and 2 is zero
+    q_0_cell_1 = [0] # Cut in cell 1, the open shear flow between booms 1 and 2 is zero                                        (q_0_2,1)
+    q_0_cell_1.append(q_0_cell_1[0] - factor_1 * z_booms_ordered_centroid[1-1] - factor_2 * x_booms_ordered_centroid[1-1])   # (q_0_1,37)
+    q_0_cell_1.append(q_0_cell_1[1] - factor_1 * z_booms_ordered_centroid[37-1] - factor_2 * x_booms_ordered_centroid[37-1]) # (q_0_37,36)
+    q_0_cell_1.append(q_0_cell_1[2] - factor_1 * z_booms_ordered_centroid[36-1] - factor_2 * x_booms_ordered_centroid[36-1]) # (q_0_36,35)
+    q_0_cell_1.append(q_0_cell_1[3] - factor_1 * z_booms_ordered_centroid[35-1] - factor_2 * x_booms_ordered_centroid[35-1]) # (q_0_35,34)
+    q_0_cell_1.append(q_0_cell_1[4] - factor_1 * z_booms_ordered_centroid[34-1] - factor_2 * x_booms_ordered_centroid[34-1]) # (q_0_34,33)
+    q_0_cell_1.append(q_0_cell_1[5] - factor_1 * z_booms_ordered_centroid[33-1] - factor_2 * x_booms_ordered_centroid[33-1]) # (q_0_33,32)
+    q_0_cell_1.append(q_0_cell_1[6] - factor_1 * z_booms_ordered_centroid[32-1] - factor_2 * x_booms_ordered_centroid[32-1]) # (q_0_32,7)
+    q_0_cell_1.append(q_0_cell_1[7] - factor_1 * z_booms_ordered_centroid[7-1] - factor_2 * x_booms_ordered_centroid[7-1])   # (q_0_7,6)
+    q_0_cell_1.append(q_0_cell_1[8] - factor_1 * z_booms_ordered_centroid[6-1] - factor_2 * x_booms_ordered_centroid[6-1])   # (q_0_6,5)
+    q_0_cell_1.append(q_0_cell_1[9] - factor_1 * z_booms_ordered_centroid[5-1] - factor_2 * x_booms_ordered_centroid[5-1])   # (q_0_5,4)
+    q_0_cell_1.append(q_0_cell_1[10] - factor_1 * z_booms_ordered_centroid[4-1] - factor_2 * x_booms_ordered_centroid[4-1])  # (q_0_4,3)  
+    q_0_cell_1.append(q_0_cell_1[11] - factor_1 * z_booms_ordered_centroid[3-1] - factor_2 * x_booms_ordered_centroid[3-1])  # (q_0_3,2)
     
-    #for x in x_booms_cell_1 : 
+    # Verify the open shear flow computation (should recover 0)
+    q_0_cell_1_verif = (q_0_cell_1[12] - factor_1 * z_booms_ordered_centroid[2-1] - factor_2 * x_booms_ordered_centroid[2-1]) # recomputation of (q_0_2,1)
+    # if(q_0_cell_1_verif == q_0_cell_1[0]) : 
+    #     print('OK')   
+    # else : 
+    #     print ('Problem in open shear flow')
+    #     print('q_0_cell_1[0] =', q_0_cell_1[0])
+    #     print('q_0_cell_1_verif =', q_0_cell_1_verif)   
+    # print('')
+    #print(len(q_0_cell_1))
+    
+    # Invert all elements except the first one so that the order of the shear flow values is the same than what I have noted on the graph 
+    q_0_cell_1[1:] = np.flip(q_0_cell_1[1:])
+
     
     # -- Cell 2 -- 
+    q_0_cell_2 = [0]                                                                                                          # (q_0_8,7)
+    q_0_cell_2.append(q_0_cell_2[0] - factor_1 * z_booms_ordered_centroid[7-1] - factor_2 * x_booms_ordered_centroid[7-1])    # (q_0_7,32)
+    q_0_cell_2.append(q_0_cell_2[1] - factor_1 * z_booms_ordered_centroid[32-1] - factor_2 * x_booms_ordered_centroid[32-1])  # (q_0_32,31)
+    q_0_cell_2.append(q_0_cell_2[2] - factor_1 * z_booms_ordered_centroid[31-1] - factor_2 * x_booms_ordered_centroid[31-1])  # (q_0_31,30)
+    q_0_cell_2.append(q_0_cell_2[3] - factor_1 * z_booms_ordered_centroid[30-1] - factor_2 * x_booms_ordered_centroid[30-1])  # (q_0_30,29)
+    q_0_cell_2.append(q_0_cell_2[4] - factor_1 * z_booms_ordered_centroid[29-1] - factor_2 * x_booms_ordered_centroid[29-1])  # (q_0_29,28)
+    q_0_cell_2.append(q_0_cell_2[5] - factor_1 * z_booms_ordered_centroid[28-1] - factor_2 * x_booms_ordered_centroid[28-1])  # (q_0_28,27)
+    q_0_cell_2.append(q_0_cell_2[6] - factor_1 * z_booms_ordered_centroid[27-1] - factor_2 * x_booms_ordered_centroid[27-1])  # (q_0_27,26)
+    q_0_cell_2.append(q_0_cell_2[7] - factor_1 * z_booms_ordered_centroid[26-1] - factor_2 * x_booms_ordered_centroid[26-1])  # (q_0_26,25)
+    q_0_cell_2.append(q_0_cell_2[8] - factor_1 * z_booms_ordered_centroid[25-1] - factor_2 * x_booms_ordered_centroid[25-1])  # (q_0_25,24)
+    q_0_cell_2.append(q_0_cell_2[9] - factor_1 * z_booms_ordered_centroid[24-1] - factor_2 * x_booms_ordered_centroid[24-1])  # (q_0_24,23)
+    q_0_cell_2.append(q_0_cell_2[10] - factor_1 * z_booms_ordered_centroid[23-1] - factor_2 * x_booms_ordered_centroid[23-1]) # (q_0_23,22)
+    q_0_cell_2.append(q_0_cell_2[11] - factor_1 * z_booms_ordered_centroid[22-1] - factor_2 * x_booms_ordered_centroid[22-1]) # (q_0_22,21)
+    q_0_cell_2.append(q_0_cell_2[12] - factor_1 * z_booms_ordered_centroid[21-1] - factor_2 * x_booms_ordered_centroid[21-1]) # (q_0_21,20)
+    q_0_cell_2.append(q_0_cell_2[13] - factor_1 * z_booms_ordered_centroid[20-1] - factor_2 * x_booms_ordered_centroid[20-1]) # (q_0_20,19)
+    q_0_cell_2.append(q_0_cell_2[14] - factor_1 * z_booms_ordered_centroid[19-1] - factor_2 * x_booms_ordered_centroid[19-1]) # (q_0_19,18)
+    q_0_cell_2.append(q_0_cell_2[15] - factor_1 * z_booms_ordered_centroid[18-1] - factor_2 * x_booms_ordered_centroid[18-1]) # (q_0_18,17)
+    q_0_cell_2.append(q_0_cell_2[16] - factor_1 * z_booms_ordered_centroid[17-1] - factor_2 * x_booms_ordered_centroid[17-1]) # (q_0_17,16)
+    q_0_cell_2.append(q_0_cell_2[17] - factor_1 * z_booms_ordered_centroid[16-1] - factor_2 * x_booms_ordered_centroid[16-1]) # (q_0_16,15)
+    q_0_cell_2.append(q_0_cell_2[18] - factor_1 * z_booms_ordered_centroid[15-1] - factor_2 * x_booms_ordered_centroid[15-1]) # (q_0_15,14)
+    q_0_cell_2.append(q_0_cell_2[19] - factor_1 * z_booms_ordered_centroid[14-1] - factor_2 * x_booms_ordered_centroid[14-1]) # (q_0_14,13)
+    q_0_cell_2.append(q_0_cell_2[20] - factor_1 * z_booms_ordered_centroid[13-1] - factor_2 * x_booms_ordered_centroid[13-1]) # (q_0_13,12)
+    q_0_cell_2.append(q_0_cell_2[21] - factor_1 * z_booms_ordered_centroid[12-1] - factor_2 * x_booms_ordered_centroid[12-1]) # (q_0_12,11)
+    q_0_cell_2.append(q_0_cell_2[22] - factor_1 * z_booms_ordered_centroid[11-1] - factor_2 * x_booms_ordered_centroid[11-1]) # (q_0_11,10)
+    q_0_cell_2.append(q_0_cell_2[23] - factor_1 * z_booms_ordered_centroid[10-1] - factor_2 * x_booms_ordered_centroid[10-1]) # (q_0_10,9)
+    q_0_cell_2.append(q_0_cell_2[24] - factor_1 * z_booms_ordered_centroid[9-1] - factor_2 * x_booms_ordered_centroid[9-1])   # (q_0_9,8)
+    
+    # Verify the open shear flow computation (should recover 0)
+    q_0_cell_2_verif = (q_0_cell_2[25] - factor_1 * z_booms_ordered_centroid[8-1] - factor_2 * x_booms_ordered_centroid[8-1]) # recomputation of (q_0_8,7)
+    # if(q_0_cell_2_verif == q_0_cell_2[0]) : 
+    #     print('OK')    
+    # else : 
+    #     print ('Problem in open shear flow')
+    #     print('q_0_cell_2[0] =', q_0_cell_2[0])
+    #     print('q_0_cell_2_verif =', q_0_cell_2_verif) 
+    # print('')
+    # print(len(q_0_cell_2))
+    
+    # Invert all elements except the first one so that the order of the shear flow values is the same than what I have noted on the graph 
+    q_0_cell_2[1:] = np.flip(q_0_cell_2[1:])
     
     
-    # ---- Correction term ----
+    # ---- Lengths of the segments and the cells ----
+    lengths = dist_2_booms(x_booms_ordered_centroid, z_booms_ordered_centroid)[0]
+    intersecting_length = dist_2_pts(x_booms_ordered_centroid[7-1], z_booms_ordered_centroid[7-1], x_booms_ordered_centroid[32-1], z_booms_ordered_centroid[32-1])
+
+    # Cell 1
+    lengths_c_1 = dist_2_booms(x_booms_cell_1, z_booms_cell_1)[0]
+    l_cell_1 = np.sum(lengths_c_1)
+    # print('lengths_c_1 = ', lengths_c_1)
+    # print(l_cell_1)
     
+    # Cell 2
+    lengths_c_2 = dist_2_booms(x_booms_cell_2, z_booms_cell_2)[0]
+    l_cell_2 = np.sum(lengths_c_2)
+    # print('lengths_c_2 = ', lengths_c_2)
+    # print(l_cell_2)
+    
+    
+    # ---- Cell Area ----
+    A_h_c_1 = polygon_area(x_booms_cell_1, z_booms_cell_1)
+    A_h_c_2 = polygon_area(x_booms_cell_2, z_booms_cell_2)
+    #print(f"Cell Areas: A_h_c_1 = {A_h_c_1:.4f} m², A_h_c_2 = {A_h_c_2:.4f} m²")
+    
+    
+    # ---- Open shear flow integration ----
+    # Cell 1
+    q_0_cell_1 = np.array(q_0_cell_1) # Convert the lists to NumPy arrays
+    lengths_c_1 = np.array(lengths_c_1)
+    # print('q_0_cell_1 =', q_0_cell_1)
+    # print('lengths_c_1 =', lengths_c_1)
+    open_shear_flux_1 = np.sum(q_0_cell_1 * lengths_c_1)
+    # print('open_shear_flux_1 =', open_shear_flux_1)
+    
+    # Cell 2
+    q_0_cell_2 = np.array(q_0_cell_2) # Convert the lists to NumPy arrays
+    lengths_c_2 = np.array(lengths_c_2)
+    # print('q_0_cell_2 =', q_0_cell_2)
+    # print('lengths_c_2 =', lengths_c_2)
+    open_shear_flux_2 = np.sum(q_0_cell_2 * lengths_c_2)
+    # print('open_shear_flux_2 =', open_shear_flux_2)
+    
+    
+    # ---- Swept Areas ----
+    # Cell 1
+    swept_area_cell_1 = swept_area_from_center(x_booms_cell_1, z_booms_cell_1, x_centroid = 0, z_centroid = 0)[1]
+    # Cell 2
+    swept_area_cell_2 = swept_area_from_center(x_booms_cell_2, z_booms_cell_2, x_centroid = 0, z_centroid = 0)[1]
+    # Term in the momentum equilibrium : 
+    term_swept_area = 2 * (np.sum(q_0_cell_1 * swept_area_cell_1) + np.sum(q_0_cell_2 * swept_area_cell_2))
+    #print('term_swept_area =', term_swept_area)
+    
+    
+    # ---- Correction term computation : solve a 2 eqns syst (because 2 cells) ----
+    # Syst parameters : x => q_1_corr and y => q_2_corr
+    
+    # Twist rate comaptibility equation
+    coeff_x_eq1 = l_cell_1 * A_h_c_2 + intersecting_length * A_h_c_1
+    coeff_y_eq1 = (-1)* intersecting_length * A_h_c_2 - l_cell_2 * A_h_c_2
+    ind_term_eq1 = open_shear_flux_2 * A_h_c_1 - open_shear_flux_1 * A_h_c_2
+    
+    # Momentum equilibrium
+    coeff_x_eq2 = 2 * A_h_c_1
+    coeff_y_eq2 = 2 * A_h_c_2
+    
+    M_x = 0 # ??????????????????????? x_T * T_z ??
+    term_P_z = B * np.sum(x_booms_ordered_centroid * sigma_yy * delta_z/delta_y)
+    term_P_x = B * np.sum(x_booms_ordered_centroid * sigma_yy * delta_x/delta_y)
+    ind_term_eq2 = term_swept_area + term_P_z - term_P_x - M_x
+    
+    # Solve syst : 
+    A = np.array([[coeff_x_eq1, coeff_y_eq1],[coeff_x_eq2, coeff_y_eq2]]) # Coeff matrix
+    B = np.array([ind_term_eq1, ind_term_eq2]) # Independent term vector 
+    sol = np.linalg.solve(A, B)
+    q_1_corr, q_2_corr = sol
+    #print(f"q_1_corr = {q_1_corr:.4f}, q_2_corr = {q_2_corr:.4f}")
     
     # ---- Shear flow (closed) ----
+    q_closed_cell_1 = np.array(q_0_cell_1) + q_1_corr # Apply the correction 
+    q_closed_cell_2 = np.array(q_0_cell_2) + q_2_corr  
+    q_closed = np.concatenate([q_closed_cell_1, q_closed_cell_2])
     
-    
-    # ---- Thickness computation ----
-     
-    thickness = 1
+    # ---- Thickness computation ----   
+    thickness = max(q_closed, key=abs)/tau_max 
     
     return thickness
+
 # -------------------------------------------------------------------
 
 def plotAirfoil(plot_airfoil, n_booms, x_c_max, x_c_cell_1):
@@ -137,17 +326,19 @@ def plotAirfoil(plot_airfoil, n_booms, x_c_max, x_c_cell_1):
     
     # ---- Geometry ----
     wing_semi_span = 10 #[m]
-    x_tip = wing_semi_span
-    x_root = 0
-    x_arrondi = 3.10921985816
+    y_tip = wing_semi_span
+    y_root = 0
+    y_arrondi = 3.10921985816
     chord_root = 5.875
     chord_tip = 2.35
-    chord_length_arrondi = chord_tip + (chord_root - chord_tip)/(x_root - x_tip) * (x_arrondi -x_tip)
-    # print('chord_length :',chord_length_arrondi)
+    chord_length_arrondi = chord_tip + (chord_root - chord_tip)/(y_root - y_tip) * (y_arrondi - y_tip)
+    #print('chord_length :',chord_length_arrondi)
     sweep_angle = np.radians(31.599) #[°]
-    x_dist_root_tip = (wing_semi_span - x_arrondi)*np.tan(sweep_angle)
-    print('x_dist_root_tip : ', x_dist_root_tip)
-    print('')
+    delta_y = (wing_semi_span - y_arrondi)
+    x_dist_root_tip = delta_y *np.tan(sweep_angle)
+    #print('delta_y : ', delta_y)
+    #print('x_dist_root_tip : ', x_dist_root_tip)
+    #print('')
     
     # Load airfoil data
     data_wing = pd.read_csv("sc20710_XYZ.csv")
@@ -206,12 +397,13 @@ def plotAirfoil(plot_airfoil, n_booms, x_c_max, x_c_cell_1):
     z_booms = np.array(z_c_booms) * chord_length_arrondi
     x_centroid = x_c_centroid * chord_length_arrondi
     z_centroid = z_c_centroid * chord_length_arrondi
-    print('Centroid location:')
-    print(f'x = {x_centroid}')
-    print(f'z = {z_centroid}')
+    print('')
+    #print('Centroid location:')
+    #print(f'x = {x_centroid}')
+    #sprint(f'z = {z_centroid}')
     
     
-    # ---- Verify that the distance between 2 succesive booms is between 0.1 and 0.2 m (Limits imposed by M.Noels) ----
+    # ---- Verify that the distance between 2 succesive booms is between 0.1 and 0.2 m (Limits suggested by M.Noels) ----
     # Separate booms on upper and lower surfaces (skipping the first LE point)
     upper_booms = [(x, z) for i, (x, z) in enumerate(zip(x_booms[1:], z_booms[1:])) if z > 0]
     lower_booms = [(x, z) for i, (x, z) in enumerate(zip(x_booms[1:], z_booms[1:])) if z < 0]
@@ -265,8 +457,11 @@ def plotAirfoil(plot_airfoil, n_booms, x_c_max, x_c_cell_1):
     # ---- Coordinate transformation to centroid-based system (for the calculations) ----
     x_booms_ordered_centroid = [x - x_centroid for x in x_booms_ordered]
     z_booms_ordered_centroid = [z - z_centroid for z in z_booms_ordered]
-    print('x_booms_ordered_centroid =', x_booms_ordered_centroid)
-    print('z_booms_ordered_centroid =', z_booms_ordered_centroid)
+    print('')
+    #print('x_booms_ordered_centroid =', x_booms_ordered_centroid)
+    print('')
+    #print('z_booms_ordered_centroid =', z_booms_ordered_centroid)
+    print('')
     
     
     # ---- Delimitation of the two cells ----
@@ -308,6 +503,7 @@ def plotAirfoil(plot_airfoil, n_booms, x_c_max, x_c_cell_1):
     # ---- Material ----
     
     sigma_y_0 = 1 # CHOOSE THE MATERIAL
+    tau_max = 2 # maximum shear stress
     safety_factor = 1.5
     
     
@@ -370,11 +566,12 @@ def plotAirfoil(plot_airfoil, n_booms, x_c_max, x_c_cell_1):
     B = max(B_values)
     index_of_max = B_values.index(B)
     sigma_yy = sigma_yy_values[index_of_max]
+    sigma_yy = np.array(sigma_yy)
       
-    print(f"Index de la contrainte max : {index_of_max}")
-    print(f"sigma_yy associée (à B max) : {sigma_yy}")
+    #print(f"Index de la contrainte max : {index_of_max}")
+    #print(f"sigma_yy associée (à B max) : {sigma_yy}")
 
-    print('The boom area is :', B)
+    print(f"Boom area : {B:.9f} m²")
     # print('The associated sigma_yy are :', sigma_yy) # should be an array for each boom
     
     
@@ -384,44 +581,46 @@ def plotAirfoil(plot_airfoil, n_booms, x_c_max, x_c_cell_1):
     x_pos_booms_tip = np.array(x_c_booms_ordered) * chord_tip + x_dist_root_tip 
     x_pos_booms_arrondi = np.array(x_c_booms_ordered) * chord_length_arrondi # where chord_length_arrondi is the chord from the tip, just before the 'arrondi'
     delta_x = x_pos_booms_tip - x_pos_booms_arrondi 
-    print('x_pos_booms_tip :', x_pos_booms_tip)
-    print('')
-    print('x_pos_booms_arrondi :', x_pos_booms_arrondi)
-    print('')
-    print('delta_x :', delta_x) 
-    print('')
+    delta_x = np.array(delta_x)
+    #print('x_pos_booms_tip :', x_pos_booms_tip)
+    #print('')
+    #print('x_pos_booms_arrondi :', x_pos_booms_arrondi)
+    #print('')
+    #print('delta_x :', delta_x) 
+    #print('')
     
     # Taper effect along z
     z_pos_booms_tip = np.array(z_c_booms_ordered) * chord_tip 
     z_pos_booms_arrondi = np.array(z_c_booms_ordered) * chord_length_arrondi # where chord_length_arrondi is the chord from the tip, just before the 'arrondi'
     delta_z = z_pos_booms_tip - z_pos_booms_arrondi 
-    print('z_pos_booms_tip :', z_pos_booms_tip)
-    print('')
-    print('z_pos_booms_arrondi :', z_pos_booms_arrondi)
-    print('')
-    print('delta_z :', delta_z)
-    print('')
+    delta_z = np.array(delta_z)
+    #print('z_pos_booms_tip :', z_pos_booms_tip)
+    #print('')
+    #print('z_pos_booms_arrondi :', z_pos_booms_arrondi)
+    #print('')
+    #print('delta_z :', delta_z)
+    #print('')
     
     # Point A
-    thickness_pt_A = skin_thickness(B, sigma_yy, delta_x, delta_z, T_x_A, T_z_A, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1)
+    thickness_pt_A = skin_thickness(B, sigma_yy, delta_y, delta_x, delta_z, T_x_A, T_z_A, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1, tau_max, x_booms_cell_2, z_booms_cell_2)
     
     # Point B
-    thickness_pt_B = skin_thickness(B, sigma_yy, delta_x, delta_z, T_x_B, T_z_B, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1)
+    thickness_pt_B = skin_thickness(B, sigma_yy, delta_y, delta_x, delta_z, T_x_B, T_z_B, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1, tau_max, x_booms_cell_2, z_booms_cell_2)
     
     # Point C
-    thickness_pt_C = skin_thickness(B, sigma_yy, delta_x, delta_z, T_x_C, T_z_C, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1)
+    thickness_pt_C = skin_thickness(B, sigma_yy, delta_y, delta_x, delta_z, T_x_C, T_z_C, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1, tau_max, x_booms_cell_2, z_booms_cell_2)
     
     # Point D
-    thickness_pt_D = skin_thickness(B, sigma_yy, delta_x, delta_z, T_x_D, T_z_D, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1)
+    thickness_pt_D = skin_thickness(B, sigma_yy, delta_y, delta_x, delta_z, T_x_D, T_z_D, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1, tau_max, x_booms_cell_2, z_booms_cell_2)
     
     # Point E
-    thickness_pt_E = skin_thickness(B, sigma_yy, delta_x, delta_z, T_x_E, T_z_E, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1)
+    thickness_pt_E = skin_thickness(B, sigma_yy, delta_y, delta_x, delta_z, T_x_E, T_z_E, x_booms_ordered_centroid, z_booms_ordered_centroid, x_booms_cell_1, z_booms_cell_1, tau_max, x_booms_cell_2, z_booms_cell_2)
     
     # Take the maximum value
     thickness_values = [thickness_pt_A, thickness_pt_B, thickness_pt_C, thickness_pt_D, thickness_pt_E]
     thickness = max(thickness_values)
     print('')
-    print('The skin thickness is ', thickness)
+    print(f"Skin thickness : {thickness:.9f} m")
     print('')
     
     
