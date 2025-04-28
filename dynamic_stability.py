@@ -118,7 +118,7 @@ I_z = 1344583.40 * 0.737562149
 Kn = 0.1
 Le = 584000*0.224809 #lift force in lb
 m = 105682.71* 0.031080950037834#*0.45359237 #mass in kg
-x_CG_tot = 8.5*3.28084
+x_CG_tot = 8.895*3.28084
 
 x = x_AC_tot - x_CG_tot
 l_V = x_AC_tail - x_CG_tot
@@ -422,7 +422,9 @@ def beta_der():
     L_beta = L_beta_WB + L_beta_H + L_beta_V
     Y_beta = Y_beta_W + Y_beta_B + Y_beta_V
     N_beta = N_beta_W + N_beta_B + N_beta_V
-
+    print("The Y_beta is : ", Y_beta)
+    print("The L_beta is : ", L_beta)
+    print("The N_beta is : ", N_beta)
     Y_beta_normed = Y_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim)
     L_beta = L_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
     N_beta = N_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
@@ -450,7 +452,9 @@ def r_der():
 
     L_r = L_rW + L_rV
     N_r = N_rW + N_rV
-
+    print("The Y_r is : ", Y_r)
+    print("The L_r is : ", L_r)
+    print("The N_r is : ", N_r)
     Y_r = Y_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
     L_r = L_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
     N_r = N_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
@@ -476,12 +480,13 @@ def p_der():
     L_p_V = 2 * Y_beta_V * (y_AC_tail/b)**2
 
     L_p = L_p_WB + L_p_H + L_p_V
-
     N_p_V = -2/b * (l_V*np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*Y_beta_V*(y_AC_tail*np.cos(alpha_e)-l_V*np.sin(alpha_e))/b
     N_p_W = - L_p_WB*np.tan(wing_aoa) - (-L_p*np.tan(wing_aoa) - Np_CL * CL) + term_twist*twist_angle 
     N_p = N_p_W + N_p_V
-
-    Y_p = Y_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)   
+    print("The Y_p is : ", Y_p)
+    print("The L_p is : ", L_p)
+    print("The N_p is : ", N_p)
+    Y_p = Y_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim) 
     L_p = L_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
     N_p = N_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
 

@@ -1029,7 +1029,8 @@ def main():
         print(f"Cl max wing: {Cl_max_wing:.3f} [-]")
         print(f"cl alpha wing airfoil: {cl_alpha_wing:.3f} [rad^-1]\n")
         
-        
+        _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight) 
+        print(y_fus, leading_fus, trailing_fus, quarter_fus)
 
         b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
         Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
