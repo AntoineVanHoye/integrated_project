@@ -285,7 +285,7 @@ def long_stat_stab_cruise(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): #in
     a = getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     #check the stability
-    x_AC_tot = 8.3241
+    x_AC_tot = 8.56
     #neutral point : position of the cg in order to have the derivative equals 0
     x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]

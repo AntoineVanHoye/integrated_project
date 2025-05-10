@@ -71,7 +71,7 @@ def getAirfoilFus():
         cl_max = 1.7125
         alpha_L0 = -3 * (np.pi/180) #[rad]
         CD_fuselage = 0.0026
-        cm = -0.0026
+        cm = 0.01
     elif airfoil == 3:
         cl_alpha = (0.7236+0.2617)/(5+5) * (180/np.pi)# NACA35118 M0.85 Re12M cm = -0.0022
         cl_max = 1.6876
@@ -115,7 +115,7 @@ def getAirfoilWing():
         cl_max = 1.6#2.243
         alpha_l0 = -4.5*(np.pi/180)
         CD_wing = 0.00907 #at 6° aoa  and at 0° aoa = 0.006
-        cm = -0.129
+        cm = -0.143
     elif airfoil == 2:
         cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
         cl_max = 1.4
