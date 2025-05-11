@@ -1,0 +1,36 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def naca0012(x):
+    """Retourne l'épaisseur (demi) du profil NACA 0012 à la position x (0 à 1)"""
+    t = 0.12  # Épaisseur relative pour NACA 0012
+    return 5 * t * (
+        0.2969 * np.sqrt(x)
+        - 0.1260 * x
+        - 0.3516 * x**2
+        + 0.2843 * x**3
+        - 0.1015 * x**4
+    )
+
+def generate_naca0012(n_points=100):
+    x = np.linspace(0, 1, n_points)
+    y_t = naca0012(x)
+
+    # Profil symétrique : ligne moyenne y_c = 0
+    x_upper = x
+    y_upper = y_t
+    x_lower = x
+    y_lower = -y_t
+
+    return x_upper, y_upper, x_lower, y_lower
+
+def plot_naca0012():
+    x_upper, y_upper, x_lower, y_lower = generate_naca0012(200)
+
+    plt.figure(figsize=(10, 4))
+    plt.plot(x_upper, y_upper, label="Extrados", color="blue")
+    plt.plot(x_lower, y_lower, label="Intrados", color="red")
+    plt.gca().set_aspect('equal')
+    plt.show()
+
+plot_naca0012()

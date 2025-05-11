@@ -51,11 +51,18 @@ Cm0_wing = getAirfoilWing()[4]
 Cm0_fus = getAirfoilFus()[4]
 
 def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, force):
-    _, _, _, _, _, _, _, _, y_wing, leading_wing, trailing_wing, quarter_wing,_,_ = winggeom(Cl,sweep_LE_fus, sweep_quarter_wing, force) 
-    _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusgeom(Cl,sweep_LE_fus, sweep_quarter_wing, force) 
-    surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    
+    surface_wing_ideal = 119.05
+    surf_fus  = 121.07
+    surf_wing = 71.11
+    MAC_fus = 14.293
+    MAC_wing = 3.706
+    MAC_tot = 11.098
+    y_wing = np.array([0, 1.10833333, 2.21666667, 3.325,      4.43333333, 5.54166667,6.65,       7.75833333, 8.86666667, 9.975     ] )
+    leading_wing = np.array([0,         0.68183035, 1.36366069, 2.04549104, 2.72732139, 3.40915173,4.09098208, 4.77281242, 5.45464277, 6.13647312])
+    trailing_wing =np.array([4.77878354, 5.1907293 , 5.60267505, 6.01462081, 6.42656656, 6.83851232,7.25045808, 7.66240383 ,8.07434959, 8.48629534])
+    y_fus = np.array([0, 0.5, 1,  1.5 ,2,  2.5 ,3, 3.5 ,4, 4.5])
+    leading_fus = np.array([0,        0.5958768,  1.19175359, 1.78763039, 2.38350719 ,2.97938398,3.57526078, 4.17113757 ,4.76701437 ,5.36289117])
+    trailing_fus = np.array([16.8 ,16.8, 16.8, 16.8 ,16.8 ,16.8 ,16.8, 16.8, 16.8 ,16.8])
     c_fus = trailing_fus - leading_fus
     c_wing = trailing_wing - leading_wing
     Cm0_wing = (2/(surf_wing*MAC_wing)) * trapz(Cm0_airfoil_wing*c_wing**2, y_wing)
@@ -81,7 +88,7 @@ def Cm0(Cm0_airfoil_fus,Cm0_airfoil_wing, Cl ,sweep_LE_fus, sweep_quarter_wing, 
 
 z_AC_tot = 0
 z_CG_tot = 0
-z_CG_motors = 2.7
+z_CG_motors = 1.7
 
 ##################################################################
 ######TAIL QUANTITIES
@@ -100,7 +107,7 @@ z_AC_tail = y_AC_tail
 ######CONFIGURATION SETTING
 ##################################################################
 
-config =3
+config =2
 fuel = 2
 
 ##################################################################
@@ -202,6 +209,7 @@ def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force):
     total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst_weight + payload_weight + ops_weight 
     position = total_mom/total_weight
 
+    position = 8.655
     return position, pourc_wings, motors_pos/MAC_tot, total_weight 
 
 
@@ -232,9 +240,10 @@ def CL(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_quarter_win
 
     surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    x_AC_tot = 8.38
     L_tot, L_T = symbols('L_tot L_T')
     V_T = tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    T = 32374.06 #take-off : 134926.83
+    T =38778.1#134926.83#take-off : 134926.83 32374.06 
     x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     weight = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[3]*9.81*0.453592 + passengers(i)[0]*9.81*0.453592
     
@@ -276,6 +285,7 @@ def long_stat_stab_cruise(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): #in
     a = getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     #check the stability
+    x_AC_tot = 8.56
     #neutral point : position of the cg in order to have the derivative equals 0
     x_CG_tot = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[0]
     engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]
@@ -303,6 +313,7 @@ def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, Cl, sweep_LE_fus, sweep_quar
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]
     deps = 0#2*3.17/(np.pi*7.04)
+    x_AC_tot = 8.3241
     V_T = tail_eff(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)
     dalpha_prop = 1 - deps
     Fp = prop_force()
@@ -355,7 +366,7 @@ def dir_stat_stab_cruise(CG_position, Cl, sweep_LE_fus, sweep_quarter_wing, forc
     mean_chord = AR/b
     sweep_quarter_wing = sweep_quarter_wing*np.pi/180
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
-
+    x_AC_tot = 8.37895
     CN_beta_fuselage = -1.3*fus_vol/(surface_wing_ideal*b)*(h/w)
 
     CN_beta_w = Cl**2 *(1/(4*np.pi*AR) - np.tan(sweep_quarter_wing)/(np.pi*AR*(AR+4*np.cos(sweep_quarter_wing)))*(np.cos(sweep_quarter_wing) - AR/2 - AR**2/(8*np.cos(sweep_quarter_wing)) + 6*np.abs(x_CG - x_AC_tot*3.28084)/(mean_chord*3.28084) * np.sin(sweep_quarter_wing/AR)))

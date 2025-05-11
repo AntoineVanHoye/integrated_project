@@ -71,7 +71,7 @@ def getAirfoilFus():
         cl_max = 1.7125
         alpha_L0 = -3 * (np.pi/180) #[rad]
         CD_fuselage = 0.0026
-        cm = -0.0026
+        cm = 0.01
     elif airfoil == 3:
         cl_alpha = (0.7236+0.2617)/(5+5) * (180/np.pi)# NACA35118 M0.85 Re12M cm = -0.0022
         cl_max = 1.6876
@@ -1088,7 +1088,8 @@ def main():
         print(f"Cl max wing: {Cl_max_wing:.3f} [-]")
         print(f"cl alpha wing airfoil: {cl_alpha_wing:.3f} [rad^-1]\n")
         
-        
+        _, _, _, _, _, _, _, y_fus, leading_fus, trailing_fus, quarter_fus = fusGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight) 
+        print(y_fus, leading_fus, trailing_fus, quarter_fus)
 
         b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
         Cl_fuselage, Cl_fuselage_0, Cd_fuselage, Cl_max_fus, a_fus = fuselageCL(Cl, sweep_LE_fus, sweep_quarter_wing, weight)

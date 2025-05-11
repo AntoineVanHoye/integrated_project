@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 ##################################################################
 ######GENERAL PARAMETERS     
@@ -118,7 +119,7 @@ I_z = 1344583.40 * 0.737562149
 Kn = 0.1
 Le = 584000*0.224809 #lift force in lb
 m = 105682.71* 0.031080950037834#*0.45359237 #mass in kg
-x_CG_tot = 8.5*3.28084
+x_CG_tot = 8.895*3.28084
 
 x = x_AC_tot - x_CG_tot
 l_V = x_AC_tail - x_CG_tot
@@ -363,6 +364,8 @@ def long_dyn_stab():
         zeta = -sigma / omega_n if omega_n != 0 else 0
         if i == 0 :
             print(f"Short period oscillations mode :")
+            print(sigma)
+            print(omega_d)
             print(f"  ω_n = {omega_n:.4f} rad/s")
             print(f"  ζ = {zeta:.4f}")
             if zeta > 0.3 and zeta < 2:
@@ -374,6 +377,7 @@ def long_dyn_stab():
 
         if i == -1 :
             print(f"Phugoid mode :")
+            
             print(f"  ω_n = {omega_n:.4f} rad/s")
             print(f"  ζ = {zeta:.4f}")
             if zeta > 0.04: 
@@ -422,7 +426,9 @@ def beta_der():
     L_beta = L_beta_WB + L_beta_H + L_beta_V
     Y_beta = Y_beta_W + Y_beta_B + Y_beta_V
     N_beta = N_beta_W + N_beta_B + N_beta_V
-
+    print("The Y_beta is : ", Y_beta)
+    print("The L_beta is : ", L_beta)
+    print("The N_beta is : ", N_beta)
     Y_beta_normed = Y_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim)
     L_beta = L_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
     N_beta = N_beta * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
@@ -450,7 +456,9 @@ def r_der():
 
     L_r = L_rW + L_rV
     N_r = N_rW + N_rV
-
+    print("The Y_r is : ", Y_r)
+    print("The L_r is : ", L_r)
+    print("The N_r is : ", N_r)
     Y_r = Y_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)
     L_r = L_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
     N_r = N_r * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
@@ -476,12 +484,13 @@ def p_der():
     L_p_V = 2 * Y_beta_V * (y_AC_tail/b)**2
 
     L_p = L_p_WB + L_p_H + L_p_V
-
     N_p_V = -2/b * (l_V*np.cos(alpha_e)+y_AC_tail*np.sin(alpha_e))*Y_beta_V*(y_AC_tail*np.cos(alpha_e)-l_V*np.sin(alpha_e))/b
     N_p_W = - L_p_WB*np.tan(wing_aoa) - (-L_p*np.tan(wing_aoa) - Np_CL * CL) + term_twist*twist_angle 
     N_p = N_p_W + N_p_V
-
-    Y_p = Y_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim)   
+    print("The Y_p is : ", Y_p)
+    print("The L_p is : ", L_p)
+    print("The N_p is : ", N_p)
+    Y_p = Y_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim) 
     L_p = L_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
     N_p = N_p * (1/2*rho_adim*V0_adim*surface_wing_ideal_adim*b_adim**2)
 
@@ -593,6 +602,280 @@ def short_period():
     xi_s = -(M_q/I_y + Z_w/m + M_w_dot/I_y*U_e)/(2*omega_s)
 
     return omega_s, xi_s
+
+
+
+
+
+"""
+def long_dyn_stab_bis(X_w_dot, Z_w_dot, M_w_dot, X_u, Z_u, M_u, X_w, Z_w, M_w, X_q, Z_q, M_q): 
+    
+    M_matrix = np.array([
+        [m, -X_w_dot, 0, 0],
+        [0, (m - Z_w_dot), 0, 0],
+        [0, -M_w_dot, I_y, 0],
+        [0, 0, 0, 1]
+    ])
+
+    B_matrix = np.array([
+        [-X_u, -X_w, -(X_q - m * W_e), m * g * np.cos(theta_e)],
+        [-Z_u, -Z_w, -(Z_q + m * U_e), m * g * np.sin(theta_e)],
+        [-M_u, -M_w, -M_q, 0],
+        [0, 0, -1, 0]
+    ])
+
+    A_matrix = -np.linalg.inv(M_matrix) @ B_matrix
+    eigenvalues = np.linalg.eigvals(A_matrix)
+    real_parts = np.real(eigenvalues)
+    imag_parts = np.imag(eigenvalues)
+
+    return real_parts, imag_parts
+
+tableau = np.arange(0.8, 1.2 + 0.001, 0.05)
+
+imag_parts_tab_SP = np.zeros(len(tableau))
+real_parts_tab_SP = np.zeros(len(tableau))
+
+imag_parts_tab_PHUG = np.zeros(len(tableau))
+real_parts_tab_PHUG = np.zeros(len(tableau))
+
+for i in range(len(tableau)): 
+
+        X_w_dot = w_dot_der()[0]*tableau[i]
+        Z_w_dot = w_dot_der()[1]*tableau[i]
+        M_w_dot = w_dot_der()[2]*tableau[i]
+
+        X_u = u_der2()[1]*tableau[i]
+        Z_u = u_der2()[0]*tableau[i]
+        M_u = u_der2()[2]*tableau[i]
+
+        X_w = w_der()[1]*tableau[i]
+        Z_w = w_der()[0]*tableau[i]
+        M_w = w_der()[2]*tableau[i]
+
+        X_q = q_der2()[1]*tableau[i]
+        Z_q = q_der2()[0]*tableau[i]
+        M_q = q_der2()[2]*tableau[i]
+
+        real_parts_tab_SP[i], imag_parts_tab_SP[i] = long_dyn_stab_bis(X_w_dot, Z_w_dot, M_w_dot, X_u, Z_u, M_u, X_w, Z_w, M_w, X_q, Z_q, M_q)[0][0],long_dyn_stab_bis(X_w_dot, Z_w_dot, M_w_dot, X_u, Z_u, M_u, X_w, Z_w, M_w, X_q, Z_q, M_q)[1][0]
+        real_parts_tab_PHUG[i], imag_parts_tab_PHUG[i] = long_dyn_stab_bis(X_w_dot, Z_w_dot, M_w_dot, X_u, Z_u, M_u, X_w, Z_w, M_w, X_q, Z_q, M_q)[0][2],long_dyn_stab_bis(X_w_dot, Z_w_dot, M_w_dot, X_u, Z_u, M_u, X_w, Z_w, M_w, X_q, Z_q, M_q)[1][2]
+print(real_parts_tab_SP, imag_parts_tab_SP)
+plt.plot(real_parts_tab_SP, imag_parts_tab_SP, 'o')
+plt.plot(real_parts_tab_PHUG, imag_parts_tab_PHUG, 'x')
+plt.show()
+"""
+"""
+
+def long_dyn_stab_bis(X_w_dot, Z_w_dot, M_w_dot, X_u, Z_u, M_u, X_w, Z_w, M_w, X_q, Z_q, M_q): 
+    
+    M_matrix = np.array([
+        [m, -X_w_dot, 0, 0],
+        [0, (m - Z_w_dot), 0, 0],
+        [0, -M_w_dot, I_y, 0],
+        [0, 0, 0, 1]
+    ])
+
+    B_matrix = np.array([
+        [-X_u, -X_w, -(X_q - m * W_e), m * g * np.cos(theta_e)],
+        [-Z_u, -Z_w, -(Z_q + m * U_e), m * g * np.sin(theta_e)],
+        [-M_u, -M_w, -M_q, 0],
+        [0, 0, -1, 0]
+    ])
+
+    A_matrix = -np.linalg.inv(M_matrix) @ B_matrix
+    eigenvalues = np.linalg.eigvals(A_matrix)
+    real_parts = np.real(eigenvalues)
+    imag_parts = np.imag(eigenvalues)
+
+    return real_parts, imag_parts
+
+def lat_dyn_stab_bis(Y_beta, Y_p, Y_r, L_beta, L_p, L_r, N_beta, N_p, N_r): 
+
+    M_matrix = np.array([
+    [m, 0, 0, 0, 0],
+    [0, I_x, -I_xz, 0, 0],
+    [0, -I_xz, I_z, 0, 0],
+    [0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 1]
+    ])
+
+    B_matrix = np.array([
+        [-Y_beta, -(Y_p + m * W_e), -(Y_r - m * U_e), -m * g * np.cos(theta_e), -m * g * np.sin(theta_e)],
+        [-L_beta, -L_p, -L_r, 0, 0],
+        [-N_beta, -N_p, -N_r, 0, 0],
+        [0, -1, 0, 0, 0],
+        [0, 0, -1, 0, 0]
+    ])
+
+    A_matrix = -np.linalg.inv(M_matrix) @ B_matrix
+    eigenvalues = np.linalg.eigvals(A_matrix)
+    real_parts = np.real(eigenvalues)
+    imag_parts = np.imag(eigenvalues)
+
+    return real_parts, imag_parts
+
+tableau = np.arange(0.8, 1.2 + 0.001, 0.05)
+
+real_parts_tab_SP = np.zeros(len(tableau))
+imag_parts_tab_SP = np.zeros(len(tableau))
+real_parts_tab_PHUG = np.zeros(len(tableau))
+imag_parts_tab_PHUG = np.zeros(len(tableau))
+real_parts_tab_DR = np.zeros(len(tableau))
+imag_parts_tab_DR = np.zeros(len(tableau))
+real_parts_tab_SPIRAL = np.zeros(len(tableau))
+imag_parts_tab_SPIRAL = np.zeros(len(tableau))
+real_parts_tab_ROLL = np.zeros(len(tableau))
+imag_parts_tab_ROLL = np.zeros(len(tableau))
+
+for i in range(len(tableau)): 
+
+    X_w_dot = w_dot_der()[0]*tableau[i]
+    Z_w_dot = w_dot_der()[1]*tableau[i]
+    M_w_dot = w_dot_der()[2]*tableau[i]
+
+    X_u = u_der2()[1]*tableau[i]
+    Z_u = u_der2()[0]*tableau[i]
+    M_u = u_der2()[2]*tableau[i]
+
+    X_w = w_der()[1]*tableau[i]
+    Z_w = w_der()[0]*tableau[i]
+    M_w = w_der()[2]*tableau[i]
+
+    X_q = q_der2()[1]*tableau[i]
+    Z_q = q_der2()[0]*tableau[i]
+    M_q = q_der2()[2]*tableau[i]
+
+    real_parts, imag_parts = long_dyn_stab_bis(
+        X_w_dot, Z_w_dot, M_w_dot,
+        X_u, Z_u, M_u,
+        X_w, Z_w, M_w,
+        X_q, Z_q, M_q
+    )
+
+    eigvals = real_parts + 1j * imag_parts
+
+    eigvals_sorted = sorted(eigvals, key=lambda z: abs(np.imag(z)), reverse=True)
+
+    SP = eigvals_sorted[0]
+
+    PHUG = eigvals_sorted[-1]
+
+    real_parts_tab_SP[i] = SP.real
+    imag_parts_tab_SP[i] = SP.imag
+    real_parts_tab_PHUG[i] = PHUG.real
+    imag_parts_tab_PHUG[i] = PHUG.imag
+
+    real_parts_tab_SP_conj = np.copy(real_parts_tab_SP)
+    imag_parts_tab_SP_conj = -imag_parts_tab_SP
+
+    real_parts_tab_PHUG_conj = np.copy(real_parts_tab_PHUG)
+    imag_parts_tab_PHUG_conj = -imag_parts_tab_PHUG
+
+    Y_beta = beta_der()[2]*tableau[i]
+    Y_p = p_der()[0]*tableau[i]
+    Y_r = r_der()[0]*tableau[i]
+
+    L_beta = beta_der()[0]*tableau[i]
+    L_p = p_der()[1]*tableau[i]
+    L_r = r_der()[1]*tableau[i]
+
+    N_beta = beta_der()[2]*tableau[i]
+    N_p = p_der()[2]*tableau[i]
+    N_r = r_der()[2]*tableau[i]
+
+    real_lat, imag_lat = lat_dyn_stab_bis(
+        Y_beta,Y_p,Y_r,L_beta,
+        L_p,L_r,N_beta,N_p,N_r
+    )
+
+
+    eig_lat = real_lat + 1j * imag_lat
+    print(eig_lat)
+    real_parts_tab_DR[i] = eig_lat[2]
+    imag_parts_tab_DR[i] = eig_lat[2].imag
+    if real_parts_tab_DR[i] > 0:
+        real_parts_tab_DR[i] = -real_parts_tab_DR[i]
+        
+    real_parts_tab_SPIRAL[i] = eig_lat[1]
+    imag_parts_tab_SPIRAL[i] = eig_lat[1].imag
+    real_parts_tab_ROLL[i] = eig_lat[4]
+    imag_parts_tab_ROLL[i] = eig_lat[4].imag
+    
+    real_parts_tab_DR_conj = np.copy(real_parts_tab_DR)
+    imag_parts_tab_DR_conj = -imag_parts_tab_DR
+
+
+
+fig, axs = plt.subplots(5, 1, figsize=(10, 7))
+i_cible = 5
+axs[0].axhline(0, color='grey', lw=0.5)
+axs[0].axvline(0, color='grey', lw=0.5)
+axs[0].set_xlim([-1.45, -0.9])   
+
+axs[0].plot(real_parts_tab_SP, imag_parts_tab_SP, 'o', color='blue', label='Short period')
+axs[0].plot(real_parts_tab_SP[i_cible], imag_parts_tab_SP[i_cible], 'o', color='black')
+axs[0].plot(real_parts_tab_SP_conj, imag_parts_tab_SP_conj, 'o', color='blue')
+axs[0].plot(real_parts_tab_SP[i_cible], imag_parts_tab_SP_conj[i_cible], 'o', color='black')
+axs[0].set_ylabel('Imaginary part')
+axs[0].legend()
+
+
+axs[1].axhline(0, color='grey', lw=0.5)
+axs[1].axvline(0, color='grey', lw=0.5)
+axs[1].set_xlim([-0.0025, -0.001])   
+
+#axs[1].set_ylim([-0.01, 0.01])
+axs[1].plot(real_parts_tab_PHUG, imag_parts_tab_PHUG, 'x', color='red', label='Phugoid')
+axs[1].plot(real_parts_tab_PHUG[i_cible], imag_parts_tab_PHUG[i_cible], 'x', color='black')
+axs[1].plot(real_parts_tab_PHUG_conj, imag_parts_tab_PHUG_conj, 'x', color='red')
+axs[1].plot(real_parts_tab_PHUG[i_cible], imag_parts_tab_PHUG_conj[i_cible], 'x', color='black')
+
+axs[1].set_ylabel('Imaginary part')
+axs[1].legend()
+
+axs[2].axhline(0, color='grey', lw=0.5)
+axs[2].axvline(0, color='grey', lw=0.5)
+axs[2].plot(real_parts_tab_DR, imag_parts_tab_DR, 's', color='green', label='Dutch roll')
+axs[2].plot(real_parts_tab_DR[i_cible], imag_parts_tab_DR[i_cible], 's', color='black')
+axs[2].plot(real_parts_tab_DR, -imag_parts_tab_DR, 's', color='green')
+axs[2].plot(real_parts_tab_DR[i_cible], -imag_parts_tab_DR[i_cible], 's', color='black')
+axs[2].set_ylabel('Imaginary part')
+axs[2].legend()
+
+# --- Roll ---
+axs[3].axhline(0, color='grey', lw=0.5)
+axs[3].axvline(0, color='grey', lw=0.5)
+axs[3].set_xlim([-0.07, -0.06])  
+axs[3].plot(real_parts_tab_ROLL, imag_parts_tab_ROLL, 's', color='red', label='Roll subsidence')
+axs[3].plot(real_parts_tab_ROLL[i_cible], imag_parts_tab_ROLL[i_cible], 's', color='black')
+axs[3].plot(real_parts_tab_ROLL, -imag_parts_tab_ROLL, 's', color='red')
+axs[3].plot(real_parts_tab_ROLL[i_cible], -imag_parts_tab_ROLL[i_cible], 's', color='black')
+axs[3].set_ylabel('Imaginary part')
+axs[3].legend()
+
+#A METTRE EN COM
+# --- SPIRAL ---
+axs[3].axhline(0, color='grey', lw=0.5)
+axs[3].axvline(0, color='grey', lw=0.5)
+axs[3].plot(real_parts_tab_SPIRAL, imag_parts_tab_SPIRAL, 'v', color='black', label='Spiral Mode')
+axs[3].set_ylabel('Imaginary part')
+axs[3].legend()
+axs[3].set_title('Spiral Mode')
+
+
+axs[4].axhline(0, color='grey', lw=0.5)
+axs[4].axvline(0, color='grey', lw=0.5)
+axs[4].set_xlim([-2.55, -1.7])  
+
+axs[4].plot(real_parts_tab_SPIRAL, imag_parts_tab_SPIRAL, '^', color='purple', label='Spiral')
+axs[4].plot(real_parts_tab_SPIRAL[i_cible], imag_parts_tab_SPIRAL[i_cible], '^', color='black')
+axs[4].set_xlabel('Real part')
+axs[4].set_ylabel('Imaginary part')
+axs[4].legend()
+
+plt.tight_layout()
+plt.show()
+"""
 
 ##################################################################
 ######DEFINITION OF THE PRINT FUNCTION
