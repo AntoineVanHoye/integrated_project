@@ -111,11 +111,11 @@ def getAirfoilFus():
 def getAirfoilWing():
     airfoil = 1
     if airfoil == 1:
-        cl_alpha = (0.74+0.35)/(1+1) * (180/np.pi) #(1.1117+0.0543)/(5+5) * (180/np.pi) # SC(2)-0710 M0.85 Re12M cm = -0.129
+        cl_alpha = (1.1117+0.0543)/(5+5) * (180/np.pi) # (0.74+0.35)/(1+1) * (180/np.pi) # SC(2)-0710 M0.85 Re12M cm = -0.129
         cl_max = 1.6#2.243
-        alpha_l0 = -2.795*(np.pi/180)#-4.5*(np.pi/180)
+        alpha_l0 = -4.5*(np.pi/180) #-2.795*(np.pi/180)#
         CD_wing = 0.00907 #at 6° aoa  and at 0° aoa = 0.006
-        cm = -0.16#-0.129
+        cm = -0.129 #-0.16#
     elif airfoil == 2:
         cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
         cl_max = 1.4
