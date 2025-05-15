@@ -306,21 +306,23 @@ def geomtail():
     surf_vert_tail = surf_tail()[1]
     surf_tot_tail = np.sqrt(surf_vert_tail**2+surf_hor_tail**2)
     c_root_tail = 3.5 #choice
-    """
+    
     span_hor = 2*surf_hor_tail/(taper_ratio*c_root_tail+c_root_tail)
     span_vert = 2*surf_vert_tail/(taper_ratio*c_root_tail+c_root_tail)
     gamma_h = np.arctan(surf_vert_tail/surf_hor_tail)
     span_vert = np.tan(gamma_h) * span_hor
     span_tot = np.sqrt(span_hor**2+span_vert**2)
+    
     """
     gamma_h = np.arctan(np.sqrt(surf_vert_tail/surf_hor_tail))
     surf_tot_tail = surf_hor_tail/np.cos(gamma_h)**2
     span_tot = 2*surf_tot_tail/(c_root_tail*(1+taper_ratio))
     span_hor = np.cos(gamma_h)*span_tot
     span_vert = np.sin(gamma_h)*span_tot
+    """
     AR_h = span_hor**2/surf_hor_tail
     AR = span_tot**2/surf_tot_tail
-
+    
     c_tip_tail = taper_ratio*c_root_tail
     
     y = np.linspace(0,span_hor/2,100)
@@ -430,9 +432,9 @@ def main():
     print("--------------------------DIHEDRAL ANGLE--------------------------------------------")
     print("The dihedral angle gamma of the tail is",gamma_h*180/np.pi,"degrees")
     print("--------------------------AREAS--------------------------------------------")
-    print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084,"ft^2")# and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
-    print("The horizontal area of the tail is",surf_tail()[0],"m^2 (",surf_tail()[0]*3.28084,"ft^2")# and it represents",surf_tail()[0]/surf_tot*100,"% of the total lifting surface")
-    print("The vertical area of the tail is",surf_tail()[1],"m^2 (",surf_tail()[1]*3.28084,"ft^2")# and it represents",surf_tail()[1]/surf_tot*100,"% of the total lifting surface")
+    print("The total area of the tail is",surf_tot_tail,"m^2 (",surf_tot_tail*3.28084**2,"ft^2")# and it represents",surf_tot_tail/surf_tot*100,"% of the total lifting surface")
+    print("The horizontal area of the tail is",surf_tail()[0],"m^2 (",surf_tail()[0]*3.28084**2,"ft^2")# and it represents",surf_tail()[0]/surf_tot*100,"% of the total lifting surface")
+    print("The vertical area of the tail is",surf_tail()[1],"m^2 (",surf_tail()[1]*3.28084**2,"ft^2")# and it represents",surf_tail()[1]/surf_tot*100,"% of the total lifting surface")
     print("--------------------------MAC--------------------------------------------")
     print("The MAC of the tail is",MAC_tail,"m or",MAC_tail*3.28084,"ft")
     print("--------------------------AC--------------------------------------------")

@@ -209,7 +209,7 @@ def CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force):
     total_weight = wing_weight + fus_weight + land_gear_weight + surf_cont_weight + instr_weight + elec_syst_weight + furn_weight + air_cond_weight + passengers_weight + motors_weight + fuel_weight + aft_weight + nacelle_weight + APU_weight + enginst_weight + hydr_syst_weight + payload_weight + ops_weight 
     position = total_mom/total_weight
 
-    position = 8.655
+    position = 10
     return position, pourc_wings, motors_pos/MAC_tot, total_weight 
 
 
@@ -282,7 +282,7 @@ def boucleForce(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing, Cl, sweep_LE_fus, sweep_qu
 
 def long_stat_stab_cruise(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): #in the pitching plane
     surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    a = getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    a = 3
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     #check the stability
     x_AC_tot = 8.56
@@ -309,7 +309,7 @@ def long_stat_stab_cruise(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force): #in
 
 def get_CG(i,d,Cm0_airfoil_fus,Cm0_airfoil_wing,Kn, Cl, sweep_LE_fus, sweep_quarter_wing, force): 
     surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
-    a = getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    a = 3
     MAC_fus, y_AC_fus,x_AC_fus,MAC_wing,y_AC_wing,x_AC_wing,MAC_tot,y_AC_tot,x_AC_tot = getMAC(Cl, sweep_LE_fus, sweep_quarter_wing, force)
     engines_pos = CG_position(i,d, Cl, sweep_LE_fus, sweep_quarter_wing, force)[2]
     deps = 0#2*3.17/(np.pi*7.04)
@@ -340,6 +340,7 @@ def interpolation(x1, y1, x2, y2, x3):
 
 def dir_stat_stab_cruise(CG_position, Cl, sweep_LE_fus, sweep_quarter_wing, force):  
     surface_wing_ideal, surf_fus, surf_wing, surf_tot = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, force)
+    
     """
     hf1 = (interpolation(0.2481847, 0.129909, 0.2632646, 0.1303305, 0.25)+interpolation(0.2491559,0.04703807 , 0.2613637,0.0475382 , 0.25))*l_fus  # forward fuselage height
     hf2 = (interpolation(0.7477641, 0.04391509, 0.7610847, 0.04077155, 0.75)+interpolation(0.7403715, 0.05064632, 0.7543387, 0.04952601, 0.75))*l_fus # rear fuselage height

@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib as mpl  # <--- Cette ligne est nécessaire
+
+mpl.rcParams['font.family'] = 'Times New Roman'
 
 ##################################################################
 ######GENERAL PARAMETERS     
@@ -664,7 +667,7 @@ plt.plot(real_parts_tab_SP, imag_parts_tab_SP, 'o')
 plt.plot(real_parts_tab_PHUG, imag_parts_tab_PHUG, 'x')
 plt.show()
 """
-"""
+
 
 def long_dyn_stab_bis(X_w_dot, Z_w_dot, M_w_dot, X_u, Z_u, M_u, X_w, Z_w, M_w, X_q, Z_q, M_q): 
     
@@ -855,13 +858,14 @@ axs[3].legend()
 
 #A METTRE EN COM
 # --- SPIRAL ---
+"""
 axs[3].axhline(0, color='grey', lw=0.5)
 axs[3].axvline(0, color='grey', lw=0.5)
 axs[3].plot(real_parts_tab_SPIRAL, imag_parts_tab_SPIRAL, 'v', color='black', label='Spiral Mode')
 axs[3].set_ylabel('Imaginary part')
 axs[3].legend()
 axs[3].set_title('Spiral Mode')
-
+"""
 
 axs[4].axhline(0, color='grey', lw=0.5)
 axs[4].axvline(0, color='grey', lw=0.5)
@@ -875,7 +879,6 @@ axs[4].legend()
 
 plt.tight_layout()
 plt.show()
-"""
 
 ##################################################################
 ######DEFINITION OF THE PRINT FUNCTION
