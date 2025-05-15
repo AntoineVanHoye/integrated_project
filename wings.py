@@ -111,11 +111,11 @@ def getAirfoilFus():
 def getAirfoilWing():
     airfoil = 1
     if airfoil == 1:
-        cl_alpha = (1.1117+0.0543)/(5+5) * (180/np.pi) # SC(2)-0710 M0.85 Re12M cm = -0.129
+        cl_alpha = (1.1117+0.0543)/(5+5) * (180/np.pi) # (0.74+0.35)/(1+1) * (180/np.pi) # SC(2)-0710 M0.85 Re12M cm = -0.129
         cl_max = 1.6#2.243
-        alpha_l0 = -4.5*(np.pi/180)
+        alpha_l0 = -4.5*(np.pi/180) #-2.795*(np.pi/180)#
         CD_wing = 0.00907 #at 6° aoa  and at 0° aoa = 0.006
-        cm = -0.143
+        cm = -0.129 #-0.16#
     elif airfoil == 2:
         cl_alpha = (1.4073-0.269)/(5+5) * (180/np.pi) # SC(2)-1010 M0.85 Re12M
         cl_max = 1.4
@@ -364,13 +364,16 @@ def wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight):
 
     #sweep_leading = sweep_leading*((np.pi)/180)
     sweep_quarter = np.zeros(len(c)-1)
+    sweep_half = np.zeros(len(c)-1)
     sweep_trailing = np.zeros(len(c)-1)
     sweep_beta = np.zeros(len(c)-1)
 
     for i in range(len(c)-1):
         sweep_quarter[i] = np.arctan2(h[i], ((c[i]*0.25) - ((h[i]*np.tan(sweep_leading)) + (c[i+1]*0.25)))) - (np.pi/2)#np.arctan(np.tan(sweep_leading) + (4/AR_tmp) * (((1-taper_tmp)/(1+taper_tmp)) * (0 - 0.25)))
         sweep_trailing[i] = np.arctan2(h[i], (c[i] - ((h[i]*np.tan(sweep_leading)) + c[i+1]))) - (np.pi/2) #np.arctan(np.tan(sweep_quarter[i]) + (4/AR_tmp) * (((1-taper_tmp)/(1+taper_tmp)) * (0.25 - 1)))
-        sweep_beta[i] = np.arctan(np.tan(sweep_quarter[i])/beta) #np.arctan2(np.tan(sweep_quarter[i]), beta)
+        sweep_half[i] = np.arctan2(h[i],  ((c[i]*0.5) - ((h[i]*np.tan(sweep_leading)) + (c[i+1]*0.5)))) - (np.pi/2)
+        sweep_beta[i] = np.arctan(np.tan(sweep_half[i])/beta) #np.arctan2(np.tan(sweep_quarter[i]), beta)
+        #sweep_beta[i] = np.arctan(np.tan(sweep_quarter[i])/beta) #np.arctan2(np.tan(sweep_quarter[i]), beta)
 
     y = np.array([])
     quarter_line = np.array([])
@@ -438,6 +441,8 @@ def wingGeometryIDEAL(lift_coef, weight, sweep_quarter_wing):
 
     sweep_leading = np.arctan(np.tan(sweep_quarter) + (4/AR) * (((1-taper_wing)/(1+taper_wing)) * (0.25 - 0)))
     sweep_trailing = np.arctan2(h[0], (c[0] - ((h[0]*np.tan(sweep_leading)) + c[1]))) - (np.pi/2) 
+    sweep_half = np.arctan2(h[0],  ((c[0]*0.5) - ((h[0]*np.tan(sweep_leading)) + (c[0+1]*0.5)))) - (np.pi/2)
+    #sweep_beta = np.arctan(np.tan(sweep_half)/beta) #np.arctan2(np.tan(sweep_quarter[i]), beta)
     sweep_beta = np.arctan(np.tan(sweep_quarter)/beta) 
     
     chord_middle = np.interp(cabin_width/2, [0.0, span_max/2], c)
@@ -767,7 +772,7 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
     """
     
     AoA = AoA * (180 / np.pi)  
-    with open("data_lift_cruise.txt", "w") as file:
+    with open("data_lift_climb.txt", "w") as file:
         for angle, cl, cd in zip(AoA, Cl_tot, Cd_tot):  # Boucle sur les valeurs des arrays
             file.write(f"{angle:.2f} {cl:.4f} {cd:.4f}\n")  # Formatage propre"
             
@@ -775,6 +780,59 @@ def get_Lift_and_drag(Cl, delta, sweep_LE_fus, sweep_quarter_wing, weight):
     
             
     return Cl_tot0, Cd_tot0, cl_max, AoA_L0, Cl_tot, Cd_tot, AoA, cd0, CL_alfa
+
+def lift_climb_config(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
+    Mach = 0.39
+    beta_climb = np.sqrt(1-(Mach**2))
+    ################## Wing ######################
+    sweep_beta = np.arctan(np.tan(sweep_quarter_wing)/beta_climb) 
+    cl_alpha, cl_max, alpha_l0, CD_wing, cm = getAirfoilWing()
+    surface_wing_ideal, AR = getSurface_And_AR(Cl, weight)
+
+    AoA_wing, _ = getCalageAngle(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+    
+    # --- Twist angle --- #
+    alpha_01 = -0.17
+    eta_a_tip = twist_angle 
+    alpha_L0 = alpha_l0 + (alpha_01 * twist_angle * (np.pi/180))
+    
+    # --- Lift --- #
+    AoA = np.linspace(-10, 10, 21) * ((np.pi)/180)
+    CL_wing = np.zeros(len(AoA))
+    
+    k = (beta_climb * cl_alpha)/(2*np.pi)
+    
+    a = ((2*np.pi)/((2/(beta_climb*AR)) + np.sqrt((1/((k * np.cos(sweep_beta))))**2 + ((2/(beta_climb * AR))**2) )))/beta_climb
+    
+    
+    for i in range(len(AoA)):    
+        CL_wing[i] = a*((AoA[i] + AoA_wing) - alpha_L0)
+
+
+    ################## Fuselage ######################
+
+    # --- airfoil --- #
+    cl_alpha, cl_max, alpha_L0, CD_fuselage, cm = getAirfoilFus()
+    b, AR_fuselage, sweep_beta, c_root, taper_ratio, sweep_quarter_fus, c_tip, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+    sweep_beta = np.arctan(np.tan(sweep_quarter_fus)/beta_climb) 
+    # --- Lift --- #
+    #AoA = np.linspace(-10, 10, 21) * ((np.pi)/180)
+    CL_fus = np.zeros(len(AoA))
+    
+    k = (beta_climb * cl_alpha)/(2*np.pi)
+    a = ((2*np.pi)/((2/(beta_climb*AR_fuselage)) + np.sqrt( ((1/(k * np.cos(sweep_beta)))**2) + ((2/(beta_climb * AR_fuselage))**2) )))/beta_climb
+
+    for i in range(len(AoA)):    
+        CL_fus[i] = a*((AoA[i]+ (0*(np.pi/180))) - alpha_L0)
+        CL_w0 = a*(0 - alpha_L0)
+    
+    
+    Cl_tot = CL_wing + CL_fus
+    pente = np.gradient(CL_wing, AoA)
+    origine = np.interp(0, AoA, CL_wing)
+    
+    alpha_L45 = np.interp(0.4, CL_wing, AoA) * (180 / np.pi)
+    return pente[0] , origine, alpha_L45
 
 def getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     surface_wing_ideal, AR, taper_wing, croot, ctip, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
@@ -923,7 +981,7 @@ def getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight):
     
     delta_CL_max = 2.1 - CL_max_tot  #2.1 Amos' value And 1.9 for landing configuration
     delta_cl_max = delta_CL_max* (1/(0.6* np.cos(sweep_HL)))
-    return delta_cl_max
+    return delta_cl_max , sweep_HL
 
 def getHighLiftDevice2(Cl, sweep_LE_fus, sweep_quarter_wing, weight, CLmax):
     surface_wing_ideal, surface_fuselage, surface_wing, surface_total = detSurfac(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
@@ -1002,7 +1060,7 @@ def main():
         surface_wing_ideal, AR, taper_wing, croot, c_tip_wing, chord_middle, sweep_LE_wing, sweep_beta = wingGeometryIDEAL(Cl, weight, sweep_quarter_wing)
         surface_wing_ideal, AR = getSurface_And_AR(Cl, weight)
         _, _, _, c_root_fus, _, _, _, _, _, _, _ = fusGeometry(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
-        delta_cl_max = getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        delta_cl_max, sweep_HL = getHighLiftDevice(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
         print("\n-------------- Total values --------------\n")
         print(f"New AR = {AR:.3f} [-]")
         print(f"Cl used = {Cl:.2f} [-]\n")
@@ -1013,6 +1071,7 @@ def main():
         print(f"Compressibility parameter beta: {beta:.3f} [-]")
         print(f"Taper ratio: {c_tip_wing/c_root_fus:.3f} [-]")
         print(f"High lift device delta clmax: {delta_cl_max:.3f} [-]\n")
+        print(f"Sweep hinge line: {sweep_HL*180/np.pi:.3f}")
         print(f"Cl alfa: {getClAlfa(Cl, sweep_LE_fus, sweep_quarter_wing, weight):.3f} [rad^-1]\n")
         
         b, AR_wing, sweep_beta, sweep_beta_tot, c_root, taper_ratio, sweep_quarter, c_tip, y, leading_edge, trailing_edge, quarter_line, c, h = wingGeometry(Cl,sweep_LE_fus, sweep_quarter_wing, weight)
@@ -1087,7 +1146,10 @@ def main():
         Re = getReynold(alti, MAC)
         print(f"Re_mac: {Re:.3f} [-]")
 
-        
+        pente_climb, origine_climb, alpha_L45_climb = lift_climb_config(Cl, sweep_LE_fus, sweep_quarter_wing, weight)
+        print(f"Climb slope: ", pente_climb )#{pente_climb:.3f} [rad^-1]")
+        print(f"Climb orignie Cl: {origine_climb:.3f} [-]")
+        print(f"Climb alpha et CL.45: {alpha_L45_climb:.3f} [°]\n")
         #delta = getHighLiftDevice2(Cl, sweep_LE_fus, sweep_quarter_wing, weight, 2.1)
         #print(f"Angle of flaps for 2.1 cl max: {delta[0]:.3f} or {delta[1]:.3f} [-]\n")
 
