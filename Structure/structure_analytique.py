@@ -26,19 +26,19 @@ M_wing =  [-303561.349929, -903691.7644038, -903691.7644038, -578362.72921843, -
 Surf_aile_equiv = 119.85 #[m²]
 Surf_demi_aile_equiv = Surf_aile_equiv/2 #[m²]
 Surf_demi_wing_studied = 21.86460271713637 # [m²]
+Surf_demi_trans_wing = 13.78039728282926 # [m²]
 
 Coeff = (2*Surf_demi_wing_studied)/Surf_aile_equiv
+Coeff_2 = (Surf_demi_trans_wing)/ (Surf_demi_wing_studied + Surf_demi_trans_wing)
 print(Coeff)
+print(Coeff_2)
 
-#Surf_trans = 13.78039728282926 # [m²] # no more used
-#Surf_tot = Surf_trans + Surf_wing_studied
-#Coeff = Surf_wing_studied/Surf_demi_aile_equiv
 
 
 Lwt = np.array(L_overall)*Coeff # Extract the correct lift
-Dwt = np.array(D_wing)*Coeff
-Wwt = (4735.9488633)*9.81*Coeff # [kg] mass -> to force [N] 
-Mw = np.array(M_wing)*Coeff
+Dwt = np.array(D_wing)*Coeff_2
+Wwt = (4735.9488633)*9.81*Coeff_2 # [kg] mass -> to force [N] 
+Mw = np.array(M_wing)*Coeff_2
 
 
 # ---- Material ----
@@ -48,14 +48,14 @@ Mw = np.array(M_wing)*Coeff
 # safety_factor = 1.5
 
 # Alu moyen Granta
-# sigma_x_0 = (797+683)/2*10**6 # CHOOSE THE MATERIAL
-# tau_max = (402+345)/2*10**6 # maximum shear stress
-# safety_factor = 1.5
+sigma_x_0 = (797+683)/2*10**6 # CHOOSE THE MATERIAL
+tau_max = (402+345)/2*10**6 # maximum shear stress
+safety_factor = 1.5
 
 # CFRP
-sigma_x_0 = 1500*10**6
-tau_max = 94*10**6
-safety_factor = 1.5
+# sigma_x_0 = 1500*10**6
+# tau_max = 94*10**6
+# safety_factor = 1.5
 
 print('')
 print('Lift 1 wing = ', Lwt/2)
@@ -180,13 +180,12 @@ def boom_area(z_booms_ordered_centroid, y_booms_ordered_centroid, M_y, M_z, sigm
         B_sigma_xx.append(stress)
     
     # Find maximum stress
-    max_stress = max(B_sigma_xx)  # Find maximum stress value
-    max_stress_index = B_sigma_xx.index(max_stress)  # Find the index of the maximum stress
-    
-    
+    max_B_stress = max(B_sigma_xx)  # Find maximum stress value
+    max_B_stress_index = B_sigma_xx.index(max_B_stress)  # Find the index of the maximum stress
+       
     # ---- Minimum Area -----
     sigma_xx_max_material = sigma_x_0 / safety_factor
-    B_min = max_stress/sigma_xx_max_material
+    B_min = max_B_stress/sigma_xx_max_material
     
     # Real stress in the boom with the new value of B 
     sigma_xx = np.array(B_sigma_xx) / B_min
@@ -202,10 +201,10 @@ def skin_thickness(B, sigma_xx, delta_x, delta_y, delta_z, T_y, T_z, M_x, y_boom
     # Taper effect (suite) :
     T_y_web = T_y - B* np.sum(sigma_xx * (delta_y/delta_x))
     T_z_web = T_z - B* np.sum(sigma_xx * (delta_z/delta_x))
-    # print(T_y)
-    # print(T_y_web)    
-    # print(T_z)
-    # print(T_z_web)  
+    print('T_y', T_y)
+    print('T_y_web', T_y_web)    
+    print('T_z', T_z)
+    print('T_z_web', T_z_web)  
     
     # Inertia per unit area (the boom area 'B' is considered to be the same everywhere)
     I_yy_over_B = np.sum(np.array(z_booms_ordered_centroid)**2) 
@@ -389,6 +388,7 @@ def skin_thickness(B, sigma_xx, delta_x, delta_y, delta_z, T_y, T_z, M_x, y_boom
     #print('q_closed = ',q_closed)
     # ---- Thickness computation ----   
     print("q_max =", np.max(np.abs(q_closed)) )
+    print("")
     #print('tau_max', tau_max)
     thickness = np.max(np.abs(q_closed)) / (tau_max/safety_factor) 
     
@@ -410,7 +410,7 @@ def plotAirfoil(plot_airfoil, n_booms, y_c_max, y_c_cell_1):
     sweep_angle = np.radians(31.599) #[°]
     delta_x = (wing_semi_span - x_arrondi)
     y_dist_root_tip = delta_x *np.tan(sweep_angle)
-    #print('delta_x : ', delta_x)
+    print('delta_x : ', delta_x)
     #print('y_dist_root_tip : ', y_dist_root_tip)
     #print('')
     
@@ -649,8 +649,8 @@ def plotAirfoil(plot_airfoil, n_booms, y_c_max, y_c_cell_1):
     sigma_xx = sigma_xx_values[index_of_max]
     sigma_xx = np.array(sigma_xx)
       
-    #print(f"Index de la contrainte max : {index_of_max}")
-    #print(f"sigma_xx associée (à B max) : {sigma_xx}")
+    print(f"Index de la contrainte max : {index_of_max}")
+    print(f"sigma_xx associée (à B max) : {sigma_xx}")
     
     # Constants for conversion
     m2_to_mm2 = 1e6           # 1 m² = 1,000,000 mm²
@@ -663,7 +663,7 @@ def plotAirfoil(plot_airfoil, n_booms, y_c_max, y_c_cell_1):
     
     # ---- Skin thickness ---- 
     
-    # Taper effect along x
+    # Taper effect along y
     y_pos_booms_tip = np.array(y_c_booms_ordered) * chord_tip + y_dist_root_tip 
     y_pos_booms_arrondi = np.array(y_c_booms_ordered) * chord_length_arrondi # where chord_length_arrondi is the chord from the tip, just before the 'arrondi'
     delta_y = y_pos_booms_tip - y_pos_booms_arrondi 
